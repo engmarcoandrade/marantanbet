@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <meta name="theme-color" content="#0078d4">
+    <title>🎯 Método Marantan - Gestão</title>
+    <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600;700&family=DM+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        :root { 
+            --bg: #f3f3f3; 
+            --surface: #ffffff; 
+            --surface2: #f2f2f2; 
+            --border: #d2d2d2; 
+            --accent: #0078d4; 
+            --accent-hover: #005a9e; 
+            --text: #202020; 
+            --muted: #616161; 
+            --win: #107c10; 
+            --loss: #d13438; 
+            --radius: 0px; 
+            --shadow: 0 1px 3px rgba(0,0,0,0.1); 
+        }
+        body.dark-mode { 
+            --bg: #202020; 
+            --surface: #2b2b2b; 
+            --surface2: #202020; 
+            --border: #444444; 
+            --accent: #0078d4; 
+            --accent-hover: #0093f9; 
+            --text: #f5f5f5; 
+            --muted: #cccccc; 
+            --win: #107c10; 
+            --loss: #ff6b6b; 
+            --shadow: 0 2px 8px rgba(0,0,0,0.4); 
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg); color: var(--text); transition: background-color 0.15s, color 0.15s; line-height: 1.4; font-size: 14px; }
+        
+        header { background-color: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow); }
+        .logo-container { display: flex; flex-direction: column; }
+        .logo { font-size: 15px; font-weight: 600; color: var(--text); }
+        .version-tag { font-size: 11px; color: var(--muted); font-weight: 400; margin-top: 1px; }
+        .header-controls { display: flex; gap: 8px; align-items: center; }
+        
+        button { font-family: 'Segoe UI', sans-serif; cursor: pointer; border: 1px solid var(--border); border-radius: var(--radius); padding: 6px 12px; font-size: 13px; font-weight: 600; background: var(--surface2); color: var(--text); transition: background 0.1s; }
+        button:active { background: var(--border); }
+        .btn-panic { background: var(--loss); color: white; border: 1px solid var(--loss); }
+        .btn-panic:active { background: darkred; }
+        
+        .tabs { display: flex; overflow-x: auto; scrollbar-width: none; background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 8px; position: sticky; top: 53px; z-index: 99; }
+        .tabs::-webkit-scrollbar { display: none; }
+        .tab-btn { background: transparent; color: var(--muted); font-size: 13px; padding: 12px 14px; border: none; border-bottom: 2px solid transparent; font-weight: 400; white-space: nowrap; }
+        .tab-btn.active { color: var(--accent); border-bottom: 2px solid var(--accent); font-weight: 600; }
+        
+        .container { padding: 12px 12px 32px; max-width: 100%; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        .win-input, .win-select { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); color: var(--text); font-family: 'Segoe UI', sans-serif; font-size: 14px; outline: none; }
+        .win-input:focus { border-color: var(--accent); }
+        
+        .kpi-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px; }
+        .kpi-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; box-shadow: var(--shadow); }
+        .kpi-title { font-size: 11px; color: var(--muted); text-transform: uppercase; font-weight: 600; margin-bottom: 4px; }
+        .kpi-value { font-family: 'Segoe UI', sans-serif; font-size: 15px; font-weight: 700; color: var(--text); }
+        .win-border { border-left: 3px solid var(--win); }
+        .loss-border { border-left: 3px solid var(--loss); }
+        
+        .win-modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.4); z-index: 1000; align-items: center; justify-content: center; padding: 24px; }
+        .win-modal-box { background: var(--surface); border: 1px solid var(--border); width: 100%; max-width: 320px; box-shadow: 0 4px 16px rgba(0,0,0,0.2); display: flex; flex-direction: column; }
+        .win-modal-header { padding: 12px 16px; font-size: 13px; font-weight: 700; color: white; display: flex; align-items: center; gap: 8px; }
+        .win-modal-header.meta-style { background: var(--win); }
+        .win-modal-header.stop-style { background: var(--loss); }
+        .win-modal-body { padding: 16px; font-size: 14px; line-height: 1.4; color: var(--text); }
+        .win-modal-footer { padding: 12px 16px; display: flex; justify-content: flex-end; background: var(--surface2); border-top: 1px solid var(--border); }
+        .btn-modal-close { background: var(--surface); color: var(--text); border: 1px solid var(--border); font-weight: 600; padding: 6px 16px; }
+        
+        .etapa-painel { background: var(--surface); padding: 12px; border-radius: var(--radius); margin-bottom: 12px; border: 1px solid var(--border); box-shadow: var(--shadow); }
+        .etapa-info { margin-bottom: 10px; font-size: 13px; color: var(--muted); }
+        .etapa-info strong { color: var(--text); }
+        .btn-save-etapa { background-color: var(--accent); color: white; border: 1px solid var(--accent); width: 100%; padding: 10px; font-size: 14px; }
+        
+        .progress-container { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; margin-bottom: 12px; box-shadow: var(--shadow); }
+        .progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 12px; font-weight: 600; color: var(--muted); }
+        .progress-percent-text { font-family: 'Segoe UI', sans-serif; font-size: 13px; font-weight: 700; }
+        .progress-track { background: var(--surface2); height: 10px; overflow: hidden; margin-bottom: 8px; border: 1px solid var(--border); }
+        .progress-fill { background: var(--accent); height: 100%; width: 0%; transition: width 0.3s ease; }
+        .progress-footer { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--muted); }
+        .progress-footer strong { font-family: 'Segoe UI', sans-serif; font-size: 11px; color: var(--text); }
+
+        .seq-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+        .seq-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: var(--shadow); position: relative; }
+        .seq-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 11px; font-weight: 600; color: var(--muted); }
+        
+        .seq-streak-badge { background: var(--loss); color: white; font-size: 12px; font-weight: 700; padding: 2px 6px; border-radius: 0px; font-family: 'Segoe UI', sans-serif; }
+        
+        .seq-valor { font-family: 'DM Mono', monospace; font-size: 15px; color: var(--text); font-weight: 700; margin-bottom: 10px; background: var(--surface2); padding: 6px; text-align: center; border: 1px solid var(--border); }
+        .seq-actions { display: flex; gap: 4px; }
+        .btn-seq-win, .btn-seq-loss { flex: 1; padding: 8px; font-size: 13px; border: none; color: white; font-weight: 700; text-align: center; }
+        .btn-seq-win { background: var(--win); }
+        .btn-seq-loss { background: var(--loss); }
+        
+        .form-group { margin-bottom: 10px; }
+        .form-group label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px; color: var(--muted); }
+        .form-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 10px; }
+        
+        .chart-container { background: var(--surface); border: 1px solid var(--border); padding: 12px; box-shadow: var(--shadow); }
+        .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        
+        .table-responsive { overflow-x: auto; border: 1px solid var(--border); background: var(--surface); }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th, td { padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 13px; }
+        th { background: var(--surface2); font-weight: 600; color: var(--text); font-size: 12px; text-transform: uppercase; }
+        td { font-family: 'Segoe UI', sans-serif; }
+        
+        .backup-controls { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border); }
+    </style>
+</head>
+<body>
+
+    <div id="modal-meta" class="win-modal-overlay">
+        <div class="win-modal-box">
+            <div class="win-modal-header meta-style">🎯 OBJETIVO ALCANÇADO</div>
+            <div class="win-modal-body">Parabéns! A meta da etapa foi estabelecida com sucesso.</div>
+            <div class="win-modal-footer">
+                <button class="btn-modal-close" onclick="fecharModal('modal-meta')">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-stop" class="win-modal-overlay">
+        <div class="win-modal-box">
+            <div class="win-modal-header stop-style">⚠️ STOP LOSS ALCANCADO</div>
+            <div class="win-modal-body">O limite de Stop Loss foi atingido. Sugerimos fortemente parar as operações nesta etapa.</div>
+            <div class="win-modal-footer">
+                <button class="btn-modal-close" onclick="fecharModal('modal-stop')">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <header>
+        <div class="logo-container">
+            <div class="logo">🎯 Método Marantan</div>
+            <div class="version-tag">Versão 06 | 03/06/2026</div>
+        </div>
+        <div class="header-controls">
+            <button class="btn-theme" onclick="toggleTheme()">🌓 Tema</button>
+            <button class="btn-panic" onclick="acionarPanico()">Sair</button>
+        </div>
+    </header>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="openTab('painel')">📊 Dashboard</button>
+        <button class="tab-btn" onclick="openTab('registro')">🕹️ Operações</button>
+        <button class="tab-btn" onclick="openTab('graficoTab')">📈 Gráfico</button>
+        <button class="tab-btn" onclick="openTab('config')">⚙️ Configurações</button>
+        <button class="tab-btn" onclick="openTab('historico')">📜 Histórico</button>
+    </div>
+
+    <div class="container">
+        
+        <div id="painel" class="tab-content active">
+            <div class="kpi-grid">
+                <div class="kpi-card"><div class="kpi-title">Banca Atual</div><div class="kpi-value" id="kpi-banca">R$ 0,00</div></div>
+                <div class="kpi-card"><div class="kpi-title">Lucro Líquido</div><div class="kpi-value" id="kpi-lucro">R$ 0,00</div></div>
+            </div>
+            <div class="kpi-grid">
+                <div class="kpi-card win-border"><div class="kpi-title">Meta Etapa</div><div class="kpi-value" id="kpi-meta">R$ 0,00</div></div>
+                <div class="kpi-card loss-border"><div class="kpi-title">Stop Etapa</div><div class="kpi-value" id="kpi-stoploss">R$ 0,00</div></div>
+            </div>
+        </div>
+
+        <div id="registro" class="tab-content">
+            <div class="etapa-painel">
+                <div class="etapa-info">
+                    Etapa Atual: <strong id="lbl-etapa-num" style="color: var(--accent);">#1</strong> | Base: <strong id="lbl-banca-etapa">R$ 0,00</strong> | Parcial: <strong id="lbl-lucro-etapa">R$ 0,00</strong>
+                </div>
+                <button class="btn-save-etapa" onclick="fecharEtapa()">💾 Fechar Etapa e Gravar</button>
+            </div>
+
+            <div class="progress-container">
+                <div class="progress-header">
+                    <span>PROGRESSO OBJETIVO</span>
+                    <span class="progress-percent-text" id="progresso-percent">0.0% ▲</span>
+                </div>
+                <div class="progress-track">
+                    <div class="progress-fill" id="progresso-bar"></div>
+                </div>
+                <div class="progress-footer">
+                    <span>INICIAL: <strong id="progresso-inicial">R$ 0,00</strong></span>
+                    <span>SALDO: <strong id="progresso-atual">R$ 0,00</strong></span>
+                    <span>META: <strong id="progresso-meta">0%</strong></span>
+                </div>
+            </div>
+
+            <div class="seq-grid" id="seq-container"></div>
+        </div>
+
+        <div id="graficoTab" class="tab-content">
+            <div class="chart-container">
+                <div class="chart-header">
+                    <span style="font-weight:600;">Juros Compostos vs Realidade</span>
+                    <input type="number" id="input-etapas" class="win-input" value="30" style="width: 65px; padding:4px;" onchange="renderizarGrafico()">
+                </div>
+                <canvas id="meuGrafico" height="160"></canvas>
+            </div>
+        </div>
+
+        <div id="config" class="tab-content">
+            <div class="chart-container">
+                <div class="form-group">
+                    <label>Banca Inicial Geral (R$)</label>
+                    <input type="number" id="cfg-banca" class="win-input" step="0.01" value="1000.00">
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Meta (%)</label><input type="number" id="cfg-meta" class="win-input" step="0.1" value="3.0"></div>
+                    <div class="form-group"><label>Stop Loss (%)</label><input type="number" id="cfg-stoploss" class="win-input" step="0.1" value="10.0"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Aposta Inicial (%)</label><input type="number" id="cfg-aposta-base-pct" class="win-input" step="0.1" value="1.0"></div>
+                    <div class="form-group"><label>Fator Recuperação</label><input type="number" id="cfg-fator" class="win-input" step="0.1" value="2.0"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Lotes Simultâneos</label><input type="number" id="cfg-lote" class="win-input" value="6"></div>
+                    <div class="form-group"><label>Retorno Pós-Win (%)</label><input type="number" id="cfg-retorno-pos" class="win-input" step="1" value="50"></div>
+                </div>
+                <button class="btn-save-etapa" onclick="salvarConfiguracoes()" style="margin-top: 6px;">Salvar Parâmetros Matemáticos</button>
+                
+                <div class="backup-controls">
+                    <button onclick="fazerBackup()">💾 Exportar</button>
+                    <input type="file" id="file-restore" style="display:none" accept=".json" onchange="restaurarBackup(event)">
+                    <button onclick="document.getElementById('file-restore').click()">📂 Importar</button>
+                </div>
+                <button onclick="resetarTudo()" style="color: var(--loss); border-color: var(--loss); width:100%; margin-top:8px; background:transparent;">Limpar Tudo</button>
+            </div>
+        </div>
+
+        <div id="historico" class="tab-content">
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>E</th>
+                            <th>Hora</th>
+                            <th>Lucro</th>
+                            <th>Saldo</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabela-historico"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let state = { 
+            bancaInicial: 1000, 
+            bancaAtual: 1000, 
+            bancaInicioEtapa: 1000, 
+            etapaAtual: 1, 
+            metaPercent: 3.0, 
+            stopLossPercent: 10.0, 
+            apostaBasePercent: 1.0, 
+            fatorMarantan: 2.0, 
+            loteQtd: 6, 
+            retornoPosCicloPercent: 50.0, 
+            sequencias: [], 
+            historico: [], 
+            resultadosReaisGrafico: [1000] 
+        };
+        let sinalizadoMeta = false;
+        let sinalizadoStop = false;
+        let chartInstance = null;
+
+        window.onload = () => { carregarDados(); if (state.sequencias.length === 0) gerarSequenciasIniciais(); atualizarUI(); };
+        
+        let lastEscTime = 0;
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                const now = new Date().getTime();
+                if (now - lastEscTime < 500) acionarPanico();
+                lastEscTime = now;
+            }
+        });
+
+        function acionarPanico() { window.location.href = 'https://www.google.com'; }
+
+        function fazerBackup() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state));
+            const dl = document.createElement('a'); dl.setAttribute("href", dataStr); dl.setAttribute("download", "marantan_backup.json"); dl.click();
+        }
+
+        function restaurarBackup(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    state = JSON.parse(e.target.result);
+                    salvarDados();
+                    alert("Backup restaurado com sucesso!");
+                    location.reload();
+                } catch(err) { alert("Falha ao ler arquivo de backup."); }
+            };
+            reader.readAsText(file);
+        }
+
+        function toggleTheme() { 
+            document.body.classList.toggle('dark-mode'); 
+            if(document.getElementById('graficoTab').classList.contains('active')) renderizarGrafico(); 
+        }
+        
+        function openTab(tabId) { 
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active')); 
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active')); 
+            document.getElementById(tabId).classList.add('active'); 
+            event.currentTarget.classList.add('active'); 
+            if(tabId === 'graficoTab') renderizarGrafico(); 
+        }
+        
+        function getValorApostaBase() { return state.bancaInicioEtapa * (state.apostaBasePercent / 100); }
+        
+        function gerarSequenciasIniciais() { 
+            state.sequencias = Array.from({length: state.loteQtd}, (_, i) => ({ 
+                id: i + 1, 
+                apostaAtual: getValorApostaBase(), 
+                streakLoss: 0 
+            })); 
+            salvarDados(); 
+        }
+        
+        function salvarDados() { localStorage.setItem('marantanWinDataV4', JSON.stringify(state)); atualizarUI(); }
+        
+        function carregarDados() { 
+            const data = localStorage.getItem('marantanWinDataV4'); 
+            if (data) { 
+                state = JSON.parse(data); 
+                preencherFormulario(); 
+            } 
+        }
+        
+        function resetarTudo() { if(confirm("Deseja mesmo limpar todos os dados salvos?")) { localStorage.removeItem('marantanWinDataV4'); location.reload(); } }
+        
+        function salvarConfiguracoes() {
+            state.bancaInicial = parseFloat(document.getElementById('cfg-banca').value);
+            state.metaPercent = parseFloat(document.getElementById('cfg-meta').value);
+            state.stopLossPercent = parseFloat(document.getElementById('cfg-stoploss').value);
+            state.apostaBasePercent = parseFloat(document.getElementById('cfg-aposta-base-pct').value);
+            state.fatorMarantan = parseFloat(document.getElementById('cfg-fator').value);
+            state.loteQtd = parseInt(document.getElementById('cfg-lote').value);
+            state.retornoPosCicloPercent = parseFloat(document.getElementById('cfg-retorno-pos').value) || 50;
+            
+            state.bancaAtual = state.bancaInicial; 
+            state.bancaInicioEtapa = state.bancaInicial; 
+            state.etapaAtual = 1; 
+            state.historico = []; 
+            state.resultadosReaisGrafico = [state.bancaInicial];
+            sinalizadoMeta = false;
+            sinalizadoStop = false;
+            gerarSequenciasIniciais(); 
+            salvarDados(); 
+            alert("Parâmetros redefinidos!");
+        }
+        
+        function preencherFormulario() { 
+            document.getElementById('cfg-banca').value = state.bancaInicial; 
+            document.getElementById('cfg-meta').value = state.metaPercent; 
+            document.getElementById('cfg-stoploss').value = state.stopLossPercent; 
+            document.getElementById('cfg-aposta-base-pct').value = state.apostaBasePercent; 
+            document.getElementById('cfg-fator').value = state.fatorMarantan; 
+            document.getElementById('cfg-lote').value = state.loteQtd; 
+            document.getElementById('cfg-retorno-pos').value = state.retornoPosCicloPercent;
+        }
+        
+        function registrarAposta(index, resultado) {
+            const seq = state.sequencias[index];
+            const valorApostado = seq.apostaAtual;
+            const apostaBaseMinima = getValorApostaBase();
+
+            if (resultado === 'WIN') { 
+                state.bancaAtual += valorApostado; 
+                let apostaPosCiclo = valorApostado * (state.retornoPosCicloPercent / 100);
+                seq.apostaAtual = Math.max(apostaBaseMinima, apostaPosCiclo);
+                seq.streakLoss = 0; 
+            } else { 
+                state.bancaAtual -= valorApostado; 
+                seq.apostaAtual = valorApostado * state.fatorMarantan; 
+                seq.streakLoss++; 
+            }
+            salvarDados();
+        }
+
+        function fecharEtapa() {
+            if(state.bancaAtual === state.bancaInicioEtapa) return;
+            const lucro = state.bancaAtual - state.bancaInicioEtapa;
+            state.historico.push({ 
+                etapa: state.etapaAtual, 
+                data: new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'}), 
+                lucro: lucro, 
+                bancaPos: state.bancaAtual 
+            });
+            state.resultadosReaisGrafico.push(state.bancaAtual);
+            state.bancaInicioEtapa = state.bancaAtual;
+            state.etapaAtual++;
+            
+            sinalizadoMeta = false;
+            sinalizadoStop = false;
+
+            state.sequencias.forEach(seq => { 
+                seq.apostaAtual = getValorApostaBase(); 
+                seq.streakLoss = 0; 
+            });
+            salvarDados();
+        }
+
+        function renderizarGrafico() {
+            const ctx = document.getElementById('meuGrafico').getContext('2d');
+            const num = parseInt(document.getElementById('input-etapas').value) || 30;
+            let labels = Array.from({length: num+1}, (_, i) => i === 0 ? 'Início' : 'E'+i);
+            let proj = [state.bancaInicial];
+            for(let i=1; i<=num; i++) proj.push(proj[i-1] + (proj[i-1] * (state.metaPercent/100)));
+            if(chartInstance) chartInstance.destroy();
+            chartInstance = new Chart(ctx, { 
+                type: 'line', 
+                data: { 
+                    labels: labels, 
+                    datasets: [
+                        { label: 'Projeção', data: proj, borderColor: '#0078d4', borderDash: [4,4], pointRadius: 1 }, 
+                        { label: 'Real', data: state.resultadosReaisGrafico, borderColor: '#107c10', borderWidth: 2, pointRadius: 2 }
+                    ] 
+                }, 
+                options: { responsive: true, plugins: { legend: { display: false } } } 
+            });
+        }
+
+        function abrirModal(id) {
+            document.getElementById(id).style.display = 'flex';
+        }
+
+        function fecharModal(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+
+        function verificarMetasESignals(lucroEtapa, metaValor, stopLossValor) {
+            if (lucroEtapa >= metaValor && !sinalizadoMeta) {
+                sinalizadoMeta = true;
+                abrirModal('modal-meta');
+            } 
+            else if (state.bancaAtual <= stopLossValor && !sinalizadoStop) {
+                sinalizadoStop = true;
+                abrirModal('modal-stop');
+            }
+        }
+
+        function atualizarUI() {
+            const fmt = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            
+            const valorMetaEtapa = state.bancaInicioEtapa * (1 + state.metaPercent/100);
+            const valorStopLossEtapa = state.bancaInicioEtapa * (1 - state.stopLossPercent/100);
+            const lucroEtapaAtual = state.bancaAtual - state.bancaInicioEtapa;
+            const metaValorDesejado = state.bancaInicioEtapa * (state.metaPercent / 100);
+
+            document.getElementById('kpi-banca').innerText = fmt(state.bancaAtual);
+            document.getElementById('kpi-meta').innerText = fmt(valorMetaEtapa);
+            document.getElementById('kpi-stoploss').innerText = fmt(valorStopLossEtapa);
+            document.getElementById('kpi-lucro').innerText = fmt(state.bancaAtual - state.bancaInicial);
+            
+            document.getElementById('lbl-etapa-num').innerText = '#'+state.etapaAtual;
+            document.getElementById('lbl-banca-etapa').innerText = fmt(state.bancaInicioEtapa);
+            document.getElementById('lbl-lucro-etapa').innerText = fmt(lucroEtapaAtual);
+            
+            let percentual = metaValorDesejado > 0 ? (lucroEtapaAtual / metaValorDesejado) * 100 : 0;
+            
+            const progressBar = document.getElementById('progresso-bar');
+            const progressText = document.getElementById('progresso-percent');
+            
+            progressBar.style.width = Math.max(0, Math.min(100, percentual)) + '%';
+            if (percentual >= 100) { progressBar.style.background = 'var(--win)'; progressText.style.color = 'var(--win)'; } 
+            else if (percentual < 0) { progressBar.style.background = 'transparent'; progressText.style.color = 'var(--loss)'; } 
+            else { progressBar.style.background = 'var(--accent)'; progressText.style.color = 'var(--text)'; }
+            
+            progressText.innerText = percentual.toFixed(1) + '% ' + (percentual >= 0 ? '▲' : '▼');
+            document.getElementById('progresso-inicial').innerText = fmt(state.bancaInicioEtapa);
+            document.getElementById('progresso-atual').innerText = fmt(state.bancaAtual);
+            document.getElementById('progresso-meta').innerText = state.metaPercent.toFixed(1) + '%';
+            
+            verificarMetasESignals(lucroEtapaAtual, metaValorDesejado, valorStopLossEtapa);
+
+            const cont = document.getElementById('seq-container'); cont.innerHTML = '';
+            state.sequencias.forEach((seq, i) => {
+                const badgePerdas = seq.streakLoss > 0 ? `<span class="seq-streak-badge">${seq.streakLoss} D</span>` : '';
+                
+                cont.innerHTML += `
+                    <div class="seq-card">
+                        <div class="seq-header">
+                            <span>Lote #${seq.id}</span>
+                            ${badgePerdas}
+                        </div>
+                        <div class="seq-valor">${fmt(seq.apostaAtual)}</div>
+                        <div class="seq-actions">
+                            <button class="btn-seq-win" onclick="registrarAposta(${i}, 'WIN')">V</button>
+                            <button class="btn-seq-loss" onclick="registrarAposta(${i}, 'LOSS')">D</button>
+                        </div>
+                    </div>`;
+            });
+            
+            const tbody = document.getElementById('tabela-historico'); tbody.innerHTML = '';
+            [...state.historico].reverse().forEach(h => tbody.innerHTML += `<tr><td>${h.etapa}</td><td>${h.data}</td><td style="color:${h.lucro>=0?'var(--win)':'var(--loss)'}; font-weight:600;">${fmt(h.lucro)}</td><td>${fmt(h.bancaPos)}</td></tr>`);
+        }
+    </script>
+</body>
+</html>
