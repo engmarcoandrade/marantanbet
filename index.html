@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle Financeiro Pessoal - v1.9.4</title>
+    <style>
+        /* Variáveis Padrão (Windows Light) */
+        :root {
+            --primary: #0078D4;
+            --primary-hover: #005A9E;
+            --bg-color: #F3F3F3;
+            --panel-bg: #FFFFFF;
+            --text-color: #202020;
+            --text-muted: #605E5C;
+            --border-color: #E1DFDD;
+            --success: #107C10; 
+            --danger: #D13438;
+            --warning: #D83B01;
+            --row-hover: #F3F2F1;
+            --row-paid: #EAEAE9;
+        }
+
+        /* Variáveis Modo Noturno (Windows Dark) */
+        [data-theme="dark"] {
+            --primary: #4CC2FF;
+            --primary-hover: #0093F9;
+            --bg-color: #111111;
+            --panel-bg: #202020;
+            --text-color: #FFFFFF;
+            --text-muted: #A0AAB2;
+            --border-color: #3B3A39;
+            --success: #6CCB5F;
+            --danger: #FF99A4;
+            --warning: #FCE100;
+            --row-hover: #2D2D2D;
+            --row-paid: #2A2A2A;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        /* Tela de Bloqueio (Login) */
+        #login-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: var(--bg-color); display: flex; flex-direction: column;
+            align-items: center; justify-content: center; z-index: 9999;
+        }
+        #login-screen.hidden { display: none; }
+        .login-box {
+            background: var(--panel-bg); padding: 30px; border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-align: center; border: 1px solid var(--border-color);
+        }
+        .login-box input { margin: 15px 0; text-align: center; padding: 8px; border-radius: 4px; border: 1px solid var(--border-color); }
+
+        /* Cabeçalho e Controles de Nuvem */
+        header {
+            background-color: var(--panel-bg); padding: 10px 20px;
+            border-bottom: 1px solid var(--border-color); display: flex;
+            flex-direction: column; align-items: center; gap: 5px;
+        }
+        .header-top { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 1200px; }
+        h1 { font-size: 18px; color: var(--primary); font-weight: 600; margin-right: 10px; }
+        
+        .cloud-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+        .cloud-badge { padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; border: 1px solid var(--border-color); display: inline-block; }
+        .badge-online { background-color: var(--success); color: white; border-color: var(--success); }
+        .badge-sync { background-color: var(--warning); color: white; border-color: var(--warning); }
+        .badge-offline { background-color: var(--danger); color: white; border-color: var(--danger); }
+        
+        .btn-sync { 
+            background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); 
+            border-radius: 4px; padding: 4px 10px; cursor: pointer; font-size: 12px; font-weight: 600;
+        }
+        .btn-sync:hover { background: var(--border-color); }
+
+        .theme-toggle { background: none; border: none; font-size: 18px; cursor: pointer; color: var(--text-color); margin-left: 5px; }
+        
+        .month-selector { display: flex; align-items: center; gap: 15px; margin-top: 5px; }
+        .month-selector button { background: none; border: none; font-size: 18px; cursor: pointer; color: var(--primary); font-weight: bold;}
+        #current-month { font-size: 15px; font-weight: bold; min-width: 140px; text-align: center; text-transform: capitalize; }
+
+        /* Navegação */
+        nav {
+            background-color: var(--panel-bg); display: flex; overflow-x: auto; white-space: nowrap;
+            border-bottom: 1px solid var(--border-color);
+        }
+        nav button {
+            background: none; border: none; color: var(--text-muted); padding: 10px 15px; cursor: pointer; 
+            font-size: 13px; border-bottom: 3px solid transparent; outline: none;
+        }
+        nav button:hover { color: var(--text-color); background-color: var(--row-hover); }
+        nav button.active { color: var(--primary); border-bottom: 3px solid var(--primary); font-weight: 600; }
+
+        /* Principal e Paineis */
+        main { padding: 10px; max-width: 1200px; margin: 0 auto; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .panel {
+            background: var(--panel-bg); padding: 12px; border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 10px;
+            border: 1px solid var(--border-color); overflow-x: auto;
+        }
+        .panel h2 { font-size: 14px; margin-bottom: 8px; color: var(--primary); }
+
+        /* Resumo e Filtros da Aba */
+        .tab-toolbar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 10px; }
+        .tab-summary { display: flex; gap: 15px; font-size: 13px; background: var(--bg-color); padding: 6px 12px; border-radius: 4px; border: 1px solid var(--border-color); }
+        .tab-summary span { color: var(--text-muted); }
+        .tab-summary strong { color: var(--text-color); margin-left: 4px; }
+        
+        .filters button {
+            background: var(--bg-color); color: var(--text-color); border: 1px solid var(--border-color);
+            padding: 4px 10px; border-radius: 15px; font-size: 12px; cursor: pointer; transition: 0.2s;
+        }
+        .filters button:hover { background: var(--border-color); }
+        .filters button.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+        /* Formulários */
+        .form-group { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; align-items: center; }
+        .form-group > * { flex: 1; min-width: 120px; }
+        input, select {
+            width: 100%; padding: 5px 8px; border: 1px solid var(--border-color); border-radius: 3px;
+            background-color: var(--bg-color); color: var(--text-color); font-size: 13px;
+        }
+        input:focus, select:focus { outline: none; border-color: var(--primary); }
+        .checkbox-group { display: flex; align-items: center; gap: 5px; font-size: 12px; cursor: pointer; white-space: nowrap; flex: 0.5; }
+        
+        button.btn {
+            background-color: var(--primary); color: #fff; border: none; padding: 6px 12px;
+            border-radius: 3px; cursor: pointer; font-size: 13px; font-weight: 600; white-space: nowrap;
+        }
+        button.btn:hover { background-color: var(--primary-hover); }
+
+        /* Dashboard */
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+        .card { padding: 12px; border: 1px solid var(--border-color); border-radius: 4px; }
+        .card h3 { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; }
+        .card .value { font-size: 18px; font-weight: bold; }
+        .text-success { color: var(--success); }
+        .text-primary { color: var(--primary); } 
+        .text-danger { color: var(--danger); } 
+        .text-warning { color: var(--warning); }
+        
+        /* Flex Containers */
+        .flex-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; }
+        .flex-col { flex: 1; min-width: 300px; }
+
+        /* Tabelas */
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border-color); }
+        th { background-color: var(--bg-color); color: var(--text-muted); font-weight: 600; }
+        
+        .category-header { background-color: var(--row-hover); cursor: pointer; }
+        .category-header:hover { filter: brightness(0.95); }
+        .category-header td { border-top: 2px solid var(--border-color); font-size: 12px; }
+        
+        .row-paid { background-color: var(--row-paid); opacity: 0.75; }
+        .row-paid td { color: var(--text-muted); }
+        
+        /* Ações */
+        .action-btns { display: flex; gap: 5px; }
+        .edit-btn { background-color: var(--warning); color: white; border: none; padding: 4px 6px; border-radius: 3px; cursor: pointer; font-size: 11px; }
+        .delete-btn { background-color: var(--danger); color: white; border: none; padding: 4px 6px; border-radius: 3px; cursor: pointer; font-size: 11px; }
+        
+        .config-list { list-style: none; margin-top: 10px; font-size: 13px;}
+        .config-list li { display: flex; justify-content: space-between; padding: 4px; border-bottom: 1px solid var(--border-color); }
+        .config-list button { background: var(--danger); color: #fff; border: none; border-radius: 3px; padding: 2px 6px; cursor: pointer; }
+
+        .inline-edit-input {
+            width: 100px; 
+            text-align: right; 
+            padding: 4px 6px; 
+            font-weight: bold; 
+            border: 1px solid var(--border-color); 
+            border-radius: 4px; 
+            background: var(--bg-color); 
+            color: var(--text-color);
+        }
+        .inline-edit-input:focus { border-color: var(--primary); outline: none; }
+    </style>
+</head>
+<body>
+
+    <div id="login-screen">
+        <div class="login-box">
+            <h2 style="color: var(--primary); margin-bottom: 10px;">Controle Financeiro</h2>
+            <p style="font-size: 14px; margin-bottom: 5px;">Insira a senha de acesso:</p>
+            <input type="password" id="login-pass" placeholder="Senha" onkeypress="handleLoginKey(event)">
+            <button class="btn" style="width: 100%;" onclick="checkLogin()">Entrar</button>
+            <p id="login-error" style="color: var(--danger); font-size: 12px; margin-top: 10px; display: none;">Senha incorreta!</p>
+        </div>
+    </div>
+
+    <header>
+        <div class="header-top">
+            <h1>Controle Financeiro - v1.9.4</h1>
+            <div class="cloud-controls">
+                <span id="cloud-status-badge" class="cloud-badge badge-offline">🔴 Offline</span>
+                <button class="btn-sync" onclick="forceSync()" title="Forçar atualização na planilha">🔄 Sincronizar</button>
+                <button class="theme-toggle" onclick="toggleTheme()" title="Alternar Modo Noturno">🌓</button>
+            </div>
+        </div>
+        <div class="month-selector">
+            <button onclick="changeMonth(-1)">&#9664;</button>
+            <div id="current-month">Janeiro 2024</div>
+            <button onclick="changeMonth(1)">&#9654;</button>
+        </div>
+    </header>
+
+    <nav>
+        <button class="tab-link active" onclick="openTab(event, 'Dashboard')">Dashboard</button>
+        <button class="tab-link" onclick="openTab(event, 'Despesas')">Despesas</button>
+        <button class="tab-link" onclick="openTab(event, 'Receitas')">Receitas</button>
+        <button class="tab-link" onclick="openTab(event, 'Locacoes')">Locações</button>
+        <button class="tab-link" onclick="openTab(event, 'Dividas')">Dívidas</button>
+        <button class="tab-link" onclick="openTab(event, 'Atrasadas')">Atrasadas</button>
+        <button class="tab-link" onclick="openTab(event, 'Patrimonio')">Patrimônio</button>
+        <button class="tab-link" onclick="openTab(event, 'Configuracoes')">⚙ Config.</button>
+    </nav>
+
+    <main>
+        <section id="Dashboard" class="tab-content active">
+            <div class="panel dashboard-grid">
+                <div class="card"><h3>Contas a Receber</h3><div class="value text-primary" id="dash-receitas">R$ 0,00</div></div>
+                <div class="card"><h3>Renda Locações</h3><div class="value text-primary" id="dash-locacoes">R$ 0,00</div></div>
+                <div class="card"><h3>Total Despesas</h3><div class="value text-danger" id="dash-despesas">R$ 0,00</div></div>
+                <div class="card" style="border-color: var(--primary); background-color: var(--row-hover);">
+                    <h3 style="color: var(--primary);">Saldo Líquido Real</h3>
+                    <div class="value" id="dash-saldo">R$ 0,00</div>
+                </div>
+                <div class="card"><h3>Dívidas Atrasadas</h3><div class="value text-danger" id="dash-atrasadas">R$ 0,00</div></div>
+            </div>
+
+            <div class="flex-row">
+                <div class="panel flex-col">
+                    <h2>Contas Bancárias</h2>
+                    <div class="form-group">
+                        <input type="text" id="bank-name" placeholder="Nome do Banco">
+                        <input type="text" id="bank-val" placeholder="Saldo Inicial (R$)">
+                        <button class="btn" onclick="addBankAccount()">Adicionar</button>
+                    </div>
+                    <table style="width: 100%; margin-top: 10px;">
+                        <tbody id="bank-list-body"></tbody>
+                    </table>
+                    <div style="margin-top: 12px; text-align: right; font-size: 14px;">
+                        Total em Contas: <strong id="total-banks" class="text-primary">R$ 0,00</strong>
+                    </div>
+                </div>
+
+                <div class="panel flex-col">
+                    <h2>Previsão de Gastos Diários</h2>
+                    <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">
+                        Calcula a estimativa de gastos até o último dia do mês selecionado.
+                    </p>
+                    <div class="form-group" style="align-items: center;">
+                        <span style="font-size: 13px; font-weight: 600; min-width: 140px;">Gasto Diário (R$):</span>
+                        <input type="number" id="daily-rate" value="400" step="0.01" onchange="updateDailyExpenses()">
+                    </div>
+                    
+                    <div class="tab-summary" style="margin-top: 15px; display: flex; flex-direction: column; gap: 8px;">
+                        <div style="font-size: 14px;">Dias restantes no mês: <strong id="days-left">0</strong></div>
+                        <div style="font-size: 16px;">Gasto Previsto: <strong id="predicted-expenses" class="text-danger">R$ 0,00</strong></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <p style="font-size: 11px; color: var(--text-muted); text-align: center;">Dica: Pressione ESC duas vezes rapidamente para sair (bloquear).</p>
+            </div>
+        </section>
+
+        <div id="dynamic-tabs-container"></div>
+
+        <section id="Configuracoes" class="tab-content">
+            <div class="panel">
+                <h2>Backup e Restauração</h2>
+                <p style="font-size: 12px; margin-bottom: 12px; color: var(--text-muted);">
+                    Salve uma cópia no seu computador ou restaure um backup antigo.
+                </p>
+                <div class="form-group" style="max-width: 400px;">
+                    <button class="btn" style="background-color: var(--primary);" onclick="exportBackup()">Exportar Dados</button>
+                    <input type="file" id="import-file" accept=".json" style="display: none;" onchange="importBackup(event)">
+                    <button class="btn" style="background-color: var(--warning);" onclick="document.getElementById('import-file').click()">Restaurar Backup</button>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2>Alterar Senha do Sistema</h2>
+                <div class="form-group" style="max-width: 400px;">
+                    <input type="password" id="new-password" placeholder="Nova Senha">
+                    <button class="btn" onclick="changePassword()">Salvar</button>
+                </div>
+            </div>
+            <div class="panel">
+                <h2>Gerenciar Categorias</h2>
+                <div class="form-group" style="max-width: 600px;">
+                    <select id="config-cat-type" onchange="loadConfigCategories()">
+                        <option value="despesa">Despesas</option>
+                        <option value="receita">Receitas</option>
+                        <option value="locacao">Locações</option>
+                        <option value="divida">Dívidas</option>
+                        <option value="atrasada">Dívidas Atrasadas</option>
+                        <option value="patrimonio">Patrimônio</option>
+                    </select>
+                    <input type="text" id="new-cat-name" placeholder="Nome da Categoria">
+                    <button class="btn" onclick="addCategory()">Adicionar</button>
+                </div>
+                <ul class="config-list" id="config-cat-list" style="max-width: 600px;"></ul>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // --- NOVA URL DO GOOGLE SCRIPT INSERIDA AQUI ---
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzAkktKaDOT7elGKINlODVSHEyvpFoOeWW64AHnXJU-AwAsfY_0Vngk2J2RTcNgDb-t/exec';
+
+        let currentDate = new Date();
+        let editModeId = null; 
+        let tabFilters = { despesa: 'all', receita: 'all', locacao: 'all', divida: 'all', atrasada: 'all', patrimonio: 'all' };
+
+        let appPassword = localStorage.getItem('appPassword') || '123';
+        let financialData = JSON.parse(localStorage.getItem('financeDataBackup')) || [];
+        
+        let defaultCategories = {
+            despesa: ['Moradia', 'Alimentação', 'Transporte', 'Lazer'], receita: ['Salário', 'Serviços Extras'],
+            locacao: ['Aluguel Recebido'], divida: ['Empréstimos', 'Cartão de Crédito'],
+            atrasada: ['Boletos Vencidos'], patrimonio: ['Imóveis', 'Veículos', 'Investimentos']
+        };
+        let categories = JSON.parse(localStorage.getItem('financeCategories')) || defaultCategories;
+
+        const tabConfigs = [
+            { id: 'Despesas', type: 'despesa', title: 'Lançar Despesa' }, { id: 'Receitas', type: 'receita', title: 'Lançar Receita' },
+            { id: 'Locacoes', type: 'locacao', title: 'Lançar Locação' }, { id: 'Dividas', type: 'divida', title: 'Lançar Dívida' },
+            { id: 'Atrasadas', type: 'atrasada', title: 'Dívida Atrasada' }, { id: 'Patrimonio', type: 'patrimonio', title: 'Patrimônio' }
+        ];
+
+        // --- SISTEMA VISUAL DE STATUS ---
+        function setCloudStatus(type) {
+            const badge = document.getElementById('cloud-status-badge');
+            if(!badge) return;
+            badge.className = 'cloud-badge'; 
+            
+            if (type === 'online') {
+                badge.innerText = '🟢 Conectado';
+                badge.classList.add('badge-online');
+            } else if (type === 'syncing') {
+                badge.innerText = '⏳ Sincronizando...';
+                badge.classList.add('badge-sync');
+            } else {
+                badge.innerText = '🔴 Offline';
+                badge.classList.add('badge-offline');
+            }
+        }
+
+        async function init() {
+            applyTheme(); 
+            renderDynamicTabs(); 
+            updateMonthDisplay(); 
+            loadConfigCategories();
+            
+            fetchFromCloud();
+        }
+
+        // --- BOTÃO DE SINCRONIZAÇÃO MANUAL ---
+        async function forceSync() {
+            setCloudStatus('syncing');
+            localStorage.setItem('financeDataBackup', JSON.stringify(financialData));
+            
+            try {
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(financialData)
+                });
+                
+                setTimeout(() => { setCloudStatus('online'); }, 800);
+            } catch (error) {
+                setCloudStatus('offline');
+                alert("Falha ao conectar com o Google Sheets. Seus dados estão seguros localmente. Verifique sua conexão e tente novamente.");
+            }
+        }
+
+        // --- INTEGRAÇÃO COM NUVEM ---
+        async function fetchFromCloud() {
+            setCloudStatus('syncing');
+            try {
+                const response = await fetch(SCRIPT_URL);
+                if (!response.ok) throw new Error('Falha na resposta.');
+                
+                const cloudData = await response.json();
+                if (Array.isArray(cloudData) && cloudData.length > 0) {
+                    financialData = cloudData;
+                    localStorage.setItem('financeDataBackup', JSON.stringify(financialData));
+                }
+                setCloudStatus('online');
+                updateDataView();
+            } catch (error) {
+                console.warn("Erro ao puxar da nuvem. Usando dados locais.");
+                setCloudStatus('offline');
+                updateDataView();
+            }
+        }
+
+        async function saveData() {
+            localStorage.setItem('financeDataBackup', JSON.stringify(financialData));
+            updateDataView(); 
+            
+            await forceSync();
+        }
+
+        // --- BACKUP E RESTAURAÇÃO ---
+        function importBackup(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    let dataToImport = null;
+
+                    if (importedData.financialData && Array.isArray(importedData.financialData)) {
+                        dataToImport = importedData.financialData;
+                        if(importedData.metaDiaria) localStorage.setItem('dailyRate', importedData.metaDiaria);
+                        if(importedData.senhaApp) {
+                            appPassword = importedData.senhaApp;
+                            localStorage.setItem('appPassword', appPassword);
+                        }
+                    } else if (Array.isArray(importedData)) {
+                        dataToImport = importedData;
+                    }
+
+                    if (dataToImport) {
+                        if (confirm("Deseja restaurar os dados do arquivo? Isso substituirá a tabela atual.")) {
+                            financialData = dataToImport;
+                            
+                            financialData.forEach(item => {
+                                if (item.type && item.category && categories[item.type]) {
+                                    if (!categories[item.type].includes(item.category)) {
+                                        categories[item.type].push(item.category);
+                                    }
+                                }
+                            });
+                            saveCategories();
+                            loadConfigCategories();
+
+                            await saveData(); 
+                            alert("Dados restaurados com sucesso!");
+                        }
+                    } else {
+                        alert("Arquivo inválido.");
+                    }
+                } catch (error) {
+                    alert("Erro ao ler o arquivo.");
+                }
+                event.target.value = ''; 
+            };
+            reader.readAsText(file);
+        }
+
+        function exportBackup() {
+            if (!financialData || financialData.length === 0) return alert("Não há dados para exportar.");
+            
+            const fullBackup = {
+                financialData: financialData,
+                metaDiaria: parseFloat(localStorage.getItem('dailyRate')) || 400,
+                senhaApp: appPassword
+            };
+
+            const dataStr = JSON.stringify(fullBackup, null, 2);
+            const blob = new Blob([dataStr], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            
+            const fileName = `Backup_Financeiro_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.json`;
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // --- CRUD E LANÇAMENTOS ---
+        async function handleFormSubmit(event, type) {
+            event.preventDefault();
+            if (!Array.isArray(financialData)) financialData = [];
+
+            const desc = document.getElementById(`desc-${type}`).value.trim();
+            const cat = document.getElementById(`cat-${type}`).value;
+            let valInput = document.getElementById(`val-${type}`).value;
+            const rep = document.getElementById(`rep-${type}`).checked;
+
+            valInput = valInput.replace(',', '.'); 
+            const val = parseFloat(valInput);
+
+            if (!desc || isNaN(val) || !cat) return alert("Preencha todos os campos.");
+
+            const monthKey = `${currentDate.getFullYear()}-${currentDate.getMonth()}`;
+
+            if (editModeId) {
+                let item = financialData.find(i => i.id === editModeId);
+                if(item){
+                    item.description = desc; item.category = cat; item.value = val; item.recurring = rep;
+                }
+                cancelEdit();
+            } else {
+                financialData.push({
+                    id: Date.now().toString(), type: type, description: desc, category: cat,
+                    value: val, baseMonthKey: monthKey, recurring: rep, paidMonths: [] 
+                });
+            }
+            
+            document.getElementById(`desc-${type}`).value = ''; 
+            document.getElementById(`val-${type}`).value = '';
+            document.getElementById(`rep-${type}`).checked = false; 
+            document.getElementById(`cat-${type}`).value = '';
+            
+            await saveData();
+        }
+
+        // --- CONTAS BANCÁRIAS ---
+        async function addBankAccount() {
+            const name = document.getElementById('bank-name').value.trim();
+            const val = parseFloat(document.getElementById('bank-val').value.replace(',', '.'));
+            
+            if (!name || isNaN(val)) return alert('Preencha nome e saldo.');
+            
+            financialData.push({
+                id: Date.now().toString(), type: 'conta', description: name, value: val,
+                baseMonthKey: 'global', recurring: false, paidMonths: []
+            });
+            
+            document.getElementById('bank-name').value = '';
+            document.getElementById('bank-val').value = '';
+            
+            await saveData();
+        }
+
+        async function updateBankValue(id, newValue) {
+            const val = parseFloat(String(newValue).replace(',', '.'));
+            if(isNaN(val)) return;
+            const bank = financialData.find(item => item.id === id);
+            if(bank) { bank.value = val; await saveData(); }
+        }
+
+        async function deleteBankAccount(id) {
+            if(confirm("Remover esta conta?")) {
+                financialData = financialData.filter(item => item.id !== id);
+                await saveData();
+            }
+        }
+
+        async function deleteEntry(id) {
+            if(confirm("Excluir lançamento?")) {
+                financialData = financialData.filter(item => item.id !== id); 
+                await saveData();
+            }
+        }
+
+        function editEntry(id, type) {
+            const item = financialData.find(i => i.id === id); if(!item) return;
+            editModeId = id;
+            document.getElementById(`desc-${type}`).value = item.description;
+            setTimeout(() => { document.getElementById(`cat-${type}`).value = item.category; }, 10);
+            document.getElementById(`val-${type}`).value = item.value;
+            document.getElementById(`rep-${type}`).checked = item.recurring;
+            document.getElementById(`btn-submit-${type}`).innerText = "Salvar";
+            document.getElementById(`btn-cancel-${type}`).style.display = "block";
+        }
+
+        function cancelEdit() {
+            editModeId = null;
+            tabConfigs.forEach(tab => {
+                const btn = document.getElementById(`btn-submit-${tab.type}`); if(btn) btn.innerText = "Lançar";
+                const cancelBtn = document.getElementById(`btn-cancel-${tab.type}`); if(cancelBtn) cancelBtn.style.display = "none";
+                const form = btn ? btn.closest('form') : null; if(form) form.reset();
+            });
+        }
+
+        async function togglePaid(id, monthKey) {
+            const item = financialData.find(i => i.id === id); if(!item) return;
+            if(!item.paidMonths) item.paidMonths = [];
+            const index = item.paidMonths.indexOf(monthKey);
+            if(index > -1) item.paidMonths.splice(index, 1); else item.paidMonths.push(monthKey);
+            await saveData();
+        }
+
+        // --- SISTEMA PREVISÃO E UTILIDADES ---
+        function getRemainingDays(selectedDate) {
+            const now = new Date();
+            const year = selectedDate.getFullYear();
+            const month = selectedDate.getMonth();
+            
+            if (year === now.getFullYear() && month === now.getMonth()) {
+                const lastDay = new Date(year, month + 1, 0).getDate();
+                return (lastDay - now.getDate()) + 1;
+            } else if (year < now.getFullYear() || (year === now.getFullYear() && month < now.getMonth())) {
+                return 0;
+            } else {
+                return new Date(year, month + 1, 0).getDate();
+            }
+        }
+
+        function updateDailyExpenses() {
+            let valInput = String(document.getElementById('daily-rate').value).replace(',', '.');
+            let dailyRate = parseFloat(valInput);
+            if (isNaN(dailyRate)) dailyRate = 400;
+            localStorage.setItem('dailyRate', dailyRate); 
+            updateDataView();
+        }
+
+        function checkLogin() {
+            if (document.getElementById('login-pass').value === appPassword) {
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('login-pass').value = '';
+                document.getElementById('login-error').style.display = 'none';
+            } else { document.getElementById('login-error').style.display = 'block'; }
+        }
+        function handleLoginKey(e) { if (e.key === 'Enter') checkLogin(); }
+
+        let escTime = 0;
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                const now = Date.now();
+                if (now - escTime < 400) document.getElementById('login-screen').classList.remove('hidden');
+                escTime = now;
+            }
+        });
+
+        function changePassword() {
+            const newVal = document.getElementById('new-password').value;
+            if(newVal.trim() !== '') {
+                appPassword = newVal; localStorage.setItem('appPassword', appPassword);
+                alert('Senha alterada!'); document.getElementById('new-password').value = '';
+            }
+        }
+
+        function saveCategories() { localStorage.setItem('financeCategories', JSON.stringify(categories)); }
+        function loadConfigCategories() {
+            const type = document.getElementById('config-cat-type').value;
+            const list = document.getElementById('config-cat-list'); list.innerHTML = '';
+            (categories[type] || []).forEach(cat => {
+                list.innerHTML += `<li>${cat} <button onclick="removeCategory('${type}', '${cat}')">X</button></li>`;
+            });
+            updateAllCategoryDropdowns();
+        }
+        function addCategory() {
+            const type = document.getElementById('config-cat-type').value;
+            const name = document.getElementById('new-cat-name').value.trim();
+            if(name && !categories[type].includes(name)) {
+                categories[type].push(name); saveCategories(); document.getElementById('new-cat-name').value = ''; loadConfigCategories();
+            }
+        }
+        function removeCategory(type, name) {
+            categories[type] = categories[type].filter(c => c !== name); saveCategories(); loadConfigCategories();
+        }
+        function updateAllCategoryDropdowns() {
+            tabConfigs.forEach(tab => {
+                const select = document.getElementById(`cat-${tab.type}`);
+                if (select) {
+                    select.innerHTML = '<option value="">Selecione a Categoria</option>';
+                    (categories[tab.type] || []).forEach(cat => select.innerHTML += `<option value="${cat}">${cat}</option>`);
+                }
+            });
+        }
+
+        function toggleTheme() {
+            const isDark = document.body.getAttribute('data-theme') === 'dark';
+            document.body.setAttribute('data-theme', isDark ? 'light' : 'dark');
+            localStorage.setItem('theme', isDark ? 'light' : 'dark');
+        }
+        function applyTheme() { if(localStorage.getItem('theme') === 'dark') document.body.setAttribute('data-theme', 'dark'); }
+
+        function openTab(evt, tabName) {
+            Array.from(document.getElementsByClassName("tab-content")).forEach(t => t.classList.remove("active"));
+            Array.from(document.getElementsByClassName("tab-link")).forEach(t => t.classList.remove("active"));
+            document.getElementById(tabName).classList.add("active"); evt.currentTarget.classList.add("active");
+            if(editModeId) cancelEdit(); 
+        }
+
+        function changeMonth(offset) { currentDate.setMonth(currentDate.getMonth() + offset); updateMonthDisplay(); }
+        function updateMonthDisplay() {
+            document.getElementById('current-month').innerText = currentDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+            updateDataView();
+        }
+
+        function setFilter(type, filter) {
+            tabFilters[type] = filter;
+            document.querySelectorAll(`#filter-btns-${type} button`).forEach(b => b.classList.remove('active'));
+            document.getElementById(`btn-filter-${type}-${filter}`).classList.add('active');
+            updateDataView();
+        }
+
+        // --- RENDERIZAÇÃO E CÁLCULOS NA TELA ---
+        function renderDynamicTabs() {
+            const container = document.getElementById('dynamic-tabs-container'); let html = '';
+            tabConfigs.forEach(tab => {
+                html += `
+                <section id="${tab.id}" class="tab-content">
+                    <div class="panel">
+                        <h2>${tab.title}</h2>
+                        <form onsubmit="handleFormSubmit(event, '${tab.type}')">
+                            <div class="form-group">
+                                <input type="text" id="desc-${tab.type}" placeholder="Descrição" required>
+                                <select id="cat-${tab.type}" required></select>
+                                <input type="text" id="val-${tab.type}" placeholder="Valor (R$)" required>
+                                <label class="checkbox-group"><input type="checkbox" id="rep-${tab.type}"> Repetir mensalmente</label>
+                                <button type="submit" class="btn" id="btn-submit-${tab.type}">Lançar</button>
+                                <button type="button" class="btn" id="btn-cancel-${tab.type}" style="display:none; background:var(--text-muted);" onclick="cancelEdit()">Cancelar</button>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <div class="tab-toolbar">
+                        <div class="tab-summary">
+                            <span>Total: <strong id="sum-total-${tab.type}">R$ 0,00</strong></span> | 
+                            <span>Pago: <strong id="sum-pago-${tab.type}">R$ 0,00</strong></span> | 
+                            <span>Em Aberto: <strong id="sum-aberto-${tab.type}">R$ 0,00</strong></span>
+                        </div>
+                        <div class="filters" id="filter-btns-${tab.type}">
+                            <button id="btn-filter-${tab.type}-all" class="active" onclick="setFilter('${tab.type}', 'all')">Todos</button>
+                            <button id="btn-filter-${tab.type}-paid" onclick="setFilter('${tab.type}', 'paid')">Quitados</button>
+                            <button id="btn-filter-${tab.type}-open" onclick="setFilter('${tab.type}', 'open')">Em Aberto</button>
+                        </div>
+                    </div>
+
+                    <div class="panel" style="padding: 0;">
+                        <table id="table-${tab.type}">
+                            <thead>
+                                <tr>
+                                    <th width="5%">✔</th>
+                                    <th width="35%">Descrição</th>
+                                    <th>Total</th>
+                                    <th>A Pagar</th>
+                                    <th>Pago</th>
+                                    <th width="12%">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </section>`;
+            });
+            container.innerHTML = html;
+        }
+
+        function toggleCategoryVisibility(catClass) {
+            document.querySelectorAll(`.${catClass}`).forEach(row => { row.style.display = row.style.display === 'none' ? 'table-row' : 'none'; });
+        }
+
+        function formatCurrency(val) { return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); }
+
+        function isMonthValid(baseKey, targetYear, targetMonth) {
+            if (!baseKey) return false;
+            const [bYear, bMonth] = baseKey.split('-').map(Number);
+            if (targetYear > bYear) return true;
+            if (targetYear === bYear && targetMonth >= bMonth) return true;
+            return false;
+        }
+
+        function updateDataView() {
+            if(!Array.isArray(financialData)) return; 
+            
+            const currentMonth = currentDate.getMonth(); const currentYear = currentDate.getFullYear();
+            const viewMonthKey = `${currentYear}-${currentMonth}`;
+
+            const bankData = financialData.filter(item => item.type === 'conta');
+            let totalBancos = 0;
+            const bankTbody = document.getElementById('bank-list-body');
+            if (bankTbody) bankTbody.innerHTML = '';
+            
+            bankData.forEach(bank => {
+                totalBancos += bank.value;
+                if (bankTbody) {
+                    bankTbody.innerHTML += `
+                        <tr style="border-bottom: 1px solid var(--border-color);">
+                            <td style="padding: 8px 4px; vertical-align: middle;">${bank.description}</td>
+                            <td style="text-align: right; padding: 8px 4px;">
+                                <input type="number" step="0.01" value="${bank.value}" 
+                                       onchange="updateBankValue('${bank.id}', this.value)" 
+                                       class="inline-edit-input">
+                            </td>
+                            <td width="30px" style="text-align: right; padding: 8px 4px; vertical-align: middle;">
+                                <button class="delete-btn" onclick="deleteBankAccount('${bank.id}')" title="Excluir">X</button>
+                            </td>
+                        </tr>
+                    `;
+                }
+            });
+            
+            const totalBanksEl = document.getElementById('total-banks');
+            if (totalBanksEl) {
+                totalBanksEl.innerText = formatCurrency(totalBancos);
+                totalBanksEl.className = totalBancos >= 0 ? 'text-primary' : 'text-danger';
+            }
+
+            const monthData = financialData.filter(item => {
+                if(item.type === 'conta') return false;
+                return item.recurring ? isMonthValid(item.baseMonthKey, currentYear, currentMonth) : item.baseMonthKey === viewMonthKey;
+            });
+
+            let globals = { despesa: 0, receita: 0, locacao: 0, divida: 0, atrasada: 0, patrimonio: 0 };
+
+            tabConfigs.forEach(tab => {
+                const tbody = document.querySelector(`#table-${tab.type} tbody`); if(!tbody) return;
+                tbody.innerHTML = '';
+                
+                const typeData = monthData.filter(item => item.type === tab.type);
+                const categoriesGroup = {};
+                let tabTotal = 0, tabPago = 0, tabAberto = 0;
+
+                typeData.forEach(item => {
+                    if(!categoriesGroup[item.category]) categoriesGroup[item.category] = { total: 0, aPagar: 0, pago: 0, items: [] };
+                    
+                    const isPaid = item.paidMonths && item.paidMonths.includes(viewMonthKey);
+                    const valAberto = isPaid ? 0 : item.value;
+                    const valPago = isPaid ? item.value : 0;
+                    
+                    categoriesGroup[item.category].items.push({ ...item, isPaid, valAberto, valPago });
+                    categoriesGroup[item.category].total += item.value;
+                    categoriesGroup[item.category].aPagar += valAberto;
+                    categoriesGroup[item.category].pago += valPago;
+                    
+                    globals[tab.type] += item.value;
+                    tabTotal += item.value; tabAberto += valAberto; tabPago += valPago;
+                });
+
+                const sumTotalEl = document.getElementById(`sum-total-${tab.type}`);
+                const sumPagoEl = document.getElementById(`sum-pago-${tab.type}`);
+                const sumAbertoEl = document.getElementById(`sum-aberto-${tab.type}`);
+                
+                if(sumTotalEl) sumTotalEl.innerText = formatCurrency(tabTotal);
+                if(sumPagoEl) sumPagoEl.innerText = formatCurrency(tabPago);
+                if(sumAbertoEl) sumAbertoEl.innerText = formatCurrency(tabAberto);
+
+                const currentFilter = tabFilters[tab.type];
+
+                for(let cat in categoriesGroup) {
+                    const catClass = `cat-${tab.type}-${cat.replace(/[^a-zA-Z0-9]/g, '')}`;
+                    
+                    let hasVisibleItems = categoriesGroup[cat].items.some(i => 
+                        currentFilter === 'all' || (currentFilter === 'paid' && i.isPaid) || (currentFilter === 'open' && !i.isPaid)
+                    );
+                    
+                    if(!hasVisibleItems) continue;
+
+                    tbody.innerHTML += `
+                        <tr class="category-header" onclick="toggleCategoryVisibility('${catClass}')">
+                            <td colspan="2"><strong>▼ ${cat}</strong></td>
+                            <td><strong>${formatCurrency(categoriesGroup[cat].total)}</strong></td>
+                            <td><strong>${formatCurrency(categoriesGroup[cat].aPagar)}</strong></td>
+                            <td><strong>${formatCurrency(categoriesGroup[cat].pago)}</strong></td>
+                            <td></td>
+                        </tr>`;
+
+                    categoriesGroup[cat].items.forEach(item => {
+                        if(currentFilter === 'paid' && !item.isPaid) return;
+                        if(currentFilter === 'open' && item.isPaid) return;
+
+                        const rowClass = item.isPaid ? `row-paid ${catClass}` : catClass;
+
+                        tbody.innerHTML += `
+                            <tr class="${rowClass}">
+                                <td><input type="checkbox" ${item.isPaid ? 'checked' : ''} onchange="togglePaid('${item.id}', '${viewMonthKey}')"></td>
+                                <td>${item.description} ${item.recurring ? '🔄' : ''}</td>
+                                <td>${formatCurrency(item.value)}</td>
+                                <td>${formatCurrency(item.valAberto)}</td>
+                                <td>${formatCurrency(item.valPago)}</td>
+                                <td>
+                                    <div class="action-btns">
+                                        <button class="edit-btn" onclick="editEntry('${item.id}', '${item.type}')">Editar</button>
+                                        <button class="delete-btn" onclick="deleteEntry('${item.id}')">Excluir</button>
+                                    </div>
+                                </td>
+                            </tr>`;
+                    });
+                }
+            });
+
+            let savedDailyRate = parseFloat(localStorage.getItem('dailyRate'));
+            if (isNaN(savedDailyRate)) savedDailyRate = 400;
+            document.getElementById('daily-rate').value = savedDailyRate;
+            
+            const daysLeft = getRemainingDays(currentDate);
+            document.getElementById('days-left').innerText = daysLeft;
+            const predictedExpenses = daysLeft * savedDailyRate;
+            document.getElementById('predicted-expenses').innerText = formatCurrency(predictedExpenses);
+
+            const saldo = (globals.receita + globals.locacao + totalBancos) - globals.despesa - predictedExpenses;
+            
+            const saldoEl = document.getElementById('dash-saldo');
+            if (saldoEl) {
+                saldoEl.innerText = formatCurrency(saldo);
+                saldoEl.className = 'value ' + (saldo >= 0 ? 'text-primary' : 'text-danger');
+            }
+            
+            if (document.getElementById('dash-despesas')) document.getElementById('dash-despesas').innerText = formatCurrency(globals.despesa);
+            if (document.getElementById('dash-receitas')) document.getElementById('dash-receitas').innerText = formatCurrency(globals.receita);
+            if (document.getElementById('dash-locacoes')) document.getElementById('dash-locacoes').innerText = formatCurrency(globals.locacao);
+            if (document.getElementById('dash-atrasadas')) document.getElementById('dash-atrasadas').innerText = formatCurrency(globals.atrasada);
+        }
+
+        init();
+    </script>
+</body>
+</html>
