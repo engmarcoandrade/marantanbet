@@ -432,12 +432,15 @@ tbody tr:last-child td { border-bottom:none; }
       <button class="btn-action btn-conclude" onclick="fecharEtapa()">💾 Concluir Etapa</button>
     </div>
 
-    <div class="info-bar" style="margin-bottom:8px;">
+    <div class="info-bar" style="margin-bottom:8px; flex-wrap:wrap; gap:6px;">
       <div class="info-item accent">Etapa <b id="lbl-etapa-num">#1</b></div>
-      <div class="info-item">Parcial: <b id="lbl-lucro-etapa">R$0,00</b></div>
-      <div class="info-item win">Fin: <b id="lbl-lotes-win">0</b></div>
-      <div class="info-item loss">Pend: <b id="lbl-lotes-loss">0</b></div>
+      <div class="info-item">Início: <b id="lbl-valor-inicial-op">R$0,00</b></div>
+      <div class="info-item win">Meta: <b id="lbl-meta-op">R$0,00</b></div>
+      <div class="info-item accent">Falta: <b id="lbl-falta-op">R$0,00</b></div>
       <div class="info-item" id="wrapper-contador-resetar" style="display:none;">Vitórias: <b id="lbl-vitorias-resetar-contador">0</b></div>
+      <div style="display:none;" id="lbl-lotes-win"></div>
+      <div style="display:none;" id="lbl-lotes-loss"></div>
+      <div style="display:none;" id="lbl-lucro-etapa"></div>
     </div>
 
     <div class="modo-bar" style="margin-bottom:8px;">
@@ -1129,6 +1132,11 @@ function atualizarPainelUI(forcarGrafico=false){
   el('lbl-lucro-etapa',fmt(lucroEtapa));
   el('lbl-lotes-win',ms().sequencias.filter(s=>s.status==='FINISHED').length);
   el('lbl-lotes-loss',ms().sequencias.filter(s=>s.status!=='FINISHED').length);
+  el('lbl-valor-inicial-op',fmt(baseEtapa));
+  el('lbl-meta-op',fmt(metaVal));
+  const faltaOp=Math.max(0,metaVal-(ms().bancaAtual+banco));
+  const faltaEl=document.getElementById('lbl-falta-op');
+  if(faltaEl){ faltaEl.innerText=fmt(faltaOp); faltaEl.style.color=faltaOp<=0?'var(--win)':'var(--accent)'; }
 
   // Label do modo no chip de etapa
   const chip=document.getElementById('hdr-etapa'); if(chip) chip.parentElement.title=modoAtivo.toUpperCase();
