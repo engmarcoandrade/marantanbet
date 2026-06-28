@@ -724,8 +724,8 @@ async function carregarDaNuvem(){
 }
 
 document.addEventListener('DOMContentLoaded',()=>{
-  // Tenta carregar da nuvem primeiro — Sheets é a fonte de verdade
-  // localStorage só é usado se a nuvem falhar
+  // Fonte de verdade única: Google Sheets — limpar qualquer cache antigo
+  try { localStorage.clear(); } catch(e) {}
   inicializarApp();
 });
 
@@ -735,24 +735,29 @@ async function inicializarApp(){
   const urlSalva = SHEETS_URL_MEMORIA || "";
 
   if(urlSalva && urlSalva.startsWith("http")){
+    // Sempre começa com state vazio — só Sheets alimenta os dados
     state = JSON.parse(JSON.stringify(DEFAULT_STATE));
     state.sheetsUrl = urlSalva;
     aplicarBlindagemDeVariaveis();
     atualizarStatusSheets('sync');
     preencherCamposConfig(); ajustarCamposDeOddsMenu(true); atualizarPainelUI(true);
-    await carregarDaNuvem();
+    const ok = await carregarDaNuvem();
+    if(!ok){
+      // Sheets falhou — mostra tela vazia com aviso, sem usar cache local
+      atualizarStatusSheets('err');
+      alert('⚠️ Não foi possível conectar ao Google Sheets. Verifique sua conexão e recarregue o app.');
+    }
   } else {
-    // Sem URL — exibe tela limpa esperando configuração
+    // Sem URL configurada — tela vazia aguardando configuração
     state = JSON.parse(JSON.stringify(DEFAULT_STATE));
     aplicarBlindagemDeVariaveis();
-    if(!ms().sequencias||ms().sequencias.length===0) gerarEstruturaLotesIniciais();
     preencherCamposConfig(); ajustarCamposDeOddsMenu(true); atualizarPainelUI(true);
     atualizarStatusSheets('err');
   }
   calcularSomaCapitalGeralUI();
 }
 
-window.addEventListener('beforeunload',()=>{ salvarNaNuvem(true); });
+// beforeunload removido — save só acontece após cada ação, nunca ao fechar
 document.getElementById('btn-panic-sair').addEventListener('click',()=>{ salvarNaNuvem(true); setTimeout(()=>{ window.location.href='https://www.google.com'; },200); });
 
 function exportarDadosSistema(){ const d="data:text/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(state)); const a=document.createElement('a'); a.href=d; a.download="marantan_backup.json"; a.click(); }
@@ -839,8 +844,8 @@ function ajustarCamposDeOddsMenu(usarState=false){
   container.innerHTML=html;
 }
 
-function salvarDadosEAtualizarTudo(){ state.ultimoTimestampSinc=Date.now(); state.sheetsUrl=state.sheetsUrl||SHEETS_URL_MEMORIA; if(state.sheetsUrl) SHEETS_URL_MEMORIA=state.sheetsUrl; atualizarPainelUI(false); agendarSalvarNuvem(); }
-function carregarDadosCacheLocal(){ state=JSON.parse(JSON.stringify(DEFAULT_STATE)); }
+function salvarDadosEAtualizarTudo(){ state.ultimoTimestampSinc=Date.now(); state.sheetsUrl=state.sheetsUrl||SHEETS_URL_MEMORIA; if(state.sheetsUrl) SHEETS_URL_MEMORIA=state.sheetsUrl; atualizarPainelUI(false); agendarSalvarNuvem(); } // sem localStorage
+function carregarDadosCacheLocal(){ /* sem localStorage — Sheets é a fonte de verdade */ state=JSON.parse(JSON.stringify(DEFAULT_STATE)); aplicarBlindagemDeVariaveis(); }
 
 function reiniciarBancaTotalSistema(){ if(confirm("⚠️ Resetar o sistema inteiro?")){ state=JSON.parse(JSON.stringify(DEFAULT_STATE)); sinalizadoMeta=false; sinalizadoStop=false; gerarEstruturaLotesIniciais(); } }
 function ajustarBancaAtivaExternamente(){ const v=parseFloat(document.getElementById('cfg-banca-capital').value); if(isNaN(v)||v<=0) return; const parcial=ms().bancaAtual-ms().bancaInicioEtapa; ms().bancaInicial=v; ms().bancaInicioEtapa=v; ms().bancaAtual=v+parcial; salvarDadosEAtualizarTudo(); }
@@ -881,6 +886,7 @@ function registrarApostaIndividual(index,resultado,emMassa=false){
   else{ seq.lossesEtapa++; ms().bancaAtual-=val; seq.perdasAcumuladas+=val; seq.apostaAtual=(seq.perdasAcumuladas+getValorApostaBase())/(odd-1); }
   if(!emMassa){
     if(ms().marantanLancamentosRodada) ms().marantanLancamentosRodada[l]=resultado;
+    renderCards(); atualizarPainelUI(false);
     dispararAnimacaoToastLotes(()=>{ salvarDadosEAtualizarTudo(); });
   }
 }
@@ -898,6 +904,8 @@ function executarAcaoEmMassaCard(letraAlvo,resultado){
   if(!ok) return;
   if(resultado==='WIN') ms().vitoriasRodadaVoltarInicial+=vits;
   if(ms().marantanLancamentosRodada) ms().marantanLancamentosRodada[lu]=resultado;
+  // Atualizar UI imediatamente — não esperar o toast
+  renderCards(); atualizarPainelUI(false);
   dispararAnimacaoToastLotes(()=>{ salvarDadosEAtualizarTudo(); });
 }
 
