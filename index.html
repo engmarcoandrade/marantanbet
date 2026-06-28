@@ -544,6 +544,13 @@ tbody tr:last-child td { border-bottom:none; }
     </div>
     <input type="file" id="file-restore" style="display:none" accept=".json" onchange="importarDadosSistema(event)">
     <button class="btn-danger" onclick="reiniciarBancaTotalSistema()">⚠️ Reset Total de Fábrica</button>
+
+    <div class="cfg-section" style="margin-top:10px;">
+      <div class="cfg-title" style="color:var(--muted);">📋 Script Google Apps Script</div>
+      <p style="font-size:11px;color:var(--muted);margin-bottom:8px;font-family:var(--sans);">Cole este código no Apps Script vinculado à sua planilha e reimplante.</p>
+      <textarea id="gs-code-box" readonly style="width:100%;height:160px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--muted);font-family:var(--mono);font-size:10px;padding:10px;resize:none;outline:none;line-height:1.5;"></textarea>
+      <button onclick="copiarScriptGS()" style="width:100%;margin-top:6px;padding:9px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--sans);">📋 Copiar Script</button>
+    </div>
   </div>
 
   <!-- ABA: GRÁFICO -->
@@ -637,6 +644,24 @@ function ms(){ return state[modoAtivo]; }
 const fmt = (v) => v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 
 function fecharModal(id){ document.getElementById(id).style.display='none'; }
+
+const GS_SCRIPT_CODE = '// MÉTODO MARANTAN — Codigo.gs — V29.4\n\nfunction doPost(e) {\n  var lock = LockService.getScriptLock();\n  try {\n    lock.waitLock(10000);\n    var ss = SpreadsheetApp.getActiveSpreadsheet();\n    if (!e || !e.postData || !e.postData.contents) {\n      return ContentService.createTextOutput(JSON.stringify({ "status": "error", "message": "Corpo vazio." })).setMimeType(ContentService.MimeType.JSON);\n    }\n    var state = JSON.parse(e.postData.contents);\n    if (state.bancoCapital === undefined || !state.real) {\n      return ContentService.createTextOutput(JSON.stringify({ "status": "error", "message": "Estrutura inválida." })).setMimeType(ContentService.MimeType.JSON);\n    }\n    PropertiesService.getScriptProperties().setProperty(\'marantan_state\', e.postData.contents);\n    var sheetDash = ss.getSheetByName("Dashboard") || ss.insertSheet("Dashboard");\n    sheetDash.clear();\n    sheetDash.appendRow(["MÉTODO MARANTAN", "V29.4"]);\n    sheetDash.appendRow(["Modo", "Banca Ativa", "Etapa", "Última Sinc"]);\n    sheetDash.appendRow(["Real", parseFloat(state.real.bancaAtual)||0, parseInt(state.real.etapaAtual)||1, new Date(state.ultimoTimestampSinc||Date.now()).toLocaleString("pt-BR")]);\n    sheetDash.appendRow(["Virtual", parseFloat(state.virtual.bancaAtual)||0, parseInt(state.virtual.etapaAtual)||1, ""]);\n    sheetDash.appendRow(["Banco (Reserva)", parseFloat(state.bancoCapital)||0, "", ""]);\n    sheetDash.getRange("B3:B5").setNumberFormat("R$ #,##0.00");\n    [\'real\',\'virtual\'].forEach(function(modo) {\n      var m = state[modo];\n      var sheetHist = ss.getSheetByName("Hist_"+modo) || ss.insertSheet("Hist_"+modo);\n      sheetHist.clear();\n      sheetHist.appendRow(["Etapa", "Data", "Horário", "Lucro", "Saldo Final", "% Meta"]);\n      if (m.historico && m.historico.length > 0) {\n        var dadosHist = m.historico.map(function(h,i){ return [parseInt(h.etapa)||(i+1), h.dataCalendario||"", h.data||"", parseFloat(h.lucro)||0, parseFloat(h.bancaPos)||0, (parseFloat(h.pct)||0)/100]; });\n        sheetHist.getRange(2,1,dadosHist.length,6).setValues(dadosHist);\n        sheetHist.getRange(2,4,dadosHist.length,2).setNumberFormat("R$ #,##0.00");\n        sheetHist.getRange(2,6,dadosHist.length,1).setNumberFormat("0.0%");\n      }\n      var sheetLotes = ss.getSheetByName("Lotes_"+modo) || ss.insertSheet("Lotes_"+modo);\n      sheetLotes.clear();\n      sheetLotes.appendRow(["Lote ID", "Letra", "Aposta", "Risco Acum.", "Vitórias", "Derrotas", "Status"]);\n      if (m.sequencias && m.sequencias.length > 0) {\n        var dadosLotes = m.sequencias.map(function(s,j){ return [parseInt(s.id)||(j+1),(s.letraRandomica||"A").toUpperCase(),parseFloat(s.apostaAtual)||0.01,parseFloat(s.perdasAcumuladas)||0,parseInt(s.winsEtapa)||0,parseInt(s.lossesEtapa)||0,s.status||"PENDING"]; });\n        sheetLotes.getRange(2,1,dadosLotes.length,7).setValues(dadosLotes);\n        sheetLotes.getRange(2,3,dadosLotes.length,2).setNumberFormat("R$ #,##0.00");\n      }\n    });\n    SpreadsheetApp.flush();\n    return ContentService.createTextOutput(JSON.stringify({ "status": "success" })).setMimeType(ContentService.MimeType.JSON);\n  } catch (error) {\n    return ContentService.createTextOutput(JSON.stringify({ "status": "error", "message": error.toString() })).setMimeType(ContentService.MimeType.JSON);\n  } finally { lock.releaseLock(); }\n}\n\nfunction doGet(e) {\n  try {\n    var saved = PropertiesService.getScriptProperties().getProperty(\'marantan_state\');\n    if (saved) { return ContentService.createTextOutput(saved).setMimeType(ContentService.MimeType.JSON); }\n    return ContentService.createTextOutput(JSON.stringify({ "status": "ready", "version": "29.4" })).setMimeType(ContentService.MimeType.JSON);\n  } catch (error) {\n    return ContentService.createTextOutput(JSON.stringify({ "status": "error", "message": error.toString() })).setMimeType(ContentService.MimeType.JSON);\n  }\n}';
+
+function copiarScriptGS(){
+  const box = document.getElementById('gs-code-box');
+  if(box) box.select();
+  navigator.clipboard.writeText(GS_SCRIPT_CODE).then(()=>{
+    alert('✅ Script copiado! Cole no Apps Script e reimplante.');
+  }).catch(()=>{
+    alert('Selecione o texto na caixa e copie manualmente.');
+  });
+}
+
+// Preencher o textarea quando a aba Config for aberta
+function preencherScriptBox(){
+  const box = document.getElementById('gs-code-box');
+  if(box && !box.value) box.value = GS_SCRIPT_CODE;
+}
 
 function alternarModo(modo){
   modoAtivo=modo;
@@ -770,6 +795,7 @@ function openTab(tabId){
   const nav=document.getElementById('nav-'+tabId); if(nav) nav.classList.add('active');
   atualizarPainelUI(false);
   if(tabId==='grafico') renderizarGrafico();
+  if(tabId==='config') preencherScriptBox();
 }
 
 function getValorApostaBase(){ return ms().bancaAtual*(ms().apostaBasePercent/100); }
