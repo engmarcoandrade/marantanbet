@@ -435,6 +435,7 @@ tbody tr:last-child td { border-bottom:none; }
     <div class="info-bar" style="margin-bottom:8px; flex-wrap:wrap; gap:6px;">
       <div class="info-item accent">Etapa <b id="lbl-etapa-num">#1</b></div>
       <div class="info-item">Início: <b id="lbl-valor-inicial-op">R$0,00</b></div>
+      <div class="info-item">Atual: <b id="lbl-valor-atual-op">R$0,00</b></div>
       <div class="info-item win">Meta: <b id="lbl-meta-op">R$0,00</b></div>
       <div class="info-item accent">Falta: <b id="lbl-falta-op">R$0,00</b></div>
       <div class="info-item" id="wrapper-contador-resetar" style="display:none;">Vitórias: <b id="lbl-vitorias-resetar-contador">0</b></div>
@@ -1167,6 +1168,7 @@ function atualizarPainelUI(forcarGrafico=false){
   el('lbl-lotes-win',ms().sequencias.filter(s=>s.status==='FINISHED').length);
   el('lbl-lotes-loss',ms().sequencias.filter(s=>s.status!=='FINISHED').length);
   el('lbl-valor-inicial-op',fmt(baseEtapa));
+  el('lbl-valor-atual-op',fmt(ms().bancaAtual+(parseFloat(state.bancoCapital)||0)));
   el('lbl-meta-op',fmt(metaVal));
   const faltaOp=Math.max(0,metaVal-(ms().bancaAtual+banco));
   const faltaEl=document.getElementById('lbl-falta-op');
