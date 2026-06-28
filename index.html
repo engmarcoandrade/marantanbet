@@ -329,9 +329,9 @@ tbody tr:last-child td { border-bottom:none; }
       <div class="m-title">💾 Concluir Etapa</div>
       <span class="m-label">Saldo calculado pelo sistema</span>
       <div class="m-value-big" id="modal-etapa-saldo-calculado">R$ 0,00</div>
-      <span class="m-label">Confirme o saldo real da banca ativa</span>
+      <span class="m-label">Confirme o saldo total real (Plataforma + Banco)</span>
       <input type="number" id="modal-etapa-saldo-real" class="m-input" step="0.01" placeholder="Digite o valor real...">
-      <p class="m-note">O Banco (reserva) não será alterado.</p>
+      <p class="m-note">Digite o Total (Plataforma + Banco). O valor do Banco será mantido e a Plataforma será calculada automaticamente.</p>
     </div>
     <div class="modal-footer">
       <button class="btn-cancel" onclick="fecharModal('modal-concluir-etapa')">Cancelar</button>
@@ -498,7 +498,7 @@ tbody tr:last-child td { border-bottom:none; }
             <input type="number" id="cfg-banco-capital" class="cfg-input" step="0.01" value="0.00" oninput="calcularSomaCapitalGeralUI()">
           </div>
           <div>
-            <div class="cfg-label" style="margin-bottom:4px;">⚔️ Banca</div>
+            <div class="cfg-label" style="margin-bottom:4px;">📱 Plataforma</div>
             <input type="number" id="cfg-banca-capital" class="cfg-input" step="0.01" value="100.00" oninput="calcularSomaCapitalGeralUI(); ajustarBancaAtivaExternamente();">
           </div>
           <div>
@@ -892,7 +892,14 @@ function carregarDadosCacheLocal(){ /* sem localStorage — Sheets é a fonte de
 
 function reiniciarBancaTotalSistema(){ if(confirm("⚠️ Resetar o sistema inteiro?")){ state=JSON.parse(JSON.stringify(DEFAULT_STATE)); sinalizadoMeta=false; sinalizadoStop=false; gerarEstruturaLotesIniciais(); } }
 function ajustarBancaAtivaExternamente(){ const v=parseFloat(document.getElementById('cfg-banca-capital').value); if(isNaN(v)||v<=0) return; const parcial=ms().bancaAtual-ms().bancaInicioEtapa; ms().bancaInicial=v; ms().bancaInicioEtapa=v; ms().bancaAtual=v+parcial; salvarDadosEAtualizarTudo(); }
-function excluirRegistroEtapaHistorico(index){ if(confirm("🗑 Excluir esta etapa do histórico?")){ ms().historico.splice(index,1); ms().historico.forEach((h,i)=>{ h.etapa=i+1; }); ms().etapaAtual=ms().historico.length+1; let val=ms().bancaInicial; let pts=[ms().bancaInicial]; ms().historico.forEach(item=>{ val+=item.lucro; item.bancaPos=val; pts.push(val); }); ms().bancaInicioEtapa=val; ms().bancaAtual=val; ms().resultadosReaisGrafico=pts; gerarEstruturaLotesIniciais(); salvarDadosEAtualizarTudo(); } }
+function excluirRegistroEtapaHistorico(index){ if(confirm("🗑 Excluir esta etapa do histórico?")){
+  const banco=parseFloat(state.bancoCapital)||0;
+  ms().historico.splice(index,1); ms().historico.forEach((h,i)=>{ h.etapa=i+1; }); ms().etapaAtual=ms().historico.length+1;
+  let totalInicial=(ms().bancaInicial||0)+banco; let pts=[totalInicial];
+  ms().historico.forEach(item=>{ totalInicial+=item.lucro; item.totalPos=totalInicial; item.bancaPos=totalInicial-banco; pts.push(totalInicial); });
+  ms().bancaInicioEtapa=totalInicial-banco; ms().bancaAtual=totalInicial-banco;
+  ms().resultadosReaisGrafico=pts; gerarEstruturaLotesIniciais(); salvarDadosEAtualizarTudo();
+} }
 function alterarDataInicioCicloUI(){ ms().dataInicioCiclo=document.getElementById('cfg-data-inicio').value; salvarDadosEAtualizarTudo(); }
 function setGraficoMode(modo){ ms().chartMode=modo; document.querySelectorAll('.toggle-group button').forEach(b=>b.classList.remove('active')); if(modo==='DATA') document.getElementById('btn-chart-date').classList.add('active'); else document.getElementById('btn-chart-etapa').classList.add('active'); renderizarGrafico(); }
 
@@ -979,26 +986,31 @@ function alterarFiltroExibicao(tipo){
 }
 
 function fecharEtapa(){
-  document.getElementById('modal-etapa-saldo-calculado').innerText=fmt(ms().bancaAtual);
-  document.getElementById('modal-etapa-saldo-real').value=ms().bancaAtual.toFixed(2);
+  const banco=parseFloat(state.bancoCapital)||0;
+  const totalAtual=ms().bancaAtual+banco;
+  document.getElementById('modal-etapa-saldo-calculado').innerText=fmt(totalAtual);
+  document.getElementById('modal-etapa-saldo-real').value=totalAtual.toFixed(2);
   document.getElementById('modal-concluir-etapa').style.display='flex';
   setTimeout(()=>{ document.getElementById('modal-etapa-saldo-real').select(); },100);
 }
 
 function confirmarConclusaoEtapa(){
-  const v=parseFloat(document.getElementById('modal-etapa-saldo-real').value);
-  if(isNaN(v)||v<=0){ alert('Digite um valor válido para o saldo real.'); return; }
+  const vTotal=parseFloat(document.getElementById('modal-etapa-saldo-real').value);
+  if(isNaN(vTotal)||vTotal<=0){ alert('Digite um valor válido para o saldo total.'); return; }
   fecharModal('modal-concluir-etapa');
-  ms().bancaAtual=v;
-  const lucro=ms().bancaAtual-ms().bancaInicioEtapa;
+  const banco=parseFloat(state.bancoCapital)||0;
+  // v é o TOTAL — plataforma = total - banco
+  const novaPlataforma=vTotal-banco;
+  const totalAnterior=ms().bancaInicioEtapa+banco;
+  const lucro=vTotal-totalAnterior; // lucro sobre o total
+  ms().bancaAtual=novaPlataforma;
   if(!ms().historico) ms().historico=[];
-  const baseEtapaFinal=ms().bancaInicioEtapa+(parseFloat(state.bancoCapital)||0);
-  const lucroNecFinal=baseEtapaFinal*(ms().metaPercent/100);
+  const lucroNecFinal=totalAnterior*(ms().metaPercent/100);
   const pctEtapa=lucroNecFinal>0?(lucro/lucroNecFinal)*100:0;
-  ms().historico.push({ etapa:ms().etapaAtual, dataCalendario:new Date().toISOString().split('T')[0], data:new Date().toLocaleTimeString('pt-BR'), lucro:lucro, bancaPos:ms().bancaAtual, pct:pctEtapa });
-  ms().resultadosReaisGrafico.push(ms().bancaAtual);
-  ms().bancaInicioEtapa=ms().bancaAtual;
-  ms().bancaInicial=ms().bancaAtual;
+  ms().historico.push({ etapa:ms().etapaAtual, dataCalendario:new Date().toISOString().split('T')[0], data:new Date().toLocaleTimeString('pt-BR'), lucro:lucro, totalPos:vTotal, bancaPos:novaPlataforma, pct:pctEtapa });
+  ms().resultadosReaisGrafico.push(vTotal); // gráfico usa TOTAL
+  ms().bancaInicioEtapa=novaPlataforma;
+  ms().bancaInicial=novaPlataforma;
   ms().etapaAtual++;
   sinalizadoMeta=false; sinalizadoStop=false; ms().vitoriasRodadaVoltarInicial=0;
   ms().letrasBloqueadasRodada={};
@@ -1120,7 +1132,7 @@ function renderHistorico(){
       <div class="hist-right">
         <div class="hist-lucro" style="color:${cor};">${h.lucro>=0?'+':''}${fmt(h.lucro)}</div>
         <div style="font-size:11px; font-weight:700; color:${cor}; font-family:var(--mono);">${h.pct!==undefined?(h.pct>=0?'+':'')+h.pct.toFixed(1)+'%':''}</div>
-        <div class="hist-banca">${fmt(h.bancaPos)}</div>
+        <div class="hist-banca">${h.totalPos!==undefined?fmt(h.totalPos):fmt(h.bancaPos)} total</div>
       </div>
       <button class="hist-del" onclick="excluirRegistroEtapaHistorico(${idx})">🗑</button>
     </div>`;
@@ -1167,7 +1179,7 @@ function atualizarPainelUI(forcarGrafico=false){
   const el=(id,v)=>{ const e=document.getElementById(id); if(e) e.innerText=v; };
 
   el('kpi-global', fmt(capitalGlobal));
-  el('kpi-global-sub', 'Banca: '+fmt(ms().bancaAtual)+' · Banco: '+fmt(banco));
+  el('kpi-global-sub', 'Plataforma: '+fmt(ms().bancaAtual)+' · Banco: '+fmt(banco));
 
   const lucroEl=document.getElementById('kpi-lucro');
   if(lucroEl){ lucroEl.innerText=fmt(lucroTotal); lucroEl.className='kpi-val '+(lucroTotal>=0?'pos':'neg'); }
