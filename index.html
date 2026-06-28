@@ -76,6 +76,10 @@ header { background:var(--surface); border-bottom:1px solid var(--border); paddi
 .etapa-chip { background:var(--surface2); border:1px solid var(--border); border-radius:20px; padding:4px 12px; font-size:12px; font-weight:600; color:var(--muted); }
 .etapa-chip b { color:var(--accent); }
 .hdr-btns { display:flex; gap:6px; }
+.modo-selector { display:flex; background:var(--surface2); border:1px solid var(--border); border-radius:20px; overflow:hidden; gap:0; }
+.modo-btn { background:transparent; border:none; color:var(--muted); padding:5px 12px; font-size:11px; font-weight:700; cursor:pointer; font-family:var(--sans); white-space:nowrap; transition:all .2s; }
+.modo-btn.active.real { background:var(--win); color:#fff; border-radius:20px; }
+.modo-btn.active.virtual { background:var(--purple); color:#fff; border-radius:20px; }
 .hdr-btn { background:var(--surface2); border:1px solid var(--border); color:var(--muted); padding:6px 10px; border-radius:var(--radius-sm); font-size:12px; font-weight:600; cursor:pointer; font-family:var(--sans); white-space:nowrap; }
 .hdr-btn:active { opacity:.7; }
 .hdr-btn.danger { color:var(--loss); border-color:var(--loss-border); }
@@ -346,6 +350,10 @@ tbody tr:last-child td { border-bottom:none; }
 <!-- HEADER -->
 <header>
   <div class="app-logo">MARAN<span>TAN</span></div>
+  <div class="modo-selector">
+    <button id="btn-modo-real" class="modo-btn active" onclick="alternarModo('real')">⚽ Real</button>
+    <button id="btn-modo-virtual" class="modo-btn" onclick="alternarModo('virtual')">🎮 Virtual</button>
+  </div>
   <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
   <div class="hdr-btns">
     <button class="hdr-btn" id="btn-tema" onclick="alternarTema()" title="Alternar tema">🌙</button>
@@ -441,7 +449,7 @@ tbody tr:last-child td { border-bottom:none; }
       </div>
     </div>
 
-    <div id="container-letras-linhas"></div>
+    <div class="cards-grid" id="container-letras-linhas"></div>
   </div>
 
   <!-- ABA: LOTES -->
@@ -599,23 +607,41 @@ function alternarTema(){
 }
 let SHEETS_URL_MEMORIA = "https://script.google.com/macros/s/AKfycbx0oGZJBlmosWEoGoH1_tXsul_51XAXN6BkQkUGrbtkJPdgEZWia_05UmV0fn2WtUj0/exec";
 
-const DEFAULT_STATE = {
-  bancoCapital:0.00, bancaInicial:100.00, bancaAtual:100.00, bancaInicioEtapa:100.00, etapaAtual:1,
+const DEFAULT_MODO = {
+  bancaInicial:100.00, bancaAtual:100.00, bancaInicioEtapa:100.00, etapaAtual:1,
   metaPercent:5.0, stopLossPercent:15.0, apostaBasePercent:0.01, loteQtd:500, aleatoriedade:6,
-  dataInicioCiclo:hojeISO, sheetsUrl:"", chartMode:"DATA",
+  dataInicioCiclo:hojeISO, chartMode:"DATA",
   oddsPorLetra:{"A":1.80,"B":1.80,"C":1.80,"D":1.80,"E":1.80,"F":1.80},
   anotacoesPorLetra:{"A":"","B":"","C":"","D":"","E":"","F":""},
   letrasBloqueadasRodada:{},
   modoPosWin:"BLINDAR", modoDistribuicao:"PROPORCIONAL", marantanLancamentosRodada:{},
-  sequencias:[], historico:[], resultadosReaisGrafico:[100.00], vitoriasRodadaVoltarInicial:0, ultimoTimestampSinc:0
+  sequencias:[], historico:[], resultadosReaisGrafico:[100.00], vitoriasRodadaVoltarInicial:0
+};
+
+const DEFAULT_STATE = {
+  bancoCapital:0.00, sheetsUrl:"", ultimoTimestampSinc:0,
+  real: JSON.parse(JSON.stringify(DEFAULT_MODO)),
+  virtual: JSON.parse(JSON.stringify(DEFAULT_MODO))
 };
 
 let state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+let modoAtivo = 'real'; // 'real' ou 'virtual'
 let sinalizadoMeta=false, sinalizadoStop=false, chartInstance=null, filtroAtualExibicao='all', sheetsTimeout=null;
+
+// Atalho: state atual do modo ativo
+function ms(){ return state[modoAtivo]; }
 
 const fmt = (v) => v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 
 function fecharModal(id){ document.getElementById(id).style.display='none'; }
+
+function alternarModo(modo){
+  modoAtivo=modo;
+  sinalizadoMeta=false; sinalizadoStop=false;
+  document.getElementById('btn-modo-real').className='modo-btn'+(modo==='real'?' active real':'');
+  document.getElementById('btn-modo-virtual').className='modo-btn'+(modo==='virtual'?' active virtual':'');
+  preencherCamposConfig(); ajustarCamposDeOddsMenu(true); atualizarPainelUI(true);
+}
 
 function atualizarStatusSheets(status){
   const dot=document.getElementById('sheets-dot'); const txt=document.getElementById('sheets-text');
@@ -645,21 +671,26 @@ async function forcarSalvamentoSheets(){ if(sheetsTimeout) clearTimeout(sheetsTi
 function aplicarBlindagemDeVariaveis(){
   if(!state||typeof state!=='object') state=JSON.parse(JSON.stringify(DEFAULT_STATE));
   if(state.bancoCapital===undefined) state.bancoCapital=0.00;
-  if(!state.marantanLancamentosRodada) state.marantanLancamentosRodada={};
-  if(!state.oddsPorLetra) state.oddsPorLetra={"A":1.80,"B":1.80,"C":1.80,"D":1.80,"E":1.80,"F":1.80};
-  if(!state.anotacoesPorLetra) state.anotacoesPorLetra={"A":"","B":"","C":"","D":"","E":"","F":""};
-  if(!state.letrasBloqueadasRodada) state.letrasBloqueadasRodada={};
-  if(!state.modoPosWin) state.modoPosWin="BLINDAR";
-  if(!state.modoDistribuicao) state.modoDistribuicao="PROPORCIONAL";
-  if(!state.dataInicioCiclo) state.dataInicioCiclo=hojeISO;
-  if(!state.historico) state.historico=[];
-  if(!state.resultadosReaisGrafico||state.resultadosReaisGrafico.length===0) state.resultadosReaisGrafico=[state.bancaInicial||100.00];
-  if(!state.aleatoriedade) state.aleatoriedade=6;
-  if(!state.sequencias) state.sequencias=[];
-  if(state.vitoriasRodadaVoltarInicial===undefined) state.vitoriasRodadaVoltarInicial=0;
-  if(state.loteQtd===undefined) state.loteQtd=500;
   if(!state.ultimoTimestampSinc) state.ultimoTimestampSinc=0;
   if(!state.sheetsUrl) state.sheetsUrl="";
+  // Garantir que ambos os modos existam
+  ['real','virtual'].forEach(modo=>{
+    if(!state[modo]) state[modo]=JSON.parse(JSON.stringify(DEFAULT_MODO));
+    const m=state[modo];
+    if(!m.marantanLancamentosRodada) m.marantanLancamentosRodada={};
+    if(!m.oddsPorLetra) m.oddsPorLetra={"A":1.80,"B":1.80,"C":1.80,"D":1.80,"E":1.80,"F":1.80};
+    if(!m.anotacoesPorLetra) m.anotacoesPorLetra={"A":"","B":"","C":"","D":"","E":"","F":""};
+    if(!m.letrasBloqueadasRodada) m.letrasBloqueadasRodada={};
+    if(!m.modoPosWin) m.modoPosWin="BLINDAR";
+    if(!m.modoDistribuicao) m.modoDistribuicao="PROPORCIONAL";
+    if(!m.dataInicioCiclo) m.dataInicioCiclo=hojeISO;
+    if(!m.historico) m.historico=[];
+    if(!m.resultadosReaisGrafico||m.resultadosReaisGrafico.length===0) m.resultadosReaisGrafico=[m.bancaInicial||100.00];
+    if(!m.aleatoriedade) m.aleatoriedade=6;
+    if(!m.sequencias) m.sequencias=[];
+    if(m.vitoriasRodadaVoltarInicial===undefined) m.vitoriasRodadaVoltarInicial=0;
+    if(m.loteQtd===undefined) m.loteQtd=500;
+  });
 }
 
 async function carregarDaNuvem(){
@@ -669,10 +700,13 @@ async function carregarDaNuvem(){
   try{
     const response=await fetch(urlFinal+'?t='+Date.now());
     const data=await response.json();
-    if(data&&data.bancaInicial!==undefined&&data.sequencias&&data.sequencias.length>0){
-      data.sheetsUrl=urlFinal;
+    if(data&&data.real&&data.real.bancaInicial!==undefined){
+      data.sheetsUrl=data.sheetsUrl||urlFinal;
       state=data;
       aplicarBlindagemDeVariaveis();
+      // Garantir sequências de ambos os modos
+      if(!state.real.sequencias||state.real.sequencias.length===0){ modoAtivo='real'; gerarEstruturaLotesIniciais(); }
+      if(!state.virtual.sequencias||state.virtual.sequencias.length===0){ modoAtivo='virtual'; gerarEstruturaLotesIniciais(); modoAtivo='real'; }
       preencherCamposConfig(); ajustarCamposDeOddsMenu(true); atualizarPainelUI(true);
       atualizarStatusSheets('on');
       return true;
@@ -708,7 +742,7 @@ async function inicializarApp(){
     // Sem URL — exibe tela limpa esperando configuração
     state = JSON.parse(JSON.stringify(DEFAULT_STATE));
     aplicarBlindagemDeVariaveis();
-    if(!state.sequencias||state.sequencias.length===0) gerarEstruturaLotesIniciais();
+    if(!ms().sequencias||ms().sequencias.length===0) gerarEstruturaLotesIniciais();
     preencherCamposConfig(); ajustarCamposDeOddsMenu(true); atualizarPainelUI(true);
     atualizarStatusSheets('err');
   }
@@ -730,41 +764,41 @@ function openTab(tabId){
   if(tabId==='grafico') renderizarGrafico();
 }
 
-function getValorApostaBase(){ return state.bancaAtual*(state.apostaBasePercent/100); }
-function obterTodasLetrasConfiguradas(){ const n=Math.min(state.aleatoriedade||6,26); const az="ABCDEFGHIJKLMNOPQRSTUVWXYZ"; let l=[]; for(let i=0;i<n;i++) l.push(az[i]); return l; }
+function getValorApostaBase(){ return ms().bancaAtual*(ms().apostaBasePercent/100); }
+function obterTodasLetrasConfiguradas(){ const n=Math.min(ms().aleatoriedade||6,26); const az="ABCDEFGHIJKLMNOPQRSTUVWXYZ"; let l=[]; for(let i=0;i<n;i++) l.push(az[i]); return l; }
 function calcularSomaCapitalGeralUI(){ const b=parseFloat(document.getElementById('cfg-banco-capital').value)||0; const c=parseFloat(document.getElementById('cfg-banca-capital').value)||0; document.getElementById('cfg-banca-total-disabled').value=(b+c).toFixed(2); }
 
 function gerarEstruturaLotesIniciais(){
-  const total=parseInt(state.loteQtd)||500;
+  const total=parseInt(ms().loteQtd)||500;
   const apostaBase=getValorApostaBase();
   const letras=obterTodasLetrasConfiguradas();
   let cotas={}; let dist=0;
-  if(state.modoDistribuicao==="LINEAR"){
+  if(ms().modoDistribuicao==="LINEAR"){
     const ig=Math.floor(total/letras.length);
     letras.forEach((l,i)=>{ if(i===letras.length-1){ cotas[l]=total-dist; }else{ cotas[l]=ig; dist+=ig; } });
   }else{
     let pesos={}; let soma=0;
-    letras.forEach(l=>{ const o=state.oddsPorLetra[l]||1.80; const p=1/(o>1?o:1.1); pesos[l]=p; soma+=p; });
+    letras.forEach(l=>{ const o=ms().oddsPorLetra[l]||1.80; const p=1/(o>1?o:1.1); pesos[l]=p; soma+=p; });
     letras.forEach((l,i)=>{ if(i===letras.length-1){ cotas[l]=total-dist; }else{ let q=Math.round((pesos[l]/soma)*total); cotas[l]=q; dist+=q; } });
   }
   let pool=[];
   letras.forEach(l=>{ for(let k=0;k<cotas[l];k++) pool.push(l); });
   while(pool.length<total) pool.push(letras[0]);
   if(pool.length>total) pool=pool.slice(0,total);
-  state.sequencias=Array.from({length:total},(_,i)=>({ id:i+1, apostaAtual:apostaBase, streakLoss:0, letraRandomica:pool[i], winsEtapa:0, lossesEtapa:0, perdasAcumuladas:0, status:"PENDING" }));
-  state.marantanLancamentosRodada={};
-  state.letrasBloqueadasRodada={};
+  ms().sequencias=Array.from({length:total},(_,i)=>({ id:i+1, apostaAtual:apostaBase, streakLoss:0, letraRandomica:pool[i], winsEtapa:0, lossesEtapa:0, perdasAcumuladas:0, status:"PENDING" }));
+  ms().marantanLancamentosRodada={};
+  ms().letrasBloqueadasRodada={};
   salvarDadosEAtualizarTudo();
 }
 
 function solicitarAberturaJanelaRodada(){
   const container=document.getElementById('placeholder-preview-valores-rodada'); if(!container) return;
   const az="ABCDEFGHIJKLMNOPQRSTUVWXYZ"; let html='';
-  for(let i=0;i<Math.min(state.aleatoriedade,26);i++){
+  for(let i=0;i<Math.min(ms().aleatoriedade,26);i++){
     const l=az[i];
-    const total=state.sequencias.filter(s=>s.letraRandomica===l&&s.status!=='FINISHED').reduce((a,c)=>a+c.apostaAtual,0);
-    const cnt=state.sequencias.filter(s=>s.letraRandomica===l&&s.status!=='FINISHED').length;
-    const fix=state.letrasBloqueadasRodada[l];
+    const total=ms().sequencias.filter(s=>s.letraRandomica===l&&s.status!=='FINISHED').reduce((a,c)=>a+c.apostaAtual,0);
+    const cnt=ms().sequencias.filter(s=>s.letraRandomica===l&&s.status!=='FINISHED').length;
+    const fix=ms().letrasBloqueadasRodada[l];
     html+=`<div class="preview-row" style="${fix?'color:var(--purple);':''}"><span>[${l}] ${cnt} lotes${fix?' · FIXADA':''}</span><b>${fmt(total)}</b></div>`;
   }
   container.innerHTML=html;
@@ -772,20 +806,19 @@ function solicitarAberturaJanelaRodada(){
 }
 
 function confirmarEncerramentoRodadaReal(){
-  fecharModal('modal-encerrar-rodada'); state.marantanLancamentosRodada={};
+  fecharModal('modal-encerrar-rodada'); ms().marantanLancamentosRodada={};
   const livresIdx=[]; const livresLetras=[];
-  state.sequencias.forEach((s,i)=>{ if(!state.letrasBloqueadasRodada[s.letraRandomica]){ livresIdx.push(i); livresLetras.push(s.letraRandomica); } });
+  ms().sequencias.forEach((s,i)=>{ if(!ms().letrasBloqueadasRodada[s.letraRandomica]){ livresIdx.push(i); livresLetras.push(s.letraRandomica); } });
   if(livresLetras.length>0){
     for(let i=livresLetras.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [livresLetras[i],livresLetras[j]]=[livresLetras[j],livresLetras[i]]; }
-    livresIdx.forEach((si,ai)=>{ state.sequencias[si].letraRandomica=livresLetras[ai]; });
+    livresIdx.forEach((si,ai)=>{ ms().sequencias[si].letraRandomica=livresLetras[ai]; });
   }
-  state.sequencias.forEach(s=>{ if(s.status==='PENDING'&&s.perdasAcumuladas===0){ s.apostaAtual=getValorApostaBase(); } });
   salvarDadosEAtualizarTudo();
 }
 
 function toggleLockChaveSeletora(letra,el){
-  if(!state.letrasBloqueadasRodada) state.letrasBloqueadasRodada={};
-  state.letrasBloqueadasRodada[letra]=el.checked;
+  if(!ms().letrasBloqueadasRodada) ms().letrasBloqueadasRodada={};
+  ms().letrasBloqueadasRodada[letra]=el.checked;
   salvarDadosEAtualizarTudo();
 }
 
@@ -796,38 +829,40 @@ function ajustarCamposDeOddsMenu(usarState=false){
   for(let i=0;i<Math.min(n,26);i++){
     const l=az[i];
     let odd=1.80; let nota="";
-    if(usarState&&state.oddsPorLetra&&state.oddsPorLetra[l]!==undefined) odd=state.oddsPorLetra[l];
-    if(usarState&&state.anotacoesPorLetra&&state.anotacoesPorLetra[l]) nota=state.anotacoesPorLetra[l];
+    if(usarState&&ms().oddsPorLetra&&ms().oddsPorLetra[l]!==undefined) odd=ms().oddsPorLetra[l];
+    if(usarState&&ms().anotacoesPorLetra&&ms().anotacoesPorLetra[l]) nota=ms().anotacoesPorLetra[l];
     html+=`<div class="odds-item"><div><div class="cfg-label" style="margin-bottom:4px;">Odd ${l}</div><input type="number" id="cfg-odd-letra-${l}" class="cfg-input" style="font-size:13px;padding:6px 8px;" step="0.01" value="${odd.toFixed(2)}"></div><div><div class="cfg-label" style="margin-bottom:4px;">Nota ${l}</div><input type="text" id="cfg-nota-letra-${l}" class="cfg-input" style="font-size:12px;padding:6px 8px;font-family:var(--sans);" value="${nota}" placeholder="Mercado..."></div></div>`;
   }
   container.innerHTML=html;
 }
 
-function salvarDadosEAtualizarTudo(){ state.ultimoTimestampSinc=Date.now(); if(state.sheetsUrl) SHEETS_URL_MEMORIA=state.sheetsUrl; atualizarPainelUI(false); agendarSalvarNuvem(); }
+function salvarDadosEAtualizarTudo(){ state.ultimoTimestampSinc=Date.now(); state.sheetsUrl=state.sheetsUrl||SHEETS_URL_MEMORIA; if(state.sheetsUrl) SHEETS_URL_MEMORIA=state.sheetsUrl; atualizarPainelUI(false); agendarSalvarNuvem(); }
 function carregarDadosCacheLocal(){ state=JSON.parse(JSON.stringify(DEFAULT_STATE)); }
 
-function reiniciarBancaTotalSistema(){ if(confirm("⚠️ Resetar o sistema inteiro?")){ state=JSON.parse(JSON.stringify(DEFAULT_STATE)); state.resultadosReaisGrafico=[100.00]; sinalizadoMeta=false; sinalizadoStop=false; gerarEstruturaLotesIniciais(); } }
-function ajustarBancaAtivaExternamente(){ const v=parseFloat(document.getElementById('cfg-banca-capital').value); if(isNaN(v)||v<=0) return; const parcial=state.bancaAtual-state.bancaInicioEtapa; state.bancaInicial=v; state.bancaInicioEtapa=v; state.bancaAtual=v+parcial; salvarDadosEAtualizarTudo(); }
-function excluirRegistroEtapaHistorico(index){ if(confirm("🗑 Excluir esta etapa do histórico?")){ state.historico.splice(index,1); state.historico.forEach((h,i)=>{ h.etapa=i+1; }); state.etapaAtual=state.historico.length+1; let val=state.bancaInicial; let pts=[state.bancaInicial]; state.historico.forEach(item=>{ val+=item.lucro; item.bancaPos=val; pts.push(val); }); state.bancaInicioEtapa=val; state.bancaAtual=val; state.resultadosReaisGrafico=pts; gerarEstruturaLotesIniciais(); salvarDadosEAtualizarTudo(); } }
-function alterarDataInicioCicloUI(){ state.dataInicioCiclo=document.getElementById('cfg-data-inicio').value; salvarDadosEAtualizarTudo(); }
-function setGraficoMode(modo){ state.chartMode=modo; document.querySelectorAll('.toggle-group button').forEach(b=>b.classList.remove('active')); if(modo==='DATA') document.getElementById('btn-chart-date').classList.add('active'); else document.getElementById('btn-chart-etapa').classList.add('active'); renderizarGrafico(); }
+function reiniciarBancaTotalSistema(){ if(confirm("⚠️ Resetar o sistema inteiro?")){ state=JSON.parse(JSON.stringify(DEFAULT_STATE)); sinalizadoMeta=false; sinalizadoStop=false; gerarEstruturaLotesIniciais(); } }
+function ajustarBancaAtivaExternamente(){ const v=parseFloat(document.getElementById('cfg-banca-capital').value); if(isNaN(v)||v<=0) return; const parcial=ms().bancaAtual-ms().bancaInicioEtapa; ms().bancaInicial=v; ms().bancaInicioEtapa=v; ms().bancaAtual=v+parcial; salvarDadosEAtualizarTudo(); }
+function excluirRegistroEtapaHistorico(index){ if(confirm("🗑 Excluir esta etapa do histórico?")){ ms().historico.splice(index,1); ms().historico.forEach((h,i)=>{ h.etapa=i+1; }); ms().etapaAtual=ms().historico.length+1; let val=ms().bancaInicial; let pts=[ms().bancaInicial]; ms().historico.forEach(item=>{ val+=item.lucro; item.bancaPos=val; pts.push(val); }); ms().bancaInicioEtapa=val; ms().bancaAtual=val; ms().resultadosReaisGrafico=pts; gerarEstruturaLotesIniciais(); salvarDadosEAtualizarTudo(); } }
+function alterarDataInicioCicloUI(){ ms().dataInicioCiclo=document.getElementById('cfg-data-inicio').value; salvarDadosEAtualizarTudo(); }
+function setGraficoMode(modo){ ms().chartMode=modo; document.querySelectorAll('.toggle-group button').forEach(b=>b.classList.remove('active')); if(modo==='DATA') document.getElementById('btn-chart-date').classList.add('active'); else document.getElementById('btn-chart-etapa').classList.add('active'); renderizarGrafico(); }
 
 function salvarConfiguracoes(){
-  state.metaPercent=parseFloat(document.getElementById('cfg-meta').value);
-  state.stopLossPercent=parseFloat(document.getElementById('cfg-stoploss').value);
-  state.apostaBasePercent=parseFloat(document.getElementById('cfg-aposta-base-pct').value);
-  state.loteQtd=parseInt(document.getElementById('cfg-lote').value)||500;
-  state.aleatoriedade=parseInt(document.getElementById('cfg-aleatoriedade').value)||6;
+  // Compartilhado
   state.bancoCapital=parseFloat(document.getElementById('cfg-banco-capital').value)||0.00;
-  state.modoDistribuicao=document.getElementById('cfg-modo-distribuicao').value;
   state.sheetsUrl=document.getElementById('cfg-sheets-url').value.trim();
   if(state.sheetsUrl) SHEETS_URL_MEMORIA=state.sheetsUrl;
-  state.oddsPorLetra={}; state.anotacoesPorLetra={};
+  // Específico do modo ativo
+  ms().metaPercent=parseFloat(document.getElementById('cfg-meta').value);
+  ms().stopLossPercent=parseFloat(document.getElementById('cfg-stoploss').value);
+  ms().apostaBasePercent=parseFloat(document.getElementById('cfg-aposta-base-pct').value);
+  ms().loteQtd=parseInt(document.getElementById('cfg-lote').value)||500;
+  ms().aleatoriedade=parseInt(document.getElementById('cfg-aleatoriedade').value)||6;
+  ms().modoDistribuicao=document.getElementById('cfg-modo-distribuicao').value;
+  ms().oddsPorLetra={}; ms().anotacoesPorLetra={};
   const az="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  for(let i=0;i<Math.min(state.aleatoriedade,26);i++){
+  for(let i=0;i<Math.min(ms().aleatoriedade,26);i++){
     const l=az[i];
     const oi=document.getElementById(`cfg-odd-letra-${l}`); const ni=document.getElementById(`cfg-nota-letra-${l}`);
-    state.oddsPorLetra[l]=oi?parseFloat(oi.value)||1.80:1.80; state.anotacoesPorLetra[l]=ni?ni.value:"";
+    ms().oddsPorLetra[l]=oi?parseFloat(oi.value)||1.80:1.80; ms().anotacoesPorLetra[l]=ni?ni.value:"";
   }
   gerarEstruturaLotesIniciais(); alert("Configurações salvas e grade recriada!");
 }
@@ -836,43 +871,41 @@ function sniperArredondarAposta(val){ return Math.max(0.0001, val); }
 function roundedFixo(val){ return val; }
 
 function registrarApostaIndividual(index,resultado,emMassa=false){
-  if(index<0||index>=state.sequencias.length) return;
-  const seq=state.sequencias[index]; if(seq.status==='FINISHED') return;
-  const val=sniperArredondarAposta(seq.apostaAtual); const l=seq.letraRandomica; const odd=state.oddsPorLetra[l]||1.80;
-  if(resultado==='WIN'){ seq.winsEtapa++; state.bancaAtual+=(val*(odd-1)); seq.perdasAcumuladas=0; seq.apostaAtual=getValorApostaBase(); seq.status=state.modoPosWin==="BLINDAR"?"FINISHED":"PENDING"; state.vitoriasRodadaVoltarInicial++; }
-  else{ seq.lossesEtapa++; state.bancaAtual-=val; seq.perdasAcumuladas+=val; seq.apostaAtual=(seq.perdasAcumuladas+getValorApostaBase())/(odd-1); }
+  if(index<0||index>=ms().sequencias.length) return;
+  const seq=ms().sequencias[index]; if(seq.status==='FINISHED') return;
+  const val=sniperArredondarAposta(seq.apostaAtual); const l=seq.letraRandomica; const odd=ms().oddsPorLetra[l]||1.80;
+  if(resultado==='WIN'){ seq.winsEtapa++; ms().bancaAtual+=(val*(odd-1)); seq.perdasAcumuladas=0; seq.apostaAtual=getValorApostaBase(); seq.status=ms().modoPosWin==="BLINDAR"?"FINISHED":"PENDING"; ms().vitoriasRodadaVoltarInicial++; }
+  else{ seq.lossesEtapa++; ms().bancaAtual-=val; seq.perdasAcumuladas+=val; seq.apostaAtual=(seq.perdasAcumuladas+getValorApostaBase())/(odd-1); }
   if(!emMassa){
-    if(state.marantanLancamentosRodada) state.marantanLancamentosRodada[l]=resultado;
-    state.sequencias.forEach(s=>{ if(s.status==='PENDING'&&s.perdasAcumuladas===0) s.apostaAtual=getValorApostaBase(); });
+    if(ms().marantanLancamentosRodada) ms().marantanLancamentosRodada[l]=resultado;
     dispararAnimacaoToastLotes(()=>{ salvarDadosEAtualizarTudo(); });
   }
 }
 
 function executarAcaoEmMassaCard(letraAlvo,resultado){
   const lu=letraAlvo.toUpperCase(); let ok=false; let vits=0;
-  state.sequencias.forEach(seq=>{
+  ms().sequencias.forEach(seq=>{
     if(seq.letraRandomica===lu&&seq.status!=='FINISHED'){
-      const val=sniperArredondarAposta(seq.apostaAtual); const odd=state.oddsPorLetra[lu]||1.80;
-      if(resultado==='WIN'){ seq.winsEtapa++; state.bancaAtual+=(val*(odd-1)); seq.perdasAcumuladas=0; seq.apostaAtual=getValorApostaBase(); seq.status=state.modoPosWin==="BLINDAR"?"FINISHED":"PENDING"; vits++; }
-      else{ seq.lossesEtapa++; state.bancaAtual-=val; seq.perdasAcumuladas+=val; seq.apostaAtual=(seq.perdasAcumuladas+getValorApostaBase())/(odd-1); }
+      const val=sniperArredondarAposta(seq.apostaAtual); const odd=ms().oddsPorLetra[lu]||1.80;
+      if(resultado==='WIN'){ seq.winsEtapa++; ms().bancaAtual+=(val*(odd-1)); seq.perdasAcumuladas=0; seq.apostaAtual=getValorApostaBase(); seq.status=ms().modoPosWin==="BLINDAR"?"FINISHED":"PENDING"; vits++; }
+      else{ seq.lossesEtapa++; ms().bancaAtual-=val; seq.perdasAcumuladas+=val; seq.apostaAtual=(seq.perdasAcumuladas+getValorApostaBase())/(odd-1); }
       ok=true;
     }
   });
   if(!ok) return;
-  if(resultado==='WIN') state.vitoriasRodadaVoltarInicial+=vits;
-  if(state.marantanLancamentosRodada) state.marantanLancamentosRodada[lu]=resultado;
-  state.sequencias.forEach(s=>{ if(s.status==='PENDING'&&s.perdasAcumuladas===0) s.apostaAtual=getValorApostaBase(); });
+  if(resultado==='WIN') ms().vitoriasRodadaVoltarInicial+=vits;
+  if(ms().marantanLancamentosRodada) ms().marantanLancamentosRodada[lu]=resultado;
   dispararAnimacaoToastLotes(()=>{ salvarDadosEAtualizarTudo(); });
 }
 
 function distributingRiscoLoteCritico(indexAlvo){
-  if(indexAlvo<0||indexAlvo>=state.sequencias.length) return;
-  const lc=state.sequencias[indexAlvo];
-  const outros=state.sequencias.filter((s,i)=>s.status==='PENDING'&&i!==indexAlvo);
+  if(indexAlvo<0||indexAlvo>=ms().sequencias.length) return;
+  const lc=ms().sequencias[indexAlvo];
+  const outros=ms().sequencias.filter((s,i)=>s.status==='PENDING'&&i!==indexAlvo);
   if(outros.length===0||lc.perdasAcumuladas<=0){ alert("⚠️ Não há outros lotes disponíveis para receber o risco."); return; }
-  if(confirm("⚖️ Diluir o risco acumulado entre os outros lotes ativos?")){ 
+  if(confirm("⚖️ Diluir o risco acumulado entre os outros lotes ativos?")){
     const frac=lc.perdasAcumuladas/outros.length; lc.perdasAcumuladas=0; lc.apostaAtual=getValorApostaBase();
-    state.sequencias.forEach(seq=>{ if(seq.status==='PENDING'&&seq.id!==lc.id){ seq.perdasAcumuladas=roundedFixo(seq.perdasAcumuladas+frac); const odd=state.oddsPorLetra[seq.letraRandomica]||1.80; seq.apostaAtual=(seq.perdasAcumuladas+getValorApostaBase())/(odd-1); } });
+    ms().sequencias.forEach(seq=>{ if(seq.status==='PENDING'&&seq.id!==lc.id){ seq.perdasAcumuladas=roundedFixo(seq.perdasAcumuladas+frac); const odd=ms().oddsPorLetra[seq.letraRandomica]||1.80; seq.apostaAtual=(seq.perdasAcumuladas+getValorApostaBase())/(odd-1); } });
     dispararAnimacaoToastLotes(()=>{ salvarDadosEAtualizarTudo(); });
   }
 }
@@ -892,8 +925,8 @@ function alterarFiltroExibicao(tipo){
 }
 
 function fecharEtapa(){
-  document.getElementById('modal-etapa-saldo-calculado').innerText=fmt(state.bancaAtual);
-  document.getElementById('modal-etapa-saldo-real').value=state.bancaAtual.toFixed(2);
+  document.getElementById('modal-etapa-saldo-calculado').innerText=fmt(ms().bancaAtual);
+  document.getElementById('modal-etapa-saldo-real').value=ms().bancaAtual.toFixed(2);
   document.getElementById('modal-concluir-etapa').style.display='flex';
   setTimeout(()=>{ document.getElementById('modal-etapa-saldo-real').select(); },100);
 }
@@ -902,31 +935,31 @@ function confirmarConclusaoEtapa(){
   const v=parseFloat(document.getElementById('modal-etapa-saldo-real').value);
   if(isNaN(v)||v<=0){ alert('Digite um valor válido para o saldo real.'); return; }
   fecharModal('modal-concluir-etapa');
-  state.bancaAtual=v;
-  const lucro=state.bancaAtual-state.bancaInicioEtapa;
-  if(!state.historico) state.historico=[];
-  const baseEtapaFinal=state.bancaInicioEtapa+(parseFloat(state.bancoCapital)||0);
-  const lucroNecFinal=baseEtapaFinal*(state.metaPercent/100);
+  ms().bancaAtual=v;
+  const lucro=ms().bancaAtual-ms().bancaInicioEtapa;
+  if(!ms().historico) ms().historico=[];
+  const baseEtapaFinal=ms().bancaInicioEtapa+(parseFloat(state.bancoCapital)||0);
+  const lucroNecFinal=baseEtapaFinal*(ms().metaPercent/100);
   const pctEtapa=lucroNecFinal>0?(lucro/lucroNecFinal)*100:0;
-  state.historico.push({ etapa:state.etapaAtual, dataCalendario:new Date().toISOString().split('T')[0], data:new Date().toLocaleTimeString('pt-BR'), lucro:lucro, bancaPos:state.bancaAtual, pct:pctEtapa });
-  state.resultadosReaisGrafico.push(state.bancaAtual);
-  state.bancaInicioEtapa=state.bancaAtual;
-  state.bancaInicial=state.bancaAtual;
-  state.etapaAtual++;
-  sinalizadoMeta=false; sinalizadoStop=false; state.vitoriasRodadaVoltarInicial=0;
-  state.letrasBloqueadasRodada={};
+  ms().historico.push({ etapa:ms().etapaAtual, dataCalendario:new Date().toISOString().split('T')[0], data:new Date().toLocaleTimeString('pt-BR'), lucro:lucro, bancaPos:ms().bancaAtual, pct:pctEtapa });
+  ms().resultadosReaisGrafico.push(ms().bancaAtual);
+  ms().bancaInicioEtapa=ms().bancaAtual;
+  ms().bancaInicial=ms().bancaAtual;
+  ms().etapaAtual++;
+  sinalizadoMeta=false; sinalizadoStop=false; ms().vitoriasRodadaVoltarInicial=0;
+  ms().letrasBloqueadasRodada={};
   gerarEstruturaLotesIniciais();
   preencherCamposConfig();
 }
 
 function renderLinhas(){
   const tbody=document.getElementById('tabela-linhas-lotes'); if(!tbody) return;
-  let html=''; const total=state.sequencias.length;
+  let html=''; const total=ms().sequencias.length;
   for(let i=0;i<total;i++){
-    const seq=state.sequencias[i];
+    const seq=ms().sequencias[i];
     if(filtroAtualExibicao==='pending'&&seq.status==='FINISHED') continue;
     if(filtroAtualExibicao==='loss'&&seq.perdasAcumuladas===0) continue;
-    const l=seq.letraRandomica; const odd=state.oddsPorLetra[l]||1.80;
+    const l=seq.letraRandomica; const odd=ms().oddsPorLetra[l]||1.80;
     const rowCls=seq.status==='FINISHED'?'row-finished':(seq.perdasAcumuladas>0?'row-loss':'');
     html+=`<tr class="${rowCls}"><td class="t-mono">#${String(seq.id).padStart(3,'0')}</td><td><span class="lote-badge">${l}</span></td><td class="t-mono">@${odd.toFixed(2)}</td><td class="t-mono ${seq.perdasAcumuladas>0?'t-loss':''}">${fmt(seq.perdasAcumuladas)}</td><td class="t-mono"><b>${seq.status==='FINISHED'?fmt(0):fmt(sniperArredondarAposta(seq.apostaAtual))}</b></td><td><span class="t-win">${seq.winsEtapa}</span>/<span class="t-loss">${seq.lossesEtapa}</span></td><td>${seq.status==='FINISHED'?'<span class="status-ok">OK</span>':'<span class="status-pend">Pend</span>'}</td><td><div style="display:flex;gap:3px;"><button class="tbl-btn-win" onclick="registrarApostaIndividual(${i},'WIN',false)">Vit</button><button class="tbl-btn-loss" onclick="registrarApostaIndividual(${i},'LOSS',false)">Der</button><button class="tbl-btn-eq" onclick="distributingRiscoLoteCritico(${i})">⚖️</button></div></td></tr>`;
   }
@@ -936,48 +969,59 @@ function renderLinhas(){
 function renderCards(){
   const container=document.getElementById('container-letras-linhas'); if(!container) return;
   const az="ABCDEFGHIJKLMNOPQRSTUVWXYZ"; let html='';
-  for(let i=0;i<Math.min(state.aleatoriedade,26);i++){
+  for(let i=0;i<Math.min(ms().aleatoriedade,26);i++){
     const l=az[i];
-    const lanc=state.marantanLancamentosRodada?(state.marantanLancamentosRodada[l]||""):"";
-    const nota=state.anotacoesPorLetra[l]||"";
-    const isFixed=state.letrasBloqueadasRodada&&state.letrasBloqueadasRodada[l];
-    const lotesAtivos=state.sequencias.filter(s=>s.letraRandomica===l&&s.status!=='FINISHED').length;
-    const totalAposta=state.sequencias.filter(s=>s.letraRandomica===l&&s.status!=='FINISHED').reduce((a,c)=>a+c.apostaAtual,0);
-    const temPerda=state.sequencias.some(s=>s.letraRandomica===l&&s.status!=='FINISHED'&&s.perdasAcumuladas>0);
-    const totalPerda=state.sequencias.filter(s=>s.letraRandomica===l&&s.status!=='FINISHED').reduce((a,c)=>a+c.perdasAcumuladas,0);
+    const lanc=ms().marantanLancamentosRodada?(ms().marantanLancamentosRodada[l]||""):"";
+    const nota=ms().anotacoesPorLetra[l]||"";
+    const isFixed=ms().letrasBloqueadasRodada&&ms().letrasBloqueadasRodada[l];
+    const lotesAtivos=ms().sequencias.filter(s=>s.letraRandomica===l&&s.status!=='FINISHED').length;
+    const totalAposta=ms().sequencias.filter(s=>s.letraRandomica===l&&s.status!=='FINISHED').reduce((a,c)=>a+c.apostaAtual,0);
+    const temPerda=ms().sequencias.some(s=>s.letraRandomica===l&&s.status!=='FINISHED'&&s.perdasAcumuladas>0);
+    const totalPerda=ms().sequencias.filter(s=>s.letraRandomica===l&&s.status!=='FINISHED').reduce((a,c)=>a+c.perdasAcumuladas,0);
     const allFinished=lotesAtivos===0;
+    const totalWinsLetra=ms().sequencias.filter(s=>s.letraRandomica===l).reduce((a,c)=>a+c.winsEtapa,0);
+    const totalLossLetra=ms().sequencias.filter(s=>s.letraRandomica===l).reduce((a,c)=>a+c.lossesEtapa,0);
 
-    let linhaCls='letra-linha';
-    if(isFixed) linhaCls+=' is-locked';
-    else if(allFinished) linhaCls+=' is-finished';
-    else if(temPerda) linhaCls+=' has-loss';
-    if(lanc!==''&&!isFixed) linhaCls+=' is-done';
+    let cardCls='letra-card';
+    if(isFixed) cardCls+=' is-locked';
+    else if(allFinished) cardCls+=' is-finished';
+    else if(temPerda) cardCls+=' has-loss';
+    if(lanc!==''&&!isFixed) cardCls+=' is-done';
 
-    let badgeCls='ll-badge';
+    let badgeCls='letra-badge';
     if(isFixed) badgeCls+=' locked';
     else if(allFinished) badgeCls+=' ok';
     else if(temPerda) badgeCls+=' loss';
 
-    const valorTxt=allFinished?'Finalizado':fmt(totalAposta);
-    const valorCls=allFinished?'ll-valor ok':'ll-valor';
-    const metaTxt=temPerda?`Risco: <span class="risk">${fmt(totalPerda)}</span>`:(nota?nota:`${lotesAtivos} lotes`);
-    const lockCls=isFixed?'ll-lock locked':'ll-lock';
-    const lockTxt=isFixed?'📌':'📌';
+    let pillHtml='';
+    if(isFixed) pillHtml=`<span class="card-pill pill-locked">FIXO</span>`;
+    else if(allFinished) pillHtml=`<span class="card-pill pill-ok">OK</span>`;
+    else if(lanc==='WIN') pillHtml=`<span class="card-pill pill-win-done">VIT</span>`;
+    else if(lanc==='LOSS') pillHtml=`<span class="card-pill pill-loss-done">RED</span>`;
+    else pillHtml=`<span class="card-pill pill-neutral">${lotesAtivos}L</span>`;
 
-    const totalWinsLetra=state.sequencias.filter(s=>s.letraRandomica===l).reduce((a,c)=>a+c.winsEtapa,0);
-    const totalLossLetra=state.sequencias.filter(s=>s.letraRandomica===l).reduce((a,c)=>a+c.lossesEtapa,0);
-    const placar=`<span style="color:var(--win);font-weight:700;">A=${totalWinsLetra}</span><span style="color:var(--muted);"> · </span><span style="color:var(--loss);font-weight:700;">E=${totalLossLetra}</span>`;
-    html+=`<div class="${linhaCls}">
-      <div class="${badgeCls}">${l}</div>
-      <div class="ll-info">
-        <div class="${valorCls}">${valorTxt}</div>
-        <div class="ll-meta">${metaTxt}</div>
+    const amountCls=allFinished?'card-amount ok':'card-amount';
+    const amountTxt=allFinished?'Finalizado':fmt(totalAposta);
+    const metaNota=nota?`<span style="color:var(--muted);">${nota}</span> `:''; const metaTxt=metaNota+(temPerda?`<span class="risk">↓${fmt(totalPerda)}</span>`:`<span>${lotesAtivos}L</span>`);
+    const lockCls=isFixed?'ll-lock locked':'ll-lock';
+    const checked=isFixed?'checked':'';
+
+    html+=`<div class="${cardCls}">
+      <div class="card-top"><div class="${badgeCls}">${l}</div>${pillHtml}</div>
+      <div class="${amountCls}">${amountTxt}</div>
+      <div class="card-meta">${metaTxt}</div>
+      <div style="font-size:10px; font-family:var(--mono); margin-top:1px;">
+        <span style="color:var(--win);font-weight:700;">A=${totalWinsLetra}</span>
+        <span style="color:var(--muted);"> · </span>
+        <span style="color:var(--loss);font-weight:700;">E=${totalLossLetra}</span>
       </div>
-      <div class="ll-placar">${placar}</div>
-      <div class="ll-btns">
-        <button class="ll-btn-win" onclick="executarAcaoEmMassaCard('${l}','WIN')">V</button>
-        <button class="ll-btn-loss" onclick="executarAcaoEmMassaCard('${l}','LOSS')">D</button>
-        <button class="${lockCls}" onclick="toggleLockBtn('${l}',this)" title="Fixar na Rotação">${lockTxt}</button>
+      <div class="card-btns">
+        <button class="btn-win" onclick="executarAcaoEmMassaCard('${l}','WIN')">V</button>
+        <button class="btn-loss" onclick="executarAcaoEmMassaCard('${l}','LOSS')">D</button>
+      </div>
+      <div class="lock-row">
+        <span class="lock-label">📌 Fixar</span>
+        <label class="switch"><input type="checkbox" ${checked} onchange="toggleLockChaveSeletora('${l}',this)"><span class="slider"></span></label>
       </div>
     </div>`;
   }
@@ -985,34 +1029,34 @@ function renderCards(){
 }
 
 function toggleLockBtn(letra, el){
-  if(!state.letrasBloqueadasRodada) state.letrasBloqueadasRodada={};
-  state.letrasBloqueadasRodada[letra]=!state.letrasBloqueadasRodada[letra];
+  if(!ms().letrasBloqueadasRodada) ms().letrasBloqueadasRodada={};
+  ms().letrasBloqueadasRodada[letra]=!ms().letrasBloqueadasRodada[letra];
   salvarDadosEAtualizarTudo();
 }
 
 function preencherCamposConfig(){
   document.getElementById('cfg-banco-capital').value=(state.bancoCapital||0).toFixed(2);
-  document.getElementById('cfg-banca-capital').value=state.bancaAtual.toFixed(2);
-  document.getElementById('cfg-meta').value=state.metaPercent;
-  document.getElementById('cfg-stoploss').value=state.stopLossPercent;
-  document.getElementById('cfg-aposta-base-pct').value=state.apostaBasePercent;
-  document.getElementById('cfg-lote').value=state.loteQtd||500;
-  document.getElementById('cfg-aleatoriedade').value=state.aleatoriedade;
-  document.getElementById('cfg-data-inicio').value=state.dataInicioCiclo||hojeISO;
-  document.getElementById('cfg-modo-distribuicao').value=state.modoDistribuicao||"PROPORCIONAL";
+  document.getElementById('cfg-banca-capital').value=ms().bancaAtual.toFixed(2);
+  document.getElementById('cfg-meta').value=ms().metaPercent;
+  document.getElementById('cfg-stoploss').value=ms().stopLossPercent;
+  document.getElementById('cfg-aposta-base-pct').value=ms().apostaBasePercent;
+  document.getElementById('cfg-lote').value=ms().loteQtd||500;
+  document.getElementById('cfg-aleatoriedade').value=ms().aleatoriedade;
+  document.getElementById('cfg-data-inicio').value=ms().dataInicioCiclo||hojeISO;
+  document.getElementById('cfg-modo-distribuicao').value=ms().modoDistribuicao||"PROPORCIONAL";
   document.getElementById('cfg-sheets-url').value=state.sheetsUrl||"";
   calcularSomaCapitalGeralUI();
 }
 
-function alternarModoPosWin(){ state.modoPosWin=state.modoPosWin==="BLINDAR"?"RESETAR":"BLINDAR"; salvarDadosEAtualizarTudo(); }
-function atualizarBotaoModoUI(){ const btn=document.getElementById('btn-toggle-modo-pos-win'); if(!btn) return; btn.className="btn-modo "+(state.modoPosWin==="BLINDAR"?"blindar":"resetar"); btn.innerText=state.modoPosWin==="BLINDAR"?"🔒 Pós-Win: Blindar":"🔄 Pós-Win: Resetar"; }
-function atualizarLayoutContadoresPorModo(){ const r=document.getElementById('wrapper-contador-resetar'); if(!r) return; if(state.modoPosWin==="BLINDAR"){ r.style.display='none'; }else{ r.style.display='block'; document.getElementById('lbl-vitorias-resetar-contador').innerText=state.vitoriasRodadaVoltarInicial; } }
+function alternarModoPosWin(){ ms().modoPosWin=ms().modoPosWin==="BLINDAR"?"RESETAR":"BLINDAR"; salvarDadosEAtualizarTudo(); }
+function atualizarBotaoModoUI(){ const btn=document.getElementById('btn-toggle-modo-pos-win'); if(!btn) return; btn.className="btn-modo "+(ms().modoPosWin==="BLINDAR"?"blindar":"resetar"); btn.innerText=ms().modoPosWin==="BLINDAR"?"🔒 Pós-Win: Blindar":"🔄 Pós-Win: Resetar"; }
+function atualizarLayoutContadoresPorModo(){ const r=document.getElementById('wrapper-contador-resetar'); if(!r) return; if(ms().modoPosWin==="BLINDAR"){ r.style.display='none'; }else{ r.style.display='block'; document.getElementById('lbl-vitorias-resetar-contador').innerText=ms().vitoriasRodadaVoltarInicial; } }
 
 function renderHistorico(){
   const container=document.getElementById('hist-list-container'); if(!container) return;
-  if(!state.historico||state.historico.length===0){ container.innerHTML='<div style="padding:24px;text-align:center;color:var(--muted);font-size:13px;">Nenhuma etapa concluída ainda.</div>'; return; }
+  if(!ms().historico||ms().historico.length===0){ container.innerHTML='<div style="padding:24px;text-align:center;color:var(--muted);font-size:13px;">Nenhuma etapa concluída ainda.</div>'; return; }
   let html='';
-  state.historico.forEach((h,idx)=>{
+  ms().historico.forEach((h,idx)=>{
     const cor=h.lucro>=0?'var(--win)':'var(--loss)';
     html+=`<div class="hist-row">
       <div class="hist-left">
@@ -1034,62 +1078,61 @@ function renderizarGrafico(){
   const canvas=document.getElementById('meuGrafico'); if(!canvas) return;
   const ctx=canvas.getContext('2d');
   const textColor='#8B949E'; const gridColor='#21262D';
-  let pts=[...state.resultadosReaisGrafico]; let labels=[];
-  if(state.chartMode==='ETAPA'){ labels=pts.map((_,i)=>i===0?'Início':'E'+i); }
-  else{ let base=new Date(state.dataInicioCiclo+'T00:00:00'); labels=pts.map((_,i)=>{ let d=new Date(base); d.setDate(d.getDate()+i); return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}); }); }
+  let pts=[...ms().resultadosReaisGrafico]; let labels=[];
+  if(ms().chartMode==='ETAPA'){ labels=pts.map((_,i)=>i===0?'Início':'E'+i); }
+  else{ let base=new Date(ms().dataInicioCiclo+'T00:00:00'); labels=pts.map((_,i)=>{ let d=new Date(base); d.setDate(d.getDate()+i); return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}); }); }
   const max=parseInt(document.getElementById('input-etapas').value)||150;
   if(pts.length<max){
-    let last=pts[pts.length-1]; let fc=1+(state.metaPercent/100); let idx=pts.length;
+    let last=pts[pts.length-1]; let fc=1+(ms().metaPercent/100); let idx=pts.length;
     while(idx<=max){
       last=last*fc; pts.push(last);
-      if(state.chartMode==='ETAPA') labels.push('P'+idx);
-      else{ let d=new Date(state.dataInicioCiclo+'T00:00:00'); d.setDate(d.getDate()+idx); labels.push(d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})); }
+      if(ms().chartMode==='ETAPA') labels.push('P'+idx);
+      else{ let d=new Date(ms().dataInicioCiclo+'T00:00:00'); d.setDate(d.getDate()+idx); labels.push(d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})); }
       idx++;
     }
   }
   if(chartInstance) chartInstance.destroy();
   chartInstance=new Chart(ctx,{
     type:'line',
-    data:{ labels:labels, datasets:[{ label:'Banca (R$)', data:pts, borderColor:'#2D7FF9', borderWidth:2, pointRadius:pts.map((_,i)=>i<state.resultadosReaisGrafico.length?3:0), pointBackgroundColor:'#2D7FF9', fill:false, tension:0.15 }] },
+    data:{ labels:labels, datasets:[{ label:'Banca (R$)', data:pts, borderColor:'#2D7FF9', borderWidth:2, pointRadius:pts.map((_,i)=>i<ms().resultadosReaisGrafico.length?3:0), pointBackgroundColor:'#2D7FF9', fill:false, tension:0.15 }] },
     options:{ responsive:true, maintainAspectRatio:true, plugins:{ legend:{ labels:{ color:textColor, font:{ size:11, weight:'bold' } } } }, scales:{ x:{ ticks:{ color:textColor, maxTicksLimit:10, font:{size:10} }, grid:{ color:gridColor } }, y:{ ticks:{ color:textColor, font:{size:10}, callback:(v)=>'R$'+v.toLocaleString('pt-BR',{maximumFractionDigits:0}) }, grid:{ color:gridColor } } } }
   });
 }
 
 function atualizarPainelUI(forcarGrafico=false){
   const banco=parseFloat(state.bancoCapital)||0;
-  const capitalGlobal=state.bancaAtual+banco;
-  // Meta calculada sobre capital global (banca + banco)
-  const baseEtapa=state.bancaInicioEtapa+banco;
-  const metaVal=baseEtapa*(1+state.metaPercent/100);
-  const stopVal=state.bancaInicioEtapa*(1-state.stopLossPercent/100);
-  const lucroEtapa=state.bancaAtual-state.bancaInicioEtapa;
+  const capitalGlobal=ms().bancaAtual+banco;
+  const baseEtapa=ms().bancaInicioEtapa+banco;
+  const metaVal=baseEtapa*(1+ms().metaPercent/100);
+  const stopVal=ms().bancaInicioEtapa*(1-ms().stopLossPercent/100);
+  const lucroEtapa=ms().bancaAtual-ms().bancaInicioEtapa;
   const lucroNecessario=metaVal-baseEtapa;
-  if(!state.resultadosReaisGrafico||state.resultadosReaisGrafico.length===0) state.resultadosReaisGrafico=[state.bancaInicial];
+  if(!ms().resultadosReaisGrafico||ms().resultadosReaisGrafico.length===0) ms().resultadosReaisGrafico=[ms().bancaInicial];
 
-  const lucroTotal=state.bancaAtual-state.resultadosReaisGrafico[0];
+  const lucroTotal=ms().bancaAtual-ms().resultadosReaisGrafico[0];
   const el=(id,v)=>{ const e=document.getElementById(id); if(e) e.innerText=v; };
 
-  // Capital Global — destaque principal
   el('kpi-global', fmt(capitalGlobal));
-  el('kpi-global-sub', 'Banca: '+fmt(state.bancaAtual)+' · Banco: '+fmt(banco));
+  el('kpi-global-sub', 'Banca: '+fmt(ms().bancaAtual)+' · Banco: '+fmt(banco));
 
-  // Lucro global
   const lucroEl=document.getElementById('kpi-lucro');
   if(lucroEl){ lucroEl.innerText=fmt(lucroTotal); lucroEl.className='kpi-val '+(lucroTotal>=0?'pos':'neg'); }
 
-  el('kpi-banca',fmt(state.bancaAtual));
+  el('kpi-banca',fmt(ms().bancaAtual));
   el('kpi-banco-sub','Banco: '+fmt(banco));
   el('kpi-meta',fmt(metaVal));
-  el('kpi-meta-sub','+'+state.metaPercent+'% sobre capital global');
+  el('kpi-meta-sub','+'+ms().metaPercent+'% sobre capital global');
   el('kpi-stoploss',fmt(stopVal));
-  el('kpi-stop-sub','-'+state.stopLossPercent+'% da etapa');
-  el('hdr-etapa','#'+state.etapaAtual);
-  el('lbl-etapa-num','#'+state.etapaAtual);
+  el('kpi-stop-sub','-'+ms().stopLossPercent+'% da etapa');
+  el('hdr-etapa','#'+ms().etapaAtual);
+  el('lbl-etapa-num','#'+ms().etapaAtual);
   el('lbl-lucro-etapa',fmt(lucroEtapa));
-  el('lbl-lotes-win',state.sequencias.filter(s=>s.status==='FINISHED').length);
-  el('lbl-lotes-loss',state.sequencias.filter(s=>s.status!=='FINISHED').length);
+  el('lbl-lotes-win',ms().sequencias.filter(s=>s.status==='FINISHED').length);
+  el('lbl-lotes-loss',ms().sequencias.filter(s=>s.status!=='FINISHED').length);
 
-  // Progresso detalhado
+  // Label do modo no chip de etapa
+  const chip=document.getElementById('hdr-etapa'); if(chip) chip.parentElement.title=modoAtivo.toUpperCase();
+
   el('progresso-inicial',fmt(baseEtapa));
   el('progresso-meta-fixa-dinamica',fmt(metaVal));
   el('progresso-lucro-necessario',fmt(lucroNecessario));
@@ -1102,7 +1145,7 @@ function atualizarPainelUI(forcarGrafico=false){
   const bar=document.getElementById('progresso-bar'); if(bar) bar.style.width=Math.min(100,pct)+'%';
 
   if(pct>=100&&!sinalizadoMeta){ sinalizadoMeta=true; document.getElementById('modal-meta').style.display='flex'; }
-  if(state.bancaAtual<=stopVal&&!sinalizadoStop){ sinalizadoStop=true; document.getElementById('modal-stop').style.display='flex'; }
+  if(ms().bancaAtual<=stopVal&&!sinalizadoStop){ sinalizadoStop=true; document.getElementById('modal-stop').style.display='flex'; }
 
   renderLinhas(); renderCards(); renderHistorico(); atualizarBotaoModoUI(); atualizarLayoutContadoresPorModo();
   if(document.getElementById('grafico')&&document.getElementById('grafico').classList.contains('active')) renderizarGrafico();
