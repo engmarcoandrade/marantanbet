@@ -44,7 +44,7 @@ body.light-mode {
 }
 * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 html, body { height:100%; }
-body { font-family: var(--sans); background: var(--bg); color: var(--text); font-size:14px; line-height:1.4; overflow-x:hidden; padding-bottom:calc(100px + env(safe-area-inset-bottom)); }
+body { font-family: var(--sans); background: var(--bg); color: var(--text); font-size:14px; line-height:1.4; overflow-x:hidden; padding-bottom:16px; padding-top:calc(110px + env(safe-area-inset-top)); }
 
 /* ── MODAIS ── */
 .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:1000; align-items:center; justify-content:center; padding:20px; }
@@ -70,7 +70,7 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); font
 .toast-fill { width:0%; height:100%; background:var(--accent); border-radius:2px; transition:width .1s; }
 
 /* ── HEADER ── */
-header { background:var(--surface); border-bottom:1px solid var(--border); padding:12px 16px; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; z-index:100; gap:8px; }
+header { background:var(--surface); border-bottom:1px solid var(--border); padding:8px 16px; display:flex; justify-content:space-between; align-items:center; position:fixed; top:0; left:0; right:0; z-index:200; gap:8px; padding-top:calc(8px + env(safe-area-inset-top)); }
 .app-logo { font-family:var(--mono); font-size:15px; font-weight:700; color:var(--text); letter-spacing:.04em; }
 .app-logo span { color:var(--accent); }
 .etapa-chip { background:var(--surface2); border:1px solid var(--border); border-radius:20px; padding:4px 12px; font-size:12px; font-weight:600; color:var(--muted); }
@@ -85,8 +85,8 @@ header { background:var(--surface); border-bottom:1px solid var(--border); paddi
 .hdr-btn.danger { color:var(--loss); border-color:var(--loss-border); }
 
 /* ── BOTTOM NAV ── */
-.bottom-nav { position:fixed; bottom:0; left:0; right:0; background:var(--surface); border-top:1px solid var(--border); display:flex; z-index:100; padding-bottom:env(safe-area-inset-bottom); }
-.nav-item { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:10px 4px 8px; cursor:pointer; border:none; background:transparent; color:var(--muted); font-family:var(--sans); }
+.bottom-nav { position:fixed; top:calc(48px + 30px + env(safe-area-inset-top)); left:0; right:0; background:var(--surface); border-bottom:1px solid var(--border); display:flex; z-index:199; }
+.nav-item { flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; padding:7px 4px 6px; cursor:pointer; border:none; background:transparent; color:var(--muted); font-family:var(--sans); }
 .nav-icon { font-size:20px; line-height:1; }
 .nav-label { font-size:10px; font-weight:600; }
 .nav-item.active { color:var(--accent); }
@@ -263,7 +263,7 @@ tbody tr:last-child td { border-bottom:none; }
 .chart-num-input { background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text); font-family:var(--mono); font-size:12px; padding:5px 8px; outline:none; width:60px; }
 
 /* ── SHEETS STATUS ── */
-.sheets-bar { display:flex; align-items:center; gap:6px; padding:6px 16px; background:var(--surface2); border-bottom:1px solid var(--border); font-size:11px; }
+.sheets-bar { display:flex; align-items:center; gap:6px; padding:6px 16px; background:var(--surface2); border-bottom:1px solid var(--border); font-size:11px; position:fixed; top:calc(48px + env(safe-area-inset-top)); left:0; right:0; z-index:198; }
 .sheets-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
 .dot-on { background:var(--win); }
 .dot-sync { background:#F0A500; }
@@ -798,7 +798,7 @@ function openTab(tabId){
   if(tabId==='config') preencherScriptBox();
 }
 
-function getValorApostaBase(){ return ms().bancaAtual*(ms().apostaBasePercent/100); }
+function getValorApostaBase(){ const capitalTotal=ms().bancaAtual+(parseFloat(state.bancoCapital)||0); return capitalTotal*(ms().apostaBasePercent/100); }
 function obterTodasLetrasConfiguradas(){ const n=Math.min(ms().aleatoriedade||6,26); const az="ABCDEFGHIJKLMNOPQRSTUVWXYZ"; let l=[]; for(let i=0;i<n;i++) l.push(az[i]); return l; }
 function calcularSomaCapitalGeralUI(){ const b=parseFloat(document.getElementById('cfg-banco-capital').value)||0; const c=parseFloat(document.getElementById('cfg-banca-capital').value)||0; document.getElementById('cfg-banca-total-disabled').value=(b+c).toFixed(2); }
 
