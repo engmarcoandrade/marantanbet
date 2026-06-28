@@ -512,7 +512,7 @@ tbody tr:last-child td { border-bottom:none; }
         <div class="form-group"><label class="cfg-label">Stop Loss (%)</label><input type="number" id="cfg-stoploss" class="cfg-input" value="15.0"></div>
       </div>
       <div class="form-row2">
-        <div class="form-group"><label class="cfg-label">Aposta Base (%)</label><input type="number" id="cfg-aposta-base-pct" class="cfg-input" step="0.001" value="0.01"></div>
+        <div class="form-group"><label class="cfg-label">Meta Base por Letra (%)</label><input type="number" id="cfg-aposta-base-pct" class="cfg-input" step="0.001" value="1.0"></div>
         <div class="form-group"><label class="cfg-label">Qtd. Lotes</label><input type="number" id="cfg-lote" class="cfg-input" value="500"></div>
       </div>
       <div class="form-group">
@@ -814,13 +814,12 @@ function openTab(tabId){
   if(tabId==='config') preencherScriptBox();
 }
 
-function getValorApostaBase(){ const capitalTotal=ms().bancaAtual+(parseFloat(state.bancoCapital)||0); return capitalTotal*(ms().apostaBasePercent/100); }
+function getValorApostaBase(odd){ const capitalTotal=ms().bancaAtual+(parseFloat(state.bancoCapital)||0); const lucroDesejado=capitalTotal*(ms().apostaBasePercent/100); return lucroDesejado/((odd||2)-1); }
 function obterTodasLetrasConfiguradas(){ const n=Math.min(ms().aleatoriedade||6,26); const az="ABCDEFGHIJKLMNOPQRSTUVWXYZ"; let l=[]; for(let i=0;i<n;i++) l.push(az[i]); return l; }
 function calcularSomaCapitalGeralUI(){ const b=parseFloat(document.getElementById('cfg-banco-capital').value)||0; const c=parseFloat(document.getElementById('cfg-banca-capital').value)||0; document.getElementById('cfg-banca-total-disabled').value=(b+c).toFixed(2); }
 
 function gerarEstruturaLotesIniciais(){
   const total=parseInt(ms().loteQtd)||500;
-  const apostaBase=getValorApostaBase();
   const letras=obterTodasLetrasConfiguradas();
   let cotas={}; let dist=0;
   if(ms().modoDistribuicao==="LINEAR"){
@@ -863,6 +862,8 @@ function confirmarEncerramentoRodadaReal(){
     for(let i=livresLetras.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [livresLetras[i],livresLetras[j]]=[livresLetras[j],livresLetras[i]]; }
     livresIdx.forEach((si,ai)=>{ ms().sequencias[si].letraRandomica=livresLetras[ai]; });
   }
+  // Recalcular aposta base de lotes sem perda com nova letra/odd
+  ms().sequencias.forEach(s=>{ if(s.status==='PENDING'&&s.perdasAcumuladas===0){ const odd=ms().oddsPorLetra[s.letraRandomica]||2; s.apostaAtual=getValorApostaBase(odd); } });
   salvarDadosEAtualizarTudo();
 }
 
@@ -923,9 +924,9 @@ function roundedFixo(val){ return val; }
 function registrarApostaIndividual(index,resultado,emMassa=false){
   if(index<0||index>=ms().sequencias.length) return;
   const seq=ms().sequencias[index]; if(seq.status==='FINISHED') return;
-  const val=sniperArredondarAposta(seq.apostaAtual); const l=seq.letraRandomica; const odd=ms().oddsPorLetra[l]||1.80;
-  if(resultado==='WIN'){ seq.winsEtapa++; ms().bancaAtual+=(val*(odd-1)); seq.perdasAcumuladas=0; seq.apostaAtual=getValorApostaBase(); seq.status=ms().modoPosWin==="BLINDAR"?"FINISHED":"PENDING"; ms().vitoriasRodadaVoltarInicial++; }
-  else{ seq.lossesEtapa++; ms().bancaAtual-=val; seq.perdasAcumuladas+=val; seq.apostaAtual=(seq.perdasAcumuladas+getValorApostaBase())/(odd-1); }
+  const val=sniperArredondarAposta(seq.apostaAtual); const l=seq.letraRandomica; const odd=ms().oddsPorLetra[l]||2;
+  if(resultado==='WIN'){ seq.winsEtapa++; ms().bancaAtual+=(val*(odd-1)); seq.perdasAcumuladas=0; seq.apostaAtual=getValorApostaBase(odd); seq.status=ms().modoPosWin==="BLINDAR"?"FINISHED":"PENDING"; ms().vitoriasRodadaVoltarInicial++; }
+  else{ seq.lossesEtapa++; ms().bancaAtual-=val; seq.perdasAcumuladas+=val; seq.apostaAtual=(seq.perdasAcumuladas+getValorApostaBase(odd))/(odd-1); }
   if(!emMassa){
     if(ms().marantanLancamentosRodada) ms().marantanLancamentosRodada[l]=resultado;
     renderCards(); atualizarPainelUI(false);
@@ -937,9 +938,9 @@ function executarAcaoEmMassaCard(letraAlvo,resultado){
   const lu=letraAlvo.toUpperCase(); let ok=false; let vits=0;
   ms().sequencias.forEach(seq=>{
     if(seq.letraRandomica===lu&&seq.status!=='FINISHED'){
-      const val=sniperArredondarAposta(seq.apostaAtual); const odd=ms().oddsPorLetra[lu]||1.80;
-      if(resultado==='WIN'){ seq.winsEtapa++; ms().bancaAtual+=(val*(odd-1)); seq.perdasAcumuladas=0; seq.apostaAtual=getValorApostaBase(); seq.status=ms().modoPosWin==="BLINDAR"?"FINISHED":"PENDING"; vits++; }
-      else{ seq.lossesEtapa++; ms().bancaAtual-=val; seq.perdasAcumuladas+=val; seq.apostaAtual=(seq.perdasAcumuladas+getValorApostaBase())/(odd-1); }
+      const val=sniperArredondarAposta(seq.apostaAtual); const odd=ms().oddsPorLetra[lu]||2;
+      if(resultado==='WIN'){ seq.winsEtapa++; ms().bancaAtual+=(val*(odd-1)); seq.perdasAcumuladas=0; seq.apostaAtual=getValorApostaBase(odd); seq.status=ms().modoPosWin==="BLINDAR"?"FINISHED":"PENDING"; vits++; }
+      else{ seq.lossesEtapa++; ms().bancaAtual-=val; seq.perdasAcumuladas+=val; seq.apostaAtual=(seq.perdasAcumuladas+getValorApostaBase(odd))/(odd-1); }
       ok=true;
     }
   });
@@ -957,8 +958,8 @@ function distributingRiscoLoteCritico(indexAlvo){
   const outros=ms().sequencias.filter((s,i)=>s.status==='PENDING'&&i!==indexAlvo);
   if(outros.length===0||lc.perdasAcumuladas<=0){ alert("⚠️ Não há outros lotes disponíveis para receber o risco."); return; }
   if(confirm("⚖️ Diluir o risco acumulado entre os outros lotes ativos?")){
-    const frac=lc.perdasAcumuladas/outros.length; lc.perdasAcumuladas=0; lc.apostaAtual=getValorApostaBase();
-    ms().sequencias.forEach(seq=>{ if(seq.status==='PENDING'&&seq.id!==lc.id){ seq.perdasAcumuladas=roundedFixo(seq.perdasAcumuladas+frac); const odd=ms().oddsPorLetra[seq.letraRandomica]||1.80; seq.apostaAtual=(seq.perdasAcumuladas+getValorApostaBase())/(odd-1); } });
+    const frac=lc.perdasAcumuladas/outros.length; const oddLc=ms().oddsPorLetra[lc.letraRandomica]||2; lc.perdasAcumuladas=0; lc.apostaAtual=getValorApostaBase(oddLc);
+    ms().sequencias.forEach(seq=>{ if(seq.status==='PENDING'&&seq.id!==lc.id){ seq.perdasAcumuladas=roundedFixo(seq.perdasAcumuladas+frac); const odd=ms().oddsPorLetra[seq.letraRandomica]||2; seq.apostaAtual=(seq.perdasAcumuladas+getValorApostaBase(odd))/(odd-1); } });
     dispararAnimacaoToastLotes(()=>{ salvarDadosEAtualizarTudo(); });
   }
 }
