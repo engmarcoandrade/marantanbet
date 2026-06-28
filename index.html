@@ -423,6 +423,10 @@ tbody tr:last-child td { border-bottom:none; }
         </div>
       </div>
     </div>
+  <button id="btn-salvar-sheets" onclick="salvarManualSheets()" style="width:100%; padding:12px; background:var(--accent-dim); border:1px solid var(--accent-border); border-radius:var(--radius); color:var(--accent); font-size:14px; font-weight:700; cursor:pointer; font-family:var(--sans); margin-top:4px; display:flex; align-items:center; justify-content:center; gap:8px;">
+    ☁️ Salvar no Sheets agora
+  </button>
+
   </div>
 
   <!-- ABA: OPERACIONAL -->
@@ -696,6 +700,17 @@ async function salvarNaNuvem(sincrona=false){
 
 function agendarSalvarNuvem(){ if(sheetsTimeout) clearTimeout(sheetsTimeout); sheetsTimeout=setTimeout(()=>{ salvarNaNuvem(); },2500); }
 async function forcarSalvamentoSheets(){ if(sheetsTimeout) clearTimeout(sheetsTimeout); await salvarNaNuvem(); alert("✅ Sincronizado!"); }
+
+async function salvarManualSheets(){
+  const btn = document.getElementById('btn-salvar-sheets');
+  if(btn){ btn.innerText = '⏳ Salvando...'; btn.disabled = true; }
+  if(sheetsTimeout) clearTimeout(sheetsTimeout);
+  await salvarNaNuvem();
+  if(btn){ btn.innerHTML = '✅ Salvo!'; btn.style.background='var(--win-dim)'; btn.style.borderColor='var(--win-border)'; btn.style.color='var(--win)'; }
+  setTimeout(()=>{
+    if(btn){ btn.innerHTML = '☁️ Salvar no Sheets agora'; btn.style.background='var(--accent-dim)'; btn.style.borderColor='var(--accent-border)'; btn.style.color='var(--accent)'; btn.disabled=false; }
+  }, 2500);
+}
 
 function aplicarBlindagemDeVariaveis(){
   if(!state||typeof state!=='object') state=JSON.parse(JSON.stringify(DEFAULT_STATE));
