@@ -834,7 +834,7 @@ function gerarEstruturaLotesIniciais(){
   letras.forEach(l=>{ for(let k=0;k<cotas[l];k++) pool.push(l); });
   while(pool.length<total) pool.push(letras[0]);
   if(pool.length>total) pool=pool.slice(0,total);
-  ms().sequencias=Array.from({length:total},(_,i)=>({ id:i+1, apostaAtual:apostaBase, streakLoss:0, letraRandomica:pool[i], winsEtapa:0, lossesEtapa:0, perdasAcumuladas:0, status:"PENDING" }));
+  const seqs=Array.from({length:total},(_,i)=>{ const l=pool[i]; const o=ms().oddsPorLetra[l]||2; return { id:i+1, apostaAtual:getValorApostaBase(o), streakLoss:0, letraRandomica:l, winsEtapa:0, lossesEtapa:0, perdasAcumuladas:0, status:'PENDING' }; }); ms().sequencias=seqs;
   ms().marantanLancamentosRodada={};
   ms().letrasBloqueadasRodada={};
   salvarDadosEAtualizarTudo();
