@@ -623,18 +623,21 @@ function alternarTema(){
 let SHEETS_URL_MEMORIA = "https://script.google.com/macros/s/AKfycbx0oGZJBlmosWEoGoH1_tXsul_51XAXN6BkQkUGrbtkJPdgEZWia_05UmV0fn2WtUj0/exec";
 
 const DEFAULT_MODO = {
-  bancaInicial:100.00, bancaAtual:100.00, bancaInicioEtapa:100.00, etapaAtual:1,
-  metaPercent:5.0, stopLossPercent:15.0, apostaBasePercent:0.01, loteQtd:500, aleatoriedade:6,
+  etapaAtual:1,
+  metaPercent:5.0, stopLossPercent:15.0, apostaBasePercent:1.0, loteQtd:500, aleatoriedade:6,
   dataInicioCiclo:hojeISO, chartMode:"DATA",
   oddsPorLetra:{"A":1.80,"B":1.80,"C":1.80,"D":1.80,"E":1.80,"F":1.80},
   anotacoesPorLetra:{"A":"","B":"","C":"","D":"","E":"","F":""},
   letrasBloqueadasRodada:{},
   modoPosWin:"BLINDAR", modoDistribuicao:"PROPORCIONAL", marantanLancamentosRodada:{},
-  sequencias:[], historico:[], resultadosReaisGrafico:[100.00], vitoriasRodadaVoltarInicial:0
+  sequencias:[], historico:[], vitoriasRodadaVoltarInicial:0
 };
 
 const DEFAULT_STATE = {
   bancoCapital:0.00, sheetsUrl:"", ultimoTimestampSinc:0,
+  // Plataforma é COMPARTILHADA entre Real e Virtual — é o mesmo dinheiro
+  bancaInicial:100.00, bancaAtual:100.00, bancaInicioEtapa:100.00,
+  resultadosReaisGrafico:[100.00],
   real: JSON.parse(JSON.stringify(DEFAULT_MODO)),
   virtual: JSON.parse(JSON.stringify(DEFAULT_MODO))
 };
@@ -717,6 +720,11 @@ function aplicarBlindagemDeVariaveis(){
   if(state.bancoCapital===undefined) state.bancoCapital=0.00;
   if(!state.ultimoTimestampSinc) state.ultimoTimestampSinc=0;
   if(!state.sheetsUrl) state.sheetsUrl="";
+  // Plataforma compartilhada — nível state, não por modo
+  if(state.bancaAtual===undefined) state.bancaAtual=100.00;
+  if(state.bancaInicial===undefined) state.bancaInicial=state.bancaAtual;
+  if(state.bancaInicioEtapa===undefined) state.bancaInicioEtapa=state.bancaAtual;
+  if(!state.resultadosReaisGrafico||state.resultadosReaisGrafico.length===0) state.resultadosReaisGrafico=[state.bancaInicial];
   // Garantir que ambos os modos existam
   ['real','virtual'].forEach(modo=>{
     if(!state[modo]) state[modo]=JSON.parse(JSON.stringify(DEFAULT_MODO));
@@ -729,11 +737,11 @@ function aplicarBlindagemDeVariaveis(){
     if(!m.modoDistribuicao) m.modoDistribuicao="PROPORCIONAL";
     if(!m.dataInicioCiclo) m.dataInicioCiclo=hojeISO;
     if(!m.historico) m.historico=[];
-    if(!m.resultadosReaisGrafico||m.resultadosReaisGrafico.length===0) m.resultadosReaisGrafico=[m.bancaInicial||100.00];
     if(!m.aleatoriedade) m.aleatoriedade=6;
     if(!m.sequencias) m.sequencias=[];
     if(m.vitoriasRodadaVoltarInicial===undefined) m.vitoriasRodadaVoltarInicial=0;
     if(m.loteQtd===undefined) m.loteQtd=500;
+    if(m.apostaBasePercent===undefined) m.apostaBasePercent=1.0;
   });
 }
 
@@ -814,7 +822,7 @@ function openTab(tabId){
   if(tabId==='config') preencherScriptBox();
 }
 
-function getValorApostaBase(odd){ const capitalTotal=ms().bancaAtual+(parseFloat(state.bancoCapital)||0); const lucroDesejado=capitalTotal*(ms().apostaBasePercent/100); return lucroDesejado/((odd||2)-1); }
+function getValorApostaBase(odd){ const capitalTotal=state.bancaAtual+(parseFloat(state.bancoCapital)||0); const lucroDesejado=capitalTotal*(ms().apostaBasePercent/100); return lucroDesejado/((odd||2)-1); }
 function obterTodasLetrasConfiguradas(){ const n=Math.min(ms().aleatoriedade||6,26); const az="ABCDEFGHIJKLMNOPQRSTUVWXYZ"; let l=[]; for(let i=0;i<n;i++) l.push(az[i]); return l; }
 function calcularSomaCapitalGeralUI(){ const b=parseFloat(document.getElementById('cfg-banco-capital').value)||0; const c=parseFloat(document.getElementById('cfg-banca-capital').value)||0; document.getElementById('cfg-banca-total-disabled').value=(b+c).toFixed(2); }
 
@@ -891,14 +899,14 @@ function salvarDadosEAtualizarTudo(){ state.ultimoTimestampSinc=Date.now(); stat
 function carregarDadosCacheLocal(){ /* sem localStorage — Sheets é a fonte de verdade */ state=JSON.parse(JSON.stringify(DEFAULT_STATE)); aplicarBlindagemDeVariaveis(); }
 
 function reiniciarBancaTotalSistema(){ if(confirm("⚠️ Resetar o sistema inteiro?")){ state=JSON.parse(JSON.stringify(DEFAULT_STATE)); sinalizadoMeta=false; sinalizadoStop=false; gerarEstruturaLotesIniciais(); } }
-function ajustarBancaAtivaExternamente(){ const v=parseFloat(document.getElementById('cfg-banca-capital').value); if(isNaN(v)||v<=0) return; const parcial=ms().bancaAtual-ms().bancaInicioEtapa; ms().bancaInicial=v; ms().bancaInicioEtapa=v; ms().bancaAtual=v+parcial; salvarDadosEAtualizarTudo(); }
+function ajustarBancaAtivaExternamente(){ const v=parseFloat(document.getElementById('cfg-banca-capital').value); if(isNaN(v)||v<=0) return; const parcial=state.bancaAtual-state.bancaInicioEtapa; state.bancaInicial=v; state.bancaInicioEtapa=v; state.bancaAtual=v+parcial; salvarDadosEAtualizarTudo(); }
 function excluirRegistroEtapaHistorico(index){ if(confirm("🗑 Excluir esta etapa do histórico?")){
   const banco=parseFloat(state.bancoCapital)||0;
   ms().historico.splice(index,1); ms().historico.forEach((h,i)=>{ h.etapa=i+1; }); ms().etapaAtual=ms().historico.length+1;
-  let totalInicial=(ms().bancaInicial||0)+banco; let pts=[totalInicial];
+  let totalInicial=(state.bancaInicial||0)+banco; let pts=[totalInicial];
   ms().historico.forEach(item=>{ totalInicial+=item.lucro; item.totalPos=totalInicial; item.bancaPos=totalInicial-banco; pts.push(totalInicial); });
-  ms().bancaInicioEtapa=totalInicial-banco; ms().bancaAtual=totalInicial-banco;
-  ms().resultadosReaisGrafico=pts; gerarEstruturaLotesIniciais(); salvarDadosEAtualizarTudo();
+  state.bancaInicioEtapa=totalInicial-banco; state.bancaAtual=totalInicial-banco;
+  state.resultadosReaisGrafico=pts; gerarEstruturaLotesIniciais(); salvarDadosEAtualizarTudo();
 } }
 function alterarDataInicioCicloUI(){ ms().dataInicioCiclo=document.getElementById('cfg-data-inicio').value; salvarDadosEAtualizarTudo(); }
 function setGraficoMode(modo){ ms().chartMode=modo; document.querySelectorAll('.toggle-group button').forEach(b=>b.classList.remove('active')); if(modo==='DATA') document.getElementById('btn-chart-date').classList.add('active'); else document.getElementById('btn-chart-etapa').classList.add('active'); renderizarGrafico(); }
@@ -932,8 +940,8 @@ function registrarApostaIndividual(index,resultado,emMassa=false){
   if(index<0||index>=ms().sequencias.length) return;
   const seq=ms().sequencias[index]; if(seq.status==='FINISHED') return;
   const val=sniperArredondarAposta(seq.apostaAtual); const l=seq.letraRandomica; const odd=ms().oddsPorLetra[l]||2;
-  if(resultado==='WIN'){ seq.winsEtapa++; ms().bancaAtual+=(val*(odd-1)); seq.perdasAcumuladas=0; seq.apostaAtual=getValorApostaBase(odd); seq.status=ms().modoPosWin==="BLINDAR"?"FINISHED":"PENDING"; ms().vitoriasRodadaVoltarInicial++; }
-  else{ seq.lossesEtapa++; ms().bancaAtual-=val; seq.perdasAcumuladas+=val; seq.apostaAtual=(seq.perdasAcumuladas+getValorApostaBase(odd))/(odd-1); }
+  if(resultado==='WIN'){ seq.winsEtapa++; state.bancaAtual+=(val*(odd-1)); seq.perdasAcumuladas=0; seq.apostaAtual=getValorApostaBase(odd); seq.status=ms().modoPosWin==="BLINDAR"?"FINISHED":"PENDING"; ms().vitoriasRodadaVoltarInicial++; }
+  else{ seq.lossesEtapa++; state.bancaAtual-=val; seq.perdasAcumuladas+=val; seq.apostaAtual=(seq.perdasAcumuladas+getValorApostaBase(odd))/(odd-1); }
   if(!emMassa){
     if(ms().marantanLancamentosRodada) ms().marantanLancamentosRodada[l]=resultado;
     renderCards(); atualizarPainelUI(false);
@@ -946,8 +954,8 @@ function executarAcaoEmMassaCard(letraAlvo,resultado){
   ms().sequencias.forEach(seq=>{
     if(seq.letraRandomica===lu&&seq.status!=='FINISHED'){
       const val=sniperArredondarAposta(seq.apostaAtual); const odd=ms().oddsPorLetra[lu]||2;
-      if(resultado==='WIN'){ seq.winsEtapa++; ms().bancaAtual+=(val*(odd-1)); seq.perdasAcumuladas=0; seq.apostaAtual=getValorApostaBase(odd); seq.status=ms().modoPosWin==="BLINDAR"?"FINISHED":"PENDING"; vits++; }
-      else{ seq.lossesEtapa++; ms().bancaAtual-=val; seq.perdasAcumuladas+=val; seq.apostaAtual=(seq.perdasAcumuladas+getValorApostaBase(odd))/(odd-1); }
+      if(resultado==='WIN'){ seq.winsEtapa++; state.bancaAtual+=(val*(odd-1)); seq.perdasAcumuladas=0; seq.apostaAtual=getValorApostaBase(odd); seq.status=ms().modoPosWin==="BLINDAR"?"FINISHED":"PENDING"; vits++; }
+      else{ seq.lossesEtapa++; state.bancaAtual-=val; seq.perdasAcumuladas+=val; seq.apostaAtual=(seq.perdasAcumuladas+getValorApostaBase(odd))/(odd-1); }
       ok=true;
     }
   });
@@ -987,7 +995,7 @@ function alterarFiltroExibicao(tipo){
 
 function fecharEtapa(){
   const banco=parseFloat(state.bancoCapital)||0;
-  const totalAtual=ms().bancaAtual+banco;
+  const totalAtual=state.bancaAtual+banco;
   document.getElementById('modal-etapa-saldo-calculado').innerText=fmt(totalAtual);
   document.getElementById('modal-etapa-saldo-real').value=totalAtual.toFixed(2);
   document.getElementById('modal-concluir-etapa').style.display='flex';
@@ -1001,16 +1009,16 @@ function confirmarConclusaoEtapa(){
   const banco=parseFloat(state.bancoCapital)||0;
   // v é o TOTAL — plataforma = total - banco
   const novaPlataforma=vTotal-banco;
-  const totalAnterior=ms().bancaInicioEtapa+banco;
+  const totalAnterior=state.bancaInicioEtapa+banco;
   const lucro=vTotal-totalAnterior; // lucro sobre o total
-  ms().bancaAtual=novaPlataforma;
+  state.bancaAtual=novaPlataforma;
   if(!ms().historico) ms().historico=[];
   const lucroNecFinal=totalAnterior*(ms().metaPercent/100);
   const pctEtapa=lucroNecFinal>0?(lucro/lucroNecFinal)*100:0;
   ms().historico.push({ etapa:ms().etapaAtual, dataCalendario:new Date().toISOString().split('T')[0], data:new Date().toLocaleTimeString('pt-BR'), lucro:lucro, totalPos:vTotal, bancaPos:novaPlataforma, pct:pctEtapa });
-  ms().resultadosReaisGrafico.push(vTotal); // gráfico usa TOTAL
-  ms().bancaInicioEtapa=novaPlataforma;
-  ms().bancaInicial=novaPlataforma;
+  state.resultadosReaisGrafico.push(vTotal); // gráfico usa TOTAL
+  state.bancaInicioEtapa=novaPlataforma;
+  state.bancaInicial=novaPlataforma;
   ms().etapaAtual++;
   sinalizadoMeta=false; sinalizadoStop=false; ms().vitoriasRodadaVoltarInicial=0;
   ms().letrasBloqueadasRodada={};
@@ -1102,7 +1110,7 @@ function toggleLockBtn(letra, el){
 
 function preencherCamposConfig(){
   document.getElementById('cfg-banco-capital').value=(state.bancoCapital||0).toFixed(2);
-  document.getElementById('cfg-banca-capital').value=ms().bancaAtual.toFixed(2);
+  document.getElementById('cfg-banca-capital').value=state.bancaAtual.toFixed(2);
   document.getElementById('cfg-meta').value=ms().metaPercent;
   document.getElementById('cfg-stoploss').value=ms().stopLossPercent;
   document.getElementById('cfg-aposta-base-pct').value=ms().apostaBasePercent;
@@ -1144,7 +1152,7 @@ function renderizarGrafico(){
   const canvas=document.getElementById('meuGrafico'); if(!canvas) return;
   const ctx=canvas.getContext('2d');
   const textColor='#8B949E'; const gridColor='#21262D';
-  let pts=[...ms().resultadosReaisGrafico]; let labels=[];
+  let pts=[...state.resultadosReaisGrafico]; let labels=[];
   if(ms().chartMode==='ETAPA'){ labels=pts.map((_,i)=>i===0?'Início':'E'+i); }
   else{ let base=new Date(ms().dataInicioCiclo+'T00:00:00'); labels=pts.map((_,i)=>{ let d=new Date(base); d.setDate(d.getDate()+i); return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}); }); }
   const max=parseInt(document.getElementById('input-etapas').value)||150;
@@ -1160,31 +1168,31 @@ function renderizarGrafico(){
   if(chartInstance) chartInstance.destroy();
   chartInstance=new Chart(ctx,{
     type:'line',
-    data:{ labels:labels, datasets:[{ label:'Banca (R$)', data:pts, borderColor:'#2D7FF9', borderWidth:2, pointRadius:pts.map((_,i)=>i<ms().resultadosReaisGrafico.length?3:0), pointBackgroundColor:'#2D7FF9', fill:false, tension:0.15 }] },
+    data:{ labels:labels, datasets:[{ label:'Banca (R$)', data:pts, borderColor:'#2D7FF9', borderWidth:2, pointRadius:pts.map((_,i)=>i<state.resultadosReaisGrafico.length?3:0), pointBackgroundColor:'#2D7FF9', fill:false, tension:0.15 }] },
     options:{ responsive:true, maintainAspectRatio:true, plugins:{ legend:{ labels:{ color:textColor, font:{ size:11, weight:'bold' } } } }, scales:{ x:{ ticks:{ color:textColor, maxTicksLimit:10, font:{size:10} }, grid:{ color:gridColor } }, y:{ ticks:{ color:textColor, font:{size:10}, callback:(v)=>'R$'+v.toLocaleString('pt-BR',{maximumFractionDigits:0}) }, grid:{ color:gridColor } } } }
   });
 }
 
 function atualizarPainelUI(forcarGrafico=false){
   const banco=parseFloat(state.bancoCapital)||0;
-  const capitalGlobal=ms().bancaAtual+banco;
-  const baseEtapa=ms().bancaInicioEtapa+banco;
+  const capitalGlobal=state.bancaAtual+banco;
+  const baseEtapa=state.bancaInicioEtapa+banco;
   const metaVal=baseEtapa*(1+ms().metaPercent/100);
-  const stopVal=ms().bancaInicioEtapa*(1-ms().stopLossPercent/100);
-  const lucroEtapa=ms().bancaAtual-ms().bancaInicioEtapa;
+  const stopVal=state.bancaInicioEtapa*(1-ms().stopLossPercent/100);
+  const lucroEtapa=state.bancaAtual-state.bancaInicioEtapa;
   const lucroNecessario=metaVal-baseEtapa;
-  if(!ms().resultadosReaisGrafico||ms().resultadosReaisGrafico.length===0) ms().resultadosReaisGrafico=[ms().bancaInicial];
+  if(!state.resultadosReaisGrafico||state.resultadosReaisGrafico.length===0) state.resultadosReaisGrafico=[state.bancaInicial];
 
-  const lucroTotal=ms().bancaAtual-ms().resultadosReaisGrafico[0];
+  const lucroTotal=state.bancaAtual-state.resultadosReaisGrafico[0];
   const el=(id,v)=>{ const e=document.getElementById(id); if(e) e.innerText=v; };
 
   el('kpi-global', fmt(capitalGlobal));
-  el('kpi-global-sub', 'Plataforma: '+fmt(ms().bancaAtual)+' · Banco: '+fmt(banco));
+  el('kpi-global-sub', 'Plataforma: '+fmt(state.bancaAtual)+' · Banco: '+fmt(banco));
 
   const lucroEl=document.getElementById('kpi-lucro');
   if(lucroEl){ lucroEl.innerText=fmt(lucroTotal); lucroEl.className='kpi-val '+(lucroTotal>=0?'pos':'neg'); }
 
-  el('kpi-banca',fmt(ms().bancaAtual));
+  el('kpi-banca',fmt(state.bancaAtual));
   el('kpi-banco-sub','Banco: '+fmt(banco));
   el('kpi-meta',fmt(metaVal));
   el('kpi-meta-sub','+'+ms().metaPercent+'% sobre capital global');
@@ -1196,9 +1204,9 @@ function atualizarPainelUI(forcarGrafico=false){
   el('lbl-lotes-win',ms().sequencias.filter(s=>s.status==='FINISHED').length);
   el('lbl-lotes-loss',ms().sequencias.filter(s=>s.status!=='FINISHED').length);
   el('lbl-valor-inicial-op',fmt(baseEtapa));
-  el('lbl-valor-atual-op',fmt(ms().bancaAtual+(parseFloat(state.bancoCapital)||0)));
+  el('lbl-valor-atual-op',fmt(state.bancaAtual+(parseFloat(state.bancoCapital)||0)));
   el('lbl-meta-op',fmt(metaVal));
-  const faltaOp=Math.max(0,metaVal-(ms().bancaAtual+banco));
+  const faltaOp=Math.max(0,metaVal-(state.bancaAtual+banco));
   const faltaEl=document.getElementById('lbl-falta-op');
   if(faltaEl){ faltaEl.innerText=fmt(faltaOp); faltaEl.style.color=faltaOp<=0?'var(--win)':'var(--accent)'; }
 
@@ -1217,7 +1225,7 @@ function atualizarPainelUI(forcarGrafico=false){
   const bar=document.getElementById('progresso-bar'); if(bar) bar.style.width=Math.min(100,pct)+'%';
 
   if(pct>=100&&!sinalizadoMeta){ sinalizadoMeta=true; document.getElementById('modal-meta').style.display='flex'; }
-  if(ms().bancaAtual<=stopVal&&!sinalizadoStop){ sinalizadoStop=true; document.getElementById('modal-stop').style.display='flex'; }
+  if(state.bancaAtual<=stopVal&&!sinalizadoStop){ sinalizadoStop=true; document.getElementById('modal-stop').style.display='flex'; }
 
   renderLinhas(); renderCards(); renderHistorico(); atualizarBotaoModoUI(); atualizarLayoutContadoresPorModo();
   if(document.getElementById('grafico')&&document.getElementById('grafico').classList.contains('active')) renderizarGrafico();
