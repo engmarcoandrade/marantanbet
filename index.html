@@ -512,6 +512,10 @@ tbody tr:last-child td { border-bottom:none; }
         <div class="form-group"><label class="cfg-label">Stop Loss (%)</label><input type="number" id="cfg-stoploss" class="cfg-input" value="15.0"></div>
       </div>
       <div class="form-row2">
+        <div class="form-group"><label class="cfg-label">Meta Diária (%)</label><input type="number" id="cfg-meta-diaria" class="cfg-input" step="0.1" value="1.0" placeholder="% ao dia"></div>
+        <div class="form-group"><label class="cfg-label">Dias de Acomp.</label><input type="number" id="cfg-dias-acomp" class="cfg-input" value="30" placeholder="Qtd. dias"></div>
+      </div>
+      <div class="form-row2">
         <div class="form-group"><label class="cfg-label">Meta Base por Letra (%)</label><input type="number" id="cfg-aposta-base-pct" class="cfg-input" step="0.001" value="1.0"></div>
         <div class="form-group"><label class="cfg-label">Qtd. Lotes</label><input type="number" id="cfg-lote" class="cfg-input" value="500"></div>
       </div>
@@ -560,18 +564,38 @@ tbody tr:last-child td { border-bottom:none; }
 
   <!-- ABA: GRÁFICO -->
   <div id="grafico" class="tab-content">
+
+    <!-- Indicadores de variação vs previsto -->
+    <div id="grafico-indicadores" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; margin-bottom:10px;">
+      <div class="kpi-card">
+        <div class="kpi-label">Previsto Hoje</div>
+        <div class="kpi-val" style="font-size:13px;" id="graf-previsto-hoje">R$ 0,00</div>
+        <div class="kpi-sub" id="graf-previsto-hoje-pct"></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Realizado</div>
+        <div class="kpi-val" style="font-size:13px;" id="graf-realizado">R$ 0,00</div>
+        <div class="kpi-sub" id="graf-realizado-pct"></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Variação</div>
+        <div class="kpi-val" style="font-size:13px;" id="graf-variacao">R$ 0,00</div>
+        <div class="kpi-sub" id="graf-variacao-pct"></div>
+      </div>
+    </div>
+
     <div class="chart-card">
       <div class="chart-header">
-        <span class="chart-title">Evolução da Banca</span>
+        <span class="chart-title">Previsto × Realizado</span>
         <div class="chart-controls">
           <div class="toggle-group">
-            <button id="btn-chart-date" class="toggle-btn active" onclick="setGraficoMode('DATA')">Data</button>
-            <button id="btn-chart-etapa" class="toggle-btn" onclick="setGraficoMode('ETAPA')">Etapa</button>
+            <button id="btn-chart-date" class="toggle-btn active" onclick="setGraficoMode('DATA')">Por Data</button>
+            <button id="btn-chart-etapa" class="toggle-btn" onclick="setGraficoMode('ETAPA')">Por Etapa</button>
           </div>
-          <input type="number" id="input-etapas" class="chart-num-input" value="150" onchange="renderizarGrafico()">
+          <input type="number" id="input-etapas" class="chart-num-input" value="30" onchange="renderizarGrafico()">
         </div>
       </div>
-      <canvas id="meuGrafico" height="200"></canvas>
+      <canvas id="meuGrafico" height="220"></canvas>
     </div>
   </div>
 
@@ -624,7 +648,7 @@ let SHEETS_URL_MEMORIA = "https://script.google.com/macros/s/AKfycbx0oGZJBlmosWE
 
 const DEFAULT_MODO = {
   etapaAtual:1,
-  metaPercent:5.0, stopLossPercent:15.0, apostaBasePercent:1.0, loteQtd:500, aleatoriedade:6,
+  metaPercent:5.0, stopLossPercent:15.0, apostaBasePercent:1.0, metaDiaria:1.0, diasAcomp:30, loteQtd:500, aleatoriedade:6,
   dataInicioCiclo:hojeISO, chartMode:"DATA",
   oddsPorLetra:{"A":1.80,"B":1.80,"C":1.80,"D":1.80,"E":1.80,"F":1.80},
   anotacoesPorLetra:{"A":"","B":"","C":"","D":"","E":"","F":""},
@@ -742,6 +766,8 @@ function aplicarBlindagemDeVariaveis(){
     if(m.vitoriasRodadaVoltarInicial===undefined) m.vitoriasRodadaVoltarInicial=0;
     if(m.loteQtd===undefined) m.loteQtd=500;
     if(m.apostaBasePercent===undefined) m.apostaBasePercent=1.0;
+    if(m.metaDiaria===undefined) m.metaDiaria=1.0;
+    if(m.diasAcomp===undefined) m.diasAcomp=30;
   });
 }
 
@@ -923,6 +949,8 @@ function salvarConfiguracoes(){
   ms().loteQtd=parseInt(document.getElementById('cfg-lote').value)||500;
   ms().aleatoriedade=parseInt(document.getElementById('cfg-aleatoriedade').value)||6;
   ms().modoDistribuicao=document.getElementById('cfg-modo-distribuicao').value;
+  ms().metaDiaria=parseFloat(document.getElementById('cfg-meta-diaria').value)||1.0;
+  ms().diasAcomp=parseInt(document.getElementById('cfg-dias-acomp').value)||30;
   ms().oddsPorLetra={}; ms().anotacoesPorLetra={};
   const az="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
   for(let i=0;i<Math.min(ms().aleatoriedade,26);i++){
@@ -1118,6 +1146,8 @@ function preencherCamposConfig(){
   document.getElementById('cfg-aleatoriedade').value=ms().aleatoriedade;
   document.getElementById('cfg-data-inicio').value=ms().dataInicioCiclo||hojeISO;
   document.getElementById('cfg-modo-distribuicao').value=ms().modoDistribuicao||"PROPORCIONAL";
+  document.getElementById('cfg-meta-diaria').value=ms().metaDiaria||1.0;
+  document.getElementById('cfg-dias-acomp').value=ms().diasAcomp||30;
   document.getElementById('cfg-sheets-url').value=state.sheetsUrl||"";
   calcularSomaCapitalGeralUI();
 }
@@ -1126,21 +1156,41 @@ function alternarModoPosWin(){ ms().modoPosWin=ms().modoPosWin==="BLINDAR"?"RESE
 function atualizarBotaoModoUI(){ const btn=document.getElementById('btn-toggle-modo-pos-win'); if(!btn) return; btn.className="btn-modo "+(ms().modoPosWin==="BLINDAR"?"blindar":"resetar"); btn.innerText=ms().modoPosWin==="BLINDAR"?"🔒 Pós-Win: Blindar":"🔄 Pós-Win: Resetar"; }
 function atualizarLayoutContadoresPorModo(){ const r=document.getElementById('wrapper-contador-resetar'); if(!r) return; if(ms().modoPosWin==="BLINDAR"){ r.style.display='none'; }else{ r.style.display='block'; document.getElementById('lbl-vitorias-resetar-contador').innerText=ms().vitoriasRodadaVoltarInicial; } }
 
+function calcularPrevistoNaData(dataStr){
+  if(!dataStr) return null;
+  const banco=parseFloat(state.bancoCapital)||0;
+  const totalInicial=state.bancaInicial+banco;
+  const metaDiaria=(ms().metaDiaria||1.0)/100;
+  const baseDate=new Date(ms().dataInicioCiclo+'T00:00:00');
+  const hDate=new Date(dataStr+'T00:00:00');
+  const diffDias=Math.max(0,Math.floor((hDate-baseDate)/(1000*60*60*24)));
+  return totalInicial*Math.pow(1+metaDiaria, diffDias);
+}
+
 function renderHistorico(){
   const container=document.getElementById('hist-list-container'); if(!container) return;
   if(!ms().historico||ms().historico.length===0){ container.innerHTML='<div style="padding:24px;text-align:center;color:var(--muted);font-size:13px;">Nenhuma etapa concluída ainda.</div>'; return; }
   let html='';
   ms().historico.forEach((h,idx)=>{
     const cor=h.lucro>=0?'var(--win)':'var(--loss)';
+    const totalReal=h.totalPos||h.bancaPos||0;
+    const previsto=calcularPrevistoNaData(h.dataCalendario);
+    const varVal=previsto?totalReal-previsto:null;
+    const varPct=previsto?(varVal/previsto)*100:null;
+    const varCor=varVal>=0?'var(--win)':'var(--loss)';
     html+=`<div class="hist-row">
-      <div class="hist-left">
-        <div class="hist-etapa">Etapa #${h.etapa}</div>
-        <div class="hist-date">${h.dataCalendario} · ${h.data}</div>
+      <div class="hist-left" style="flex:1;">
+        <div class="hist-etapa">Etapa #${h.etapa} · ${h.dataCalendario||''}</div>
+        <div class="hist-date">${h.data||''}</div>
+        <div style="display:flex; gap:8px; margin-top:4px; flex-wrap:wrap;">
+          <span style="font-size:10px; color:var(--muted);">Total: <b style="font-family:var(--mono); color:var(--text);">${fmt(totalReal)}</b></span>
+          ${previsto?`<span style="font-size:10px; color:var(--muted);">Prev: <b style="font-family:var(--mono); color:var(--win);">${fmt(previsto)}</b></span>`:''}
+          ${varVal!==null?`<span style="font-size:10px; color:${varCor}; font-weight:700;">${varVal>=0?'+':''}${fmt(varVal)} (${varPct>=0?'+':''}${varPct.toFixed(1)}%)</span>`:''}
+        </div>
       </div>
-      <div class="hist-right">
+      <div class="hist-right" style="text-align:right; flex-shrink:0;">
         <div class="hist-lucro" style="color:${cor};">${h.lucro>=0?'+':''}${fmt(h.lucro)}</div>
-        <div style="font-size:11px; font-weight:700; color:${cor}; font-family:var(--mono);">${h.pct!==undefined?(h.pct>=0?'+':'')+h.pct.toFixed(1)+'%':''}</div>
-        <div class="hist-banca">${h.totalPos!==undefined?fmt(h.totalPos):fmt(h.bancaPos)} total</div>
+        <div style="font-size:11px; font-weight:700; color:${cor}; font-family:var(--mono);">${h.pct!==undefined?(h.pct>=0?'+':'')+h.pct.toFixed(1)+'% meta':''}</div>
       </div>
       <button class="hist-del" onclick="excluirRegistroEtapaHistorico(${idx})">🗑</button>
     </div>`;
@@ -1148,29 +1198,106 @@ function renderHistorico(){
   container.innerHTML=html;
 }
 
+function calcularProjetadoDiario(){
+  const banco=parseFloat(state.bancoCapital)||0;
+  const totalInicial=state.bancaInicial+banco;
+  const metaDiaria=(ms().metaDiaria||1.0)/100;
+  const diasTotal=ms().diasAcomp||30;
+  const baseDate=new Date(ms().dataInicioCiclo+'T00:00:00');
+  let pts=[totalInicial]; let labels=[baseDate.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})];
+  for(let d=1;d<=diasTotal;d++){
+    pts.push(pts[pts.length-1]*(1+metaDiaria));
+    let dt=new Date(baseDate); dt.setDate(dt.getDate()+d);
+    labels.push(dt.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}));
+  }
+  return {pts, labels, baseDate, metaDiaria};
+}
+
+function atualizarIndicadoresGrafico(){
+  const banco=parseFloat(state.bancoCapital)||0;
+  const totalAtual=state.bancaAtual+banco;
+  const {pts, baseDate, metaDiaria}=calcularProjetadoDiario();
+  const hoje=new Date(); hoje.setHours(0,0,0,0);
+  const diffMs=hoje-baseDate; const diffDias=Math.max(0,Math.floor(diffMs/(1000*60*60*24)));
+  const idxPrev=Math.min(diffDias, pts.length-1);
+  const previsto=pts[idxPrev];
+  const variacao=totalAtual-previsto;
+  const variacaoPct=(variacao/previsto)*100;
+  const el=(id,v)=>{ const e=document.getElementById(id); if(e) e.innerText=v; };
+  el('graf-previsto-hoje',fmt(previsto));
+  el('graf-previsto-hoje-pct','Dia '+diffDias+' do ciclo');
+  el('graf-realizado',fmt(totalAtual));
+  el('graf-realizado-pct','Capital atual');
+  const varEl=document.getElementById('graf-variacao');
+  const varPctEl=document.getElementById('graf-variacao-pct');
+  if(varEl){ varEl.innerText=(variacao>=0?'+':'')+fmt(variacao); varEl.style.color=variacao>=0?'var(--win)':'var(--loss)'; }
+  if(varPctEl){ varPctEl.innerText=(variacaoPct>=0?'+':'')+variacaoPct.toFixed(2)+'% vs previsto'; varPctEl.style.color=variacaoPct>=0?'var(--win)':'var(--loss)'; }
+}
+
 function renderizarGrafico(){
   const canvas=document.getElementById('meuGrafico'); if(!canvas) return;
   const ctx=canvas.getContext('2d');
   const textColor='#8B949E'; const gridColor='#21262D';
-  let pts=[...state.resultadosReaisGrafico]; let labels=[];
-  if(ms().chartMode==='ETAPA'){ labels=pts.map((_,i)=>i===0?'Início':'E'+i); }
-  else{ let base=new Date(ms().dataInicioCiclo+'T00:00:00'); labels=pts.map((_,i)=>{ let d=new Date(base); d.setDate(d.getDate()+i); return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}); }); }
-  const max=parseInt(document.getElementById('input-etapas').value)||150;
-  if(pts.length<max){
-    let last=pts[pts.length-1]; let fc=1+(ms().metaPercent/100); let idx=pts.length;
-    while(idx<=max){
-      last=last*fc; pts.push(last);
-      if(ms().chartMode==='ETAPA') labels.push('P'+idx);
-      else{ let d=new Date(ms().dataInicioCiclo+'T00:00:00'); d.setDate(d.getDate()+idx); labels.push(d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})); }
-      idx++;
+  const banco=parseFloat(state.bancoCapital)||0;
+  const totalInicial=state.bancaInicial+banco;
+
+  if(ms().chartMode==='ETAPA'){
+    // Por Etapa — apenas realizado
+    const max=parseInt(document.getElementById('input-etapas').value)||30;
+    let pts=[...state.resultadosReaisGrafico];
+    let labels=pts.map((_,i)=>i===0?'Início':'E'+i);
+    // Linha de meta por etapa
+    let metaPts=[totalInicial];
+    const fc=1+(ms().metaPercent/100);
+    for(let i=1;i<Math.max(pts.length,max);i++) metaPts.push(metaPts[i-1]*fc);
+    while(pts.length<max){ pts.push(null); labels.push('E'+pts.length); }
+    if(chartInstance) chartInstance.destroy();
+    chartInstance=new Chart(ctx,{
+      type:'line',
+      data:{ labels:labels, datasets:[
+        { label:'Realizado', data:pts, borderColor:'#2D7FF9', borderWidth:2, pointRadius:pts.map(p=>p!==null?3:0), pointBackgroundColor:'#2D7FF9', fill:false, tension:0.15, spanGaps:false },
+        { label:'Meta por Etapa', data:metaPts.slice(0,labels.length), borderColor:'#3FB950', borderWidth:1, borderDash:[4,4], pointRadius:0, fill:false, tension:0.1 }
+      ]},
+      options:{ responsive:true, maintainAspectRatio:true, plugins:{ legend:{ labels:{ color:textColor, font:{size:11} } } }, scales:{ x:{ ticks:{ color:textColor, maxTicksLimit:10, font:{size:10} }, grid:{ color:gridColor } }, y:{ ticks:{ color:textColor, font:{size:10}, callback:(v)=>'R$'+v.toLocaleString('pt-BR',{maximumFractionDigits:0}) }, grid:{ color:gridColor } } } }
+    });
+
+  } else {
+    // Por Data — Previsto x Realizado
+    const {pts:prevPts, labels:prevLabels}=calcularProjetadoDiario();
+    // Mapear realizados por data
+    const baseDate=new Date(ms().dataInicioCiclo+'T00:00:00');
+    let realPts=new Array(prevLabels.length).fill(null);
+    realPts[0]=totalInicial; // ponto inicial
+    state.resultadosReaisGrafico.forEach((val,i)=>{
+      if(i===0) return; // pula o inicial
+      // Usar data do histórico se disponível
+      const h=ms().historico[i-1];
+      if(h&&h.dataCalendario){
+        const hDate=new Date(h.dataCalendario+'T00:00:00');
+        const diff=Math.floor((hDate-baseDate)/(1000*60*60*24));
+        if(diff>=0&&diff<realPts.length) realPts[diff]=h.totalPos||val;
+      } else {
+        if(i<realPts.length) realPts[i]=val;
+      }
+    });
+    // Preencher gaps com o valor anterior (carry forward)
+    for(let i=1;i<realPts.length;i++){
+      if(realPts[i]===null&&realPts[i-1]!==null) realPts[i]=realPts[i-1];
     }
+    // Cortar realPts no último valor real
+    const ultimoReal=state.resultadosReaisGrafico.length;
+    for(let i=ultimoReal;i<realPts.length;i++) realPts[i]=null;
+    if(chartInstance) chartInstance.destroy();
+    chartInstance=new Chart(ctx,{
+      type:'line',
+      data:{ labels:prevLabels, datasets:[
+        { label:'Previsto', data:prevPts, borderColor:'#3FB950', borderWidth:1.5, borderDash:[5,4], pointRadius:0, fill:false, tension:0.1 },
+        { label:'Realizado', data:realPts, borderColor:'#2D7FF9', borderWidth:2.5, pointRadius:realPts.map(p=>p!==null?3:0), pointBackgroundColor:'#2D7FF9', fill:false, tension:0.15, spanGaps:false }
+      ]},
+      options:{ responsive:true, maintainAspectRatio:true, plugins:{ legend:{ labels:{ color:textColor, font:{size:11} } } }, scales:{ x:{ ticks:{ color:textColor, maxTicksLimit:10, font:{size:10} }, grid:{ color:gridColor } }, y:{ ticks:{ color:textColor, font:{size:10}, callback:(v)=>'R$'+v.toLocaleString('pt-BR',{maximumFractionDigits:0}) }, grid:{ color:gridColor } } } }
+    });
   }
-  if(chartInstance) chartInstance.destroy();
-  chartInstance=new Chart(ctx,{
-    type:'line',
-    data:{ labels:labels, datasets:[{ label:'Banca (R$)', data:pts, borderColor:'#2D7FF9', borderWidth:2, pointRadius:pts.map((_,i)=>i<state.resultadosReaisGrafico.length?3:0), pointBackgroundColor:'#2D7FF9', fill:false, tension:0.15 }] },
-    options:{ responsive:true, maintainAspectRatio:true, plugins:{ legend:{ labels:{ color:textColor, font:{ size:11, weight:'bold' } } } }, scales:{ x:{ ticks:{ color:textColor, maxTicksLimit:10, font:{size:10} }, grid:{ color:gridColor } }, y:{ ticks:{ color:textColor, font:{size:10}, callback:(v)=>'R$'+v.toLocaleString('pt-BR',{maximumFractionDigits:0}) }, grid:{ color:gridColor } } } }
-  });
+  atualizarIndicadoresGrafico();
 }
 
 function atualizarPainelUI(forcarGrafico=false){
