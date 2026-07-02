@@ -32,6 +32,7 @@
   --sans: 'Inter', sans-serif;
   --radius: 10px;
   --radius-sm: 6px;
+  --hdr-h: 90px;
 }
 body.light-mode {
   --bg: #F6F8FA;
@@ -44,7 +45,7 @@ body.light-mode {
 }
 * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 html, body { height:100%; }
-body { font-family: var(--sans); background: var(--bg); color: var(--text); font-size:14px; line-height:1.4; overflow-x:hidden; padding-bottom:16px; padding-top:calc(110px + env(safe-area-inset-top)); }
+body { font-family: var(--sans); background: var(--bg); color: var(--text); font-size:14px; line-height:1.4; overflow-x:hidden; padding-bottom:16px; padding-top:calc(var(--hdr-h) + 62px + env(safe-area-inset-top)); }
 
 /* ── MODAIS ── */
 .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:1000; align-items:center; justify-content:center; padding:20px; }
@@ -70,14 +71,15 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); font
 .toast-fill { width:0%; height:100%; background:var(--accent); border-radius:2px; transition:width .1s; }
 
 /* ── HEADER ── */
-header { background:var(--surface); border-bottom:1px solid var(--border); padding:8px 16px; display:flex; justify-content:space-between; align-items:center; position:fixed; top:0; left:0; right:0; z-index:200; gap:8px; padding-top:calc(8px + env(safe-area-inset-top)); }
+header { background:var(--surface); border-bottom:1px solid var(--border); padding:8px 16px; display:flex; flex-direction:column; gap:8px; position:fixed; top:0; left:0; right:0; z-index:200; padding-top:calc(8px + env(safe-area-inset-top)); }
+.hdr-linha-top { display:flex; justify-content:space-between; align-items:center; gap:8px; }
 .app-logo { font-family:var(--mono); font-size:15px; font-weight:700; color:var(--text); letter-spacing:.04em; }
 .app-logo span { color:var(--accent); }
-.etapa-chip { background:var(--surface2); border:1px solid var(--border); border-radius:20px; padding:4px 12px; font-size:12px; font-weight:600; color:var(--muted); }
+.etapa-chip { background:var(--surface2); border:1px solid var(--border); border-radius:20px; padding:4px 12px; font-size:12px; font-weight:600; color:var(--muted); white-space:nowrap; }
 .etapa-chip b { color:var(--accent); }
-.hdr-btns { display:flex; gap:6px; }
-.modo-selector { display:flex; background:var(--surface2); border:1px solid var(--border); border-radius:20px; overflow:hidden; gap:0; }
-.modo-btn { background:transparent; border:none; color:var(--muted); padding:5px 12px; font-size:11px; font-weight:700; cursor:pointer; font-family:var(--sans); white-space:nowrap; transition:all .2s; }
+.hdr-btns { display:flex; gap:6px; flex-shrink:0; }
+.modo-selector { display:flex; background:var(--surface2); border:1px solid var(--border); border-radius:20px; overflow:hidden; gap:0; width:100%; }
+.modo-btn { flex:1; background:transparent; border:none; color:var(--muted); padding:7px 12px; font-size:12px; font-weight:700; cursor:pointer; font-family:var(--sans); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; transition:all .2s; }
 .modo-btn.active.real { background:var(--win); color:#fff; border-radius:20px; }
 .modo-btn.active.virtual { background:var(--purple); color:#fff; border-radius:20px; }
 .hdr-btn { background:var(--surface2); border:1px solid var(--border); color:var(--muted); padding:6px 10px; border-radius:var(--radius-sm); font-size:12px; font-weight:600; cursor:pointer; font-family:var(--sans); white-space:nowrap; }
@@ -85,7 +87,7 @@ header { background:var(--surface); border-bottom:1px solid var(--border); paddi
 .hdr-btn.danger { color:var(--loss); border-color:var(--loss-border); }
 
 /* ── BOTTOM NAV ── */
-.bottom-nav { position:fixed; top:calc(48px + 30px + env(safe-area-inset-top)); left:0; right:0; background:var(--surface); border-bottom:1px solid var(--border); display:flex; z-index:199; }
+.bottom-nav { position:fixed; top:calc(var(--hdr-h) + 30px + env(safe-area-inset-top)); left:0; right:0; background:var(--surface); border-bottom:1px solid var(--border); display:flex; z-index:199; }
 .nav-item { flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; padding:7px 4px 6px; cursor:pointer; border:none; background:transparent; color:var(--muted); font-family:var(--sans); }
 .nav-icon { font-size:20px; line-height:1; }
 .nav-label { font-size:10px; font-weight:600; }
@@ -263,7 +265,7 @@ tbody tr:last-child td { border-bottom:none; }
 .chart-num-input { background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text); font-family:var(--mono); font-size:12px; padding:5px 8px; outline:none; width:60px; }
 
 /* ── SHEETS STATUS ── */
-.sheets-bar { display:flex; align-items:center; gap:6px; padding:6px 16px; background:var(--surface2); border-bottom:1px solid var(--border); font-size:11px; position:fixed; top:calc(48px + env(safe-area-inset-top)); left:0; right:0; z-index:198; }
+.sheets-bar { display:flex; align-items:center; gap:6px; padding:6px 16px; background:var(--surface2); border-bottom:1px solid var(--border); font-size:11px; position:fixed; top:calc(var(--hdr-h) + env(safe-area-inset-top)); left:0; right:0; z-index:198; }
 .sheets-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
 .dot-on { background:var(--win); }
 .dot-sync { background:#F0A500; }
@@ -281,6 +283,10 @@ tbody tr:last-child td { border-bottom:none; }
   .card-amount { font-size:13px; }
   .cards-grid { gap:6px; }
   .letra-card { padding:10px; }
+  .app-logo { font-size:14px; }
+  .etapa-chip { padding:4px 10px; font-size:11px; }
+  .hdr-btn { padding:6px 8px; font-size:11px; }
+  .modo-btn { padding:8px; font-size:12px; }
 }
 </style>
 </head>
@@ -349,15 +355,17 @@ tbody tr:last-child td { border-bottom:none; }
 
 <!-- HEADER -->
 <header>
-  <div class="app-logo">MARAN<span>TAN</span></div>
-  <div class="modo-selector">
-    <button id="btn-modo-real" class="modo-btn active" onclick="alternarModo('real')">⚽ Real</button>
-    <button id="btn-modo-virtual" class="modo-btn" onclick="alternarModo('virtual')">🎮 Virtual</button>
+  <div class="hdr-linha-top">
+    <div class="app-logo">MARAN<span>TAN</span></div>
+    <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
+    <div class="hdr-btns">
+      <button class="hdr-btn" id="btn-tema" onclick="alternarTema()" title="Alternar tema">🌙</button>
+      <button class="hdr-btn danger" id="btn-panic-sair">Sair</button>
+    </div>
   </div>
-  <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
-  <div class="hdr-btns">
-    <button class="hdr-btn" id="btn-tema" onclick="alternarTema()" title="Alternar tema">🌙</button>
-    <button class="hdr-btn danger" id="btn-panic-sair">Sair</button>
+  <div class="modo-selector">
+    <button id="btn-modo-real" class="modo-btn active real" onclick="alternarModo('real')">⚽ Real</button>
+    <button id="btn-modo-virtual" class="modo-btn" onclick="alternarModo('virtual')">🎮 Virtual</button>
   </div>
 </header>
 
@@ -494,6 +502,16 @@ tbody tr:last-child td { border-bottom:none; }
 
   <!-- ABA: CONFIG -->
   <div id="config" class="tab-content">
+
+    <div class="cfg-section">
+      <div class="cfg-title accent">🏷️ Nomes dos Modos</div>
+      <div class="form-row2">
+        <div class="form-group"><label class="cfg-label">Nome do Modo 1 (Real)</label><input type="text" id="cfg-nome-real" class="cfg-input" style="font-family:var(--sans);" maxlength="18" placeholder="Real"></div>
+        <div class="form-group"><label class="cfg-label">Nome do Modo 2 (Virtual)</label><input type="text" id="cfg-nome-virtual" class="cfg-input" style="font-family:var(--sans);" maxlength="18" placeholder="Virtual"></div>
+      </div>
+      <button class="btn-secondary" onclick="salvarNomesModos()">💾 Salvar Nomes</button>
+      <p style="font-size:10px;color:var(--muted);line-height:1.5;margin-top:8px;">Renomeia os botões no topo. Os dados de cada modo são preservados — muda só o rótulo. Deixe em branco para voltar ao padrão.</p>
+    </div>
 
     <div class="cfg-section">
       <div class="cfg-title accent">⚙️ Parâmetros Operacionais</div>
@@ -687,6 +705,7 @@ const DEFAULT_MODO = {
 
 const DEFAULT_STATE = {
   bancoCapital:0.00, sheetsUrl:"", ultimoTimestampSinc:0,
+  nomeReal:"Real", nomeVirtual:"Virtual",
   // Plataforma é COMPARTILHADA entre Real e Virtual — é o mesmo dinheiro
   bancaInicial:100.00, bancaAtual:100.00, bancaInicioEtapa:100.00,
   resultadosReaisGrafico:[100.00],
@@ -723,11 +742,29 @@ function preencherScriptBox(){
   if(box && !box.value) box.value = GS_SCRIPT_CODE;
 }
 
+function emojiRealVirtual(modo){ return modo==='real'?'⚽':'🎮'; }
+function aplicarNomesModos(){
+  const br=document.getElementById('btn-modo-real');
+  const bv=document.getElementById('btn-modo-virtual');
+  if(br) br.innerText='⚽ '+(state.nomeReal||'Real');
+  if(bv) bv.innerText='🎮 '+(state.nomeVirtual||'Virtual');
+}
+function salvarNomesModos(){
+  const r=document.getElementById('cfg-nome-real').value.trim();
+  const v=document.getElementById('cfg-nome-virtual').value.trim();
+  state.nomeReal=r||'Real';
+  state.nomeVirtual=v||'Virtual';
+  aplicarNomesModos();
+  salvarDadosEAtualizarTudo();
+  alert('✅ Nomes atualizados!');
+}
+
 function alternarModo(modo){
   modoAtivo=modo;
   sinalizadoMeta=false; sinalizadoStop=false;
   document.getElementById('btn-modo-real').className='modo-btn'+(modo==='real'?' active real':'');
   document.getElementById('btn-modo-virtual').className='modo-btn'+(modo==='virtual'?' active virtual':'');
+  aplicarNomesModos();
   preencherCamposConfig(); ajustarCamposDeOddsMenu(true); atualizarPainelUI(true);
 }
 
@@ -772,6 +809,8 @@ function aplicarBlindagemDeVariaveis(){
   if(state.bancoCapital===undefined) state.bancoCapital=0.00;
   if(!state.ultimoTimestampSinc) state.ultimoTimestampSinc=0;
   if(!state.sheetsUrl) state.sheetsUrl="";
+  if(state.nomeReal===undefined||state.nomeReal==="") state.nomeReal="Real";
+  if(state.nomeVirtual===undefined||state.nomeVirtual==="") state.nomeVirtual="Virtual";
   // Plataforma compartilhada — nível state, não por modo
   if(state.bancaAtual===undefined) state.bancaAtual=100.00;
   if(state.bancaInicial===undefined) state.bancaInicial=state.bancaAtual;
@@ -1252,11 +1291,13 @@ function preencherCamposConfig(){
   document.getElementById('cfg-meta-diaria').value=ms().metaDiaria||1.0;
   document.getElementById('cfg-dias-acomp').value=ms().diasAcomp||30;
   document.getElementById('cfg-sheets-url').value=state.sheetsUrl||"";
+  const cnr=document.getElementById('cfg-nome-real'); if(cnr) cnr.value=(state.nomeReal&&state.nomeReal!=='Real')?state.nomeReal:'';
+  const cnv=document.getElementById('cfg-nome-virtual'); if(cnv) cnv.value=(state.nomeVirtual&&state.nomeVirtual!=='Virtual')?state.nomeVirtual:'';
   calcularSomaCapitalGeralUI();
 }
 
 function alternarModoPosWin(){ ms().modoPosWin=ms().modoPosWin==="BLINDAR"?"RESETAR":"BLINDAR"; salvarDadosEAtualizarTudo(); }
-function atualizarBotaoModoUI(){ const btn=document.getElementById('btn-toggle-modo-pos-win'); if(!btn) return; btn.className="btn-modo "+(ms().modoPosWin==="BLINDAR"?"blindar":"resetar"); btn.innerText=ms().modoPosWin==="BLINDAR"?"🔒 Pós-Win: Blindar":"🔄 Pós-Win: Resetar"; }
+function atualizarBotaoModoUI(){ aplicarNomesModos(); const btn=document.getElementById('btn-toggle-modo-pos-win'); if(!btn) return; btn.className="btn-modo "+(ms().modoPosWin==="BLINDAR"?"blindar":"resetar"); btn.innerText=ms().modoPosWin==="BLINDAR"?"🔒 Pós-Win: Blindar":"🔄 Pós-Win: Resetar"; }
 function atualizarLayoutContadoresPorModo(){ const r=document.getElementById('wrapper-contador-resetar'); if(!r) return; if(ms().modoPosWin==="BLINDAR"){ r.style.display='none'; }else{ r.style.display='block'; document.getElementById('lbl-vitorias-resetar-contador').innerText=ms().vitoriasRodadaVoltarInicial; } }
 
 function calcularPrevistoNaData(dataStr){
