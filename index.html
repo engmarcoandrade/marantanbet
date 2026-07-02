@@ -571,6 +571,8 @@ tbody tr:last-child td { border-bottom:none; }
       <div class="form-group">
         <label class="cfg-label">URL Google Sheets</label>
         <input type="text" id="cfg-sheets-url" class="cfg-input" style="font-family:var(--sans);font-size:12px;" placeholder="https://script.google.com/macros/s/.../exec">
+        <button class="btn-secondary" style="margin-top:8px;" onclick="testarConexaoSheets()">🔌 Testar Conexão</button>
+        <div id="cfg-teste-resultado" style="font-size:11px;line-height:1.5;margin-top:8px;"></div>
       </div>
     </div>
 
@@ -688,7 +690,9 @@ function alternarTema(){
   document.getElementById('btn-tema').innerText = isLight ? '☀️' : '🌙';
   document.querySelector('meta[name="theme-color"]').setAttribute('content', isLight ? '#F6F8FA' : '#0D1117');
 }
-let SHEETS_URL_MEMORIA = "https://script.google.com/macros/s/AKfycbx0oGZJBlmosWEoGoH1_tXsul_51XAXN6BkQkUGrbtkJPdgEZWia_05UmV0fn2WtUj0/exec";
+let SHEETS_URL_MEMORIA = "https://script.google.com/macros/s/AKfycbzVYKWBmtYT06R7es8LVWKahmCpbFY9SNNRb_VWq6B0LE09vP6FKo8Yl5atgdrY-TRn/exec";
+// URLs de implantações anteriores — tentadas como fallback se a principal falhar
+const SHEETS_URLS_FALLBACK = ["https://script.google.com/macros/s/AKfycbx0oGZJBlmosWEoGoH1_tXsul_51XAXN6BkQkUGrbtkJPdgEZWia_05UmV0fn2WtUj0/exec"];
 
 const DEFAULT_MODO = {
   etapaAtual:1,
@@ -845,31 +849,71 @@ function aplicarBlindagemDeVariaveis(){
   });
 }
 
-async function carregarDaNuvem(){
-  const urlFinal=state.sheetsUrl||SHEETS_URL_MEMORIA||"";
-  if(!urlFinal||!urlFinal.startsWith("http")){ atualizarStatusSheets('err'); return false; }
-  atualizarStatusSheets('sync');
+async function testarConexaoSheets(){
+  const div=document.getElementById('cfg-teste-resultado');
+  const urlCampo=document.getElementById('cfg-sheets-url').value.trim();
+  const url=urlCampo||state.sheetsUrl||SHEETS_URL_MEMORIA||"";
+  if(!url||!url.startsWith("http")){ if(div){ div.style.color='var(--loss)'; div.innerText='⚠️ Digite uma URL válida (deve começar com https://).'; } return; }
+  if(div){ div.style.color='var(--muted)'; div.innerText='🔄 Testando conexão...'; }
+  const r=await tentarUmaUrl(url);
+  if(!div) return;
+  if(r.ok){
+    const totLotes=(r.data.real&&r.data.real.sequencias?r.data.real.sequencias.length:0);
+    div.style.color='var(--win)';
+    div.innerText='✅ Conectado! Dados encontrados (banca '+fmt(r.data.bancaAtual||0)+', '+totLotes+' lotes no modo Real). Clique em "Salvar e Recriar Grade" para fixar esta URL.';
+  } else if(r.ready){
+    div.style.color='#F0A500';
+    div.innerText='🟡 Implantação viva, mas ainda sem dados salvos. Faça uma operação e use "Salvar no Sheets agora".';
+  } else {
+    div.style.color='var(--loss)';
+    div.innerText='❌ '+r.motivo;
+  }
+}
+
+async function tentarUmaUrl(url){
+  // Retorna {ok:true,data} se veio JSON válido com dados; senão {ok:false,motivo}
   try{
-    const response=await fetch(urlFinal+'?t='+Date.now());
-    const data=await response.json();
-    if(data&&data.real&&data.real.bancaInicial!==undefined){
-      data.sheetsUrl=data.sheetsUrl||urlFinal;
+    const response=await fetch(url+'?t='+Date.now());
+    let data;
+    try{ data=await response.json(); }
+    catch(e){ return {ok:false, motivo:'A URL respondeu, mas não em formato JSON (provável tela de login — acesso da implantação não está como "Qualquer pessoa").'}; }
+    if(data&&typeof data==='object'&&data.real&&typeof data.real==='object'&&data.bancaInicial!==undefined) return {ok:true, data};
+    if(data&&data.status==='ready') return {ok:false, motivo:'A implantação está viva mas ainda não há dados salvos nela.', ready:true};
+    return {ok:false, motivo:'A URL respondeu, mas sem os dados esperados.'};
+  }catch(err){
+    return {ok:false, motivo:'Não foi possível alcançar a URL (rede, CORS ou implantação inexistente/404).'};
+  }
+}
+
+async function carregarDaNuvem(){
+  const principal=state.sheetsUrl||SHEETS_URL_MEMORIA||"";
+  // Ordem de tentativa: URL configurada/principal, depois os fallbacks (sem repetir)
+  const candidatas=[principal, ...SHEETS_URLS_FALLBACK].filter((u,i,arr)=>u&&u.startsWith("http")&&arr.indexOf(u)===i);
+  if(candidatas.length===0){ atualizarStatusSheets('err'); window.__ultimoErroSheets='Nenhuma URL válida configurada.'; return false; }
+  atualizarStatusSheets('sync');
+  let ultimoMotivo='';
+  for(const url of candidatas){
+    const r=await tentarUmaUrl(url);
+    if(r.ok){
+      const data=r.data;
+      data.sheetsUrl=url; // fixa a URL que funcionou
+      SHEETS_URL_MEMORIA=url;
       state=data;
       aplicarBlindagemDeVariaveis();
-      // Garantir sequências de ambos os modos
       if(!state.real.sequencias||state.real.sequencias.length===0){ modoAtivo='real'; gerarEstruturaLotesIniciais(); }
       if(!state.virtual.sequencias||state.virtual.sequencias.length===0){ modoAtivo='virtual'; gerarEstruturaLotesIniciais(); modoAtivo='real'; }
-      preencherCamposConfig(); ajustarCamposDeOddsMenu(true); atualizarPainelUI(true);
+      try{ preencherCamposConfig(); ajustarCamposDeOddsMenu(true); atualizarPainelUI(true); }
+      catch(e){ console.warn('Aviso ao renderizar após carregar (dados OK):', e); }
       atualizarStatusSheets('on');
+      window.__ultimoErroSheets='';
+      if(url!==principal) console.log('Sheets: conectado via URL de fallback.');
       return true;
-    } else {
-      atualizarStatusSheets('err');
-      return false;
     }
-  }catch(err){
-    atualizarStatusSheets('err');
-    return false;
+    ultimoMotivo=r.motivo;
   }
+  atualizarStatusSheets('err');
+  window.__ultimoErroSheets=ultimoMotivo;
+  return false;
 }
 
 document.addEventListener('DOMContentLoaded',()=>{
@@ -892,9 +936,9 @@ async function inicializarApp(){
     preencherCamposConfig(); ajustarCamposDeOddsMenu(true); atualizarPainelUI(true);
     const ok = await carregarDaNuvem();
     if(!ok){
-      // Sheets falhou — mostra tela vazia com aviso, sem usar cache local
       atualizarStatusSheets('err');
-      alert('⚠️ Não foi possível conectar ao Google Sheets. Verifique sua conexão e recarregue o app.');
+      const motivo=window.__ultimoErroSheets||'Causa desconhecida.';
+      alert('⚠️ Não foi possível conectar ao Google Sheets.\n\nMotivo: '+motivo+'\n\nVerifique a URL na aba Config e use "Testar conexão".');
     }
   } else {
     // Sem URL configurada — tela vazia aguardando configuração
