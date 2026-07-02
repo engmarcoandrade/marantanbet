@@ -303,7 +303,7 @@ tbody tr:last-child td { border-bottom:none; }
     <div class="modal-body" style="text-align:center;">
       <div style="font-size:36px;margin-bottom:12px;">⚠️</div>
       <div class="m-title" style="color:var(--loss);">Stop Loss Atingido</div>
-      <p style="font-size:13px;color:var(--muted);">O limite de perda da etapa foi alcançado. Avalie encerrar a operação.</p>
+      <p style="font-size:13px;color:var(--muted);">O limite de perda da etapa foi alcançado e os registros foram <b style="color:var(--loss);">travados</b>. Encerre a operação por hoje. Para destravar, conclua a etapa ou recrie a grade em Config — decisão consciente, não impulso.</p>
     </div>
     <div class="modal-footer"><button class="btn-confirm" style="background:var(--loss);" onclick="fecharModal('modal-stop')">Entendido</button></div>
   </div>
@@ -423,6 +423,16 @@ tbody tr:last-child td { border-bottom:none; }
         </div>
       </div>
     </div>
+    <div class="progress-card" id="card-exposicao">
+      <div class="progress-header">
+        <span>⚠️ Exposição Real por Letra</span>
+        <b id="exp-total-risco">R$ 0,00</b>
+      </div>
+      <div id="exposicao-body"></div>
+      <div id="exposicao-rodape" style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:6px; margin-top:8px; padding-top:8px; border-top:1px solid var(--border2); font-size:11px; color:var(--muted);"></div>
+      <p style="font-size:10px;color:var(--muted);line-height:1.5;margin-top:8px;">"Aguenta" = quantas derrotas seguidas dessa letra a banca da plataforma suporta com a progressão atual. Lembre-se: sequências de 10+ derrotas <b>vão acontecer</b> ao longo do tempo — cada jogo é independente e "estar atrasado" não aumenta a chance do próximo.</p>
+    </div>
+
   <button id="btn-salvar-sheets" onclick="salvarManualSheets()" style="width:100%; padding:12px; background:var(--accent-dim); border:1px solid var(--accent-border); border-radius:var(--radius); color:var(--accent); font-size:14px; font-weight:700; cursor:pointer; font-family:var(--sans); margin-top:4px; display:flex; align-items:center; justify-content:center; gap:8px;">
     ☁️ Salvar no Sheets agora
   </button>
@@ -431,6 +441,7 @@ tbody tr:last-child td { border-bottom:none; }
 
   <!-- ABA: OPERACIONAL -->
   <div id="operacional" class="tab-content">
+    <div id="banner-stop" style="display:none; background:var(--loss-dim); border:1px solid var(--loss-border); color:var(--loss); border-radius:var(--radius); padding:10px 14px; font-size:12px; font-weight:700; margin-bottom:8px; line-height:1.5;">⛔ STOP LOSS ATINGIDO — registros travados. Conclua a etapa (ou recrie a grade em Config) para reavaliar com calma. Continuar apostando agora para "recuperar" é a forma mais comum de transformar uma perda controlada em uma perda grande.</div>
     <div class="action-row" style="margin-bottom:10px; margin-top:0;">
       <button class="btn-action btn-rotate" onclick="solicitarAberturaJanelaRodada()">🔄 Rotação</button>
       <button class="btn-action btn-conclude" onclick="fecharEtapa()">💾 Concluir Etapa</button>
@@ -511,6 +522,11 @@ tbody tr:last-child td { border-bottom:none; }
         <div class="form-group"><label class="cfg-label">Meta Etapa (%)</label><input type="number" id="cfg-meta" class="cfg-input" value="5.0"></div>
         <div class="form-group"><label class="cfg-label">Stop Loss (%)</label><input type="number" id="cfg-stoploss" class="cfg-input" value="15.0"></div>
       </div>
+      <div class="form-row2">
+        <div class="form-group"><label class="cfg-label">⛔ Teto de Gales (derrotas/lote)</label><input type="number" id="cfg-max-gales" class="cfg-input" value="4" min="1" max="20"></div>
+        <div class="form-group"><label class="cfg-label">⛔ Stop por Lote (% capital)</label><input type="number" id="cfg-stop-lote" class="cfg-input" step="0.1" value="5.0" min="0.1"></div>
+      </div>
+      <p style="font-size:10px;color:var(--muted);line-height:1.5;margin:-4px 0 10px;">Ao atingir o teto de gales ou o stop por lote, a perda é <b>assumida</b> e o lote volta à aposta base. Isso limita o dano das sequências longas — que são estatisticamente inevitáveis — em vez de persegui-las até quebrar a banca.</p>
       <div class="form-row2">
         <div class="form-group"><label class="cfg-label">Meta Diária (%)</label><input type="number" id="cfg-meta-diaria" class="cfg-input" step="0.1" value="1.0" placeholder="% ao dia"></div>
         <div class="form-group"><label class="cfg-label">Dias de Acomp.</label><input type="number" id="cfg-dias-acomp" class="cfg-input" value="30" placeholder="Qtd. dias"></div>
@@ -601,6 +617,16 @@ tbody tr:last-child td { border-bottom:none; }
 
   <!-- ABA: HISTÓRICO -->
   <div id="historico" class="tab-content">
+    <div class="progress-card" id="card-estatisticas" style="margin-bottom:10px;">
+      <div class="progress-header">
+        <span>📊 Sequências sem Vitória (por letra)</span>
+        <b id="est-total-eventos">0 eventos</b>
+      </div>
+      <div id="estat-streaks-atuais" style="display:flex; flex-wrap:wrap; gap:5px; margin-bottom:10px;"></div>
+      <div id="estatisticas-body"></div>
+      <div id="estatisticas-rodape" style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:6px; margin-top:8px; padding-top:8px; border-top:1px solid var(--border2); font-size:11px; color:var(--muted);"></div>
+      <p style="font-size:10px;color:var(--muted);line-height:1.5;margin-top:8px;">O "teórico" usa a probabilidade implícita da odd (1/odd) — que é <b>otimista</b>, pois inclui a margem da casa; a probabilidade real de vitória é menor. Se o observado acompanhar o teórico, os resultados se comportam como aleatórios e independentes: não há padrão explorável, e sequências longas continuarão aparecendo.</p>
+    </div>
     <div class="hist-list" id="hist-list-container">
       <div style="padding:24px;text-align:center;color:var(--muted);font-size:13px;">Nenhuma etapa concluída ainda.</div>
     </div>
@@ -654,7 +680,9 @@ const DEFAULT_MODO = {
   anotacoesPorLetra:{"A":"","B":"","C":"","D":"","E":"","F":""},
   letrasBloqueadasRodada:{},
   modoPosWin:"BLINDAR", modoDistribuicao:"PROPORCIONAL", marantanLancamentosRodada:{},
-  sequencias:[], historico:[], vitoriasRodadaVoltarInicial:0
+  sequencias:[], historico:[], vitoriasRodadaVoltarInicial:0,
+  maxGales:4, stopLotePercent:5.0,
+  estatSequencias:[], streakPorLetra:{}, perdasAssumidasTotal:0, assumidasCount:0, stopTravado:false
 };
 
 const DEFAULT_STATE = {
@@ -768,6 +796,13 @@ function aplicarBlindagemDeVariaveis(){
     if(m.apostaBasePercent===undefined) m.apostaBasePercent=1.0;
     if(m.metaDiaria===undefined) m.metaDiaria=1.0;
     if(m.diasAcomp===undefined) m.diasAcomp=30;
+    if(m.maxGales===undefined) m.maxGales=4;
+    if(m.stopLotePercent===undefined) m.stopLotePercent=5.0;
+    if(!m.estatSequencias) m.estatSequencias=[];
+    if(!m.streakPorLetra) m.streakPorLetra={};
+    if(m.perdasAssumidasTotal===undefined) m.perdasAssumidasTotal=0;
+    if(m.assumidasCount===undefined) m.assumidasCount=0;
+    if(m.stopTravado===undefined) m.stopTravado=false;
   });
 }
 
@@ -871,6 +906,7 @@ function gerarEstruturaLotesIniciais(){
   const seqs=Array.from({length:total},(_,i)=>{ const l=pool[i]; const o=ms().oddsPorLetra[l]||2; return { id:i+1, apostaAtual:getValorApostaBase(o), streakLoss:0, letraRandomica:l, winsEtapa:0, lossesEtapa:0, perdasAcumuladas:0, status:'PENDING' }; }); ms().sequencias=seqs;
   ms().marantanLancamentosRodada={};
   ms().letrasBloqueadasRodada={};
+  ms().stopTravado=false; // nova grade = decisão deliberada; destrava o stop
   salvarDadosEAtualizarTudo();
 }
 
@@ -945,6 +981,8 @@ function salvarConfiguracoes(){
   // Específico do modo ativo
   ms().metaPercent=parseFloat(document.getElementById('cfg-meta').value);
   ms().stopLossPercent=parseFloat(document.getElementById('cfg-stoploss').value);
+  ms().maxGales=parseInt(document.getElementById('cfg-max-gales').value)||4;
+  ms().stopLotePercent=parseFloat(document.getElementById('cfg-stop-lote').value)||5.0;
   ms().apostaBasePercent=parseFloat(document.getElementById('cfg-aposta-base-pct').value);
   ms().loteQtd=parseInt(document.getElementById('cfg-lote').value)||500;
   ms().aleatoriedade=parseInt(document.getElementById('cfg-aleatoriedade').value)||6;
@@ -964,26 +1002,88 @@ function salvarConfiguracoes(){
 function sniperArredondarAposta(val){ return Math.max(0.0001, val); }
 function roundedFixo(val){ return val; }
 
+// ── ESTATÍSTICA DE SEQUÊNCIAS (por letra, deduplicada por rodada) ──
+function registrarEventoLetra(l,resultado){
+  if(!ms().streakPorLetra) ms().streakPorLetra={};
+  if(!ms().estatSequencias) ms().estatSequencias=[];
+  const prev=ms().marantanLancamentosRodada?ms().marantanLancamentosRodada[l]:undefined;
+  if(prev===resultado) return; // resultado desta letra já contabilizado nesta rodada
+  const cur=ms().streakPorLetra[l]||0;
+  if(resultado==='WIN'){
+    // Fecha a sequência: registra o comprimento (0 = venceu de primeira)
+    ms().estatSequencias.push({l:l, c:cur, d:new Date().toISOString().split('T')[0]});
+    ms().streakPorLetra[l]=0;
+    if(ms().estatSequencias.length>5000) ms().estatSequencias.splice(0,ms().estatSequencias.length-5000);
+  } else {
+    ms().streakPorLetra[l]=cur+1;
+  }
+}
+
+// ── MOTOR DE RESULTADO POR LOTE (com teto de gales e stop por lote) ──
+function processarWinSeq(seq,odd){
+  seq.winsEtapa++;
+  const val=sniperArredondarAposta(seq.apostaAtual);
+  state.bancaAtual+=(val*(odd-1));
+  seq.perdasAcumuladas=0; seq.streakLoss=0;
+  seq.apostaAtual=getValorApostaBase(odd);
+  seq.status=ms().modoPosWin==="BLINDAR"?"FINISHED":"PENDING";
+}
+
+function processarPerdaSeq(seq,odd){
+  seq.lossesEtapa++;
+  const val=sniperArredondarAposta(seq.apostaAtual);
+  state.bancaAtual-=val;
+  seq.perdasAcumuladas+=val;
+  seq.streakLoss=(seq.streakLoss||0)+1;
+  const capitalGlobal=state.bancaAtual+(parseFloat(state.bancoCapital)||0);
+  const limiteLote=capitalGlobal*((ms().stopLotePercent||5)/100);
+  const proximaAposta=(seq.perdasAcumuladas+getValorApostaBase(odd))/(odd-1);
+  const estourouGales=seq.streakLoss>=(ms().maxGales||4);
+  const estourouLote=seq.perdasAcumuladas>=limiteLote||proximaAposta>=limiteLote;
+  if(estourouGales||estourouLote){
+    // Assume a perda: para de perseguir e volta à base. A perda já saiu da banca a cada derrota.
+    const valorAssumido=seq.perdasAcumuladas;
+    ms().perdasAssumidasTotal=(ms().perdasAssumidasTotal||0)+valorAssumido;
+    ms().assumidasCount=(ms().assumidasCount||0)+1;
+    seq.perdasAcumuladas=0; seq.streakLoss=0;
+    seq.apostaAtual=getValorApostaBase(odd);
+    return {assumida:true, motivo:estourouGales?'teto de gales':'stop por lote', valor:valorAssumido};
+  }
+  seq.apostaAtual=proximaAposta;
+  return {assumida:false};
+}
+
+function verificarTravaStop(){
+  if(ms().stopTravado){ document.getElementById('modal-stop').style.display='flex'; return true; }
+  return false;
+}
+
 function registrarApostaIndividual(index,resultado,emMassa=false){
   if(index<0||index>=ms().sequencias.length) return;
+  if(verificarTravaStop()) return;
   const seq=ms().sequencias[index]; if(seq.status==='FINISHED') return;
-  const val=sniperArredondarAposta(seq.apostaAtual); const l=seq.letraRandomica; const odd=ms().oddsPorLetra[l]||2;
-  if(resultado==='WIN'){ seq.winsEtapa++; state.bancaAtual+=(val*(odd-1)); seq.perdasAcumuladas=0; seq.apostaAtual=getValorApostaBase(odd); seq.status=ms().modoPosWin==="BLINDAR"?"FINISHED":"PENDING"; ms().vitoriasRodadaVoltarInicial++; }
-  else{ seq.lossesEtapa++; state.bancaAtual-=val; seq.perdasAcumuladas+=val; seq.apostaAtual=(seq.perdasAcumuladas+getValorApostaBase(odd))/(odd-1); }
+  const l=seq.letraRandomica; const odd=ms().oddsPorLetra[l]||2;
+  registrarEventoLetra(l,resultado);
+  let infoAssumida=null;
+  if(resultado==='WIN'){ processarWinSeq(seq,odd); ms().vitoriasRodadaVoltarInicial++; }
+  else{ const r=processarPerdaSeq(seq,odd); if(r.assumida) infoAssumida=r; }
   if(!emMassa){
     if(ms().marantanLancamentosRodada) ms().marantanLancamentosRodada[l]=resultado;
     renderCards(); atualizarPainelUI(false);
+    if(infoAssumida) alert('⛔ Lote #'+seq.id+' atingiu o '+infoAssumida.motivo+'.\nPerda de '+fmt(infoAssumida.valor)+' assumida. O lote voltou à aposta base — não persiga esse valor.');
     dispararAnimacaoToastLotes(()=>{ salvarDadosEAtualizarTudo(); });
   }
 }
 
 function executarAcaoEmMassaCard(letraAlvo,resultado){
-  const lu=letraAlvo.toUpperCase(); let ok=false; let vits=0;
+  if(verificarTravaStop()) return;
+  const lu=letraAlvo.toUpperCase(); let ok=false; let vits=0; let assumidas=0; let valAssumido=0;
+  const odd=ms().oddsPorLetra[lu]||2;
+  if(ms().sequencias.some(s=>s.letraRandomica===lu&&s.status!=='FINISHED')) registrarEventoLetra(lu,resultado);
   ms().sequencias.forEach(seq=>{
     if(seq.letraRandomica===lu&&seq.status!=='FINISHED'){
-      const val=sniperArredondarAposta(seq.apostaAtual); const odd=ms().oddsPorLetra[lu]||2;
-      if(resultado==='WIN'){ seq.winsEtapa++; state.bancaAtual+=(val*(odd-1)); seq.perdasAcumuladas=0; seq.apostaAtual=getValorApostaBase(odd); seq.status=ms().modoPosWin==="BLINDAR"?"FINISHED":"PENDING"; vits++; }
-      else{ seq.lossesEtapa++; state.bancaAtual-=val; seq.perdasAcumuladas+=val; seq.apostaAtual=(seq.perdasAcumuladas+getValorApostaBase(odd))/(odd-1); }
+      if(resultado==='WIN'){ processarWinSeq(seq,odd); vits++; }
+      else{ const r=processarPerdaSeq(seq,odd); if(r.assumida){ assumidas++; valAssumido+=r.valor; } }
       ok=true;
     }
   });
@@ -992,6 +1092,7 @@ function executarAcaoEmMassaCard(letraAlvo,resultado){
   if(ms().marantanLancamentosRodada) ms().marantanLancamentosRodada[lu]=resultado;
   // Atualizar UI imediatamente — não esperar o toast
   renderCards(); atualizarPainelUI(false);
+  if(assumidas>0) alert('⛔ '+assumidas+' lote(s) de ['+lu+'] atingiram o limite de progressão.\nPerda total de '+fmt(valAssumido)+' assumida e progressão zerada nesses lotes.');
   dispararAnimacaoToastLotes(()=>{ salvarDadosEAtualizarTudo(); });
 }
 
@@ -1141,6 +1242,8 @@ function preencherCamposConfig(){
   document.getElementById('cfg-banca-capital').value=state.bancaAtual.toFixed(2);
   document.getElementById('cfg-meta').value=ms().metaPercent;
   document.getElementById('cfg-stoploss').value=ms().stopLossPercent;
+  document.getElementById('cfg-max-gales').value=ms().maxGales||4;
+  document.getElementById('cfg-stop-lote').value=ms().stopLotePercent||5.0;
   document.getElementById('cfg-aposta-base-pct').value=ms().apostaBasePercent;
   document.getElementById('cfg-lote').value=ms().loteQtd||500;
   document.getElementById('cfg-aleatoriedade').value=ms().aleatoriedade;
@@ -1165,6 +1268,117 @@ function calcularPrevistoNaData(dataStr){
   const hDate=new Date(dataStr+'T00:00:00');
   const diffDias=Math.max(0,Math.floor((hDate-baseDate)/(1000*60*60*24)));
   return totalInicial*Math.pow(1+metaDiaria, diffDias);
+}
+
+// ── PAINEL DE EXPOSIÇÃO REAL ──
+function simularSobrevivenciaLetra(l){
+  const ativos=ms().sequencias.filter(s=>s.letraRandomica===l&&s.status!=='FINISHED');
+  if(ativos.length===0) return null;
+  const odd=ms().oddsPorLetra[l]||2;
+  const base=getValorApostaBase(odd);
+  let sim=ativos.map(s=>({acc:s.perdasAcumuladas, stake:sniperArredondarAposta(s.apostaAtual)}));
+  let banca=state.bancaAtual;
+  let rodadas=0;
+  const proxima=sim.reduce((a,c)=>a+c.stake,0);
+  for(let i=0;i<21;i++){
+    const total=sim.reduce((a,c)=>a+c.stake,0);
+    if(total>banca) break;
+    banca-=total; rodadas++;
+    sim.forEach(s=>{ s.acc+=s.stake; s.stake=(s.acc+base)/(odd-1); });
+  }
+  return {
+    rodadas, proxima,
+    lotes:ativos.length,
+    risco:ativos.reduce((a,c)=>a+c.perdasAcumuladas,0),
+    maiorStreak:ativos.reduce((a,c)=>Math.max(a,c.streakLoss||0),0)
+  };
+}
+
+function renderExposicao(){
+  const body=document.getElementById('exposicao-body'); if(!body) return;
+  const letras=obterTodasLetrasConfiguradas();
+  let html=''; let riscoTotal=0; let proximaTotal=0;
+  letras.forEach(l=>{
+    const sim=simularSobrevivenciaLetra(l);
+    const odd=ms().oddsPorLetra[l]||2;
+    if(!sim){
+      html+=`<div class="preview-row"><span><b style="font-family:var(--mono);">[${l}]</b> @${odd.toFixed(2)} · finalizada</span><span style="color:var(--muted);font-size:11px;">—</span></div>`;
+      return;
+    }
+    riscoTotal+=sim.risco; proximaTotal+=sim.proxima;
+    const agTxt=sim.rodadas>=21?'20+':String(sim.rodadas);
+    const agCor=sim.rodadas<=3?'var(--loss)':(sim.rodadas<=6?'#F0A500':'var(--win)');
+    html+=`<div class="preview-row" style="gap:6px;">
+      <span style="flex:1;min-width:0;"><b style="font-family:var(--mono);">[${l}]</b> @${odd.toFixed(2)} · ${sim.lotes}L${sim.risco>0?` · <span style="color:var(--loss);">↓${fmt(sim.risco)}</span>`:''}${sim.maiorStreak>0?` · seq ${sim.maiorStreak}`:''}</span>
+      <span style="font-family:var(--mono);font-size:11px;white-space:nowrap;">próx ${fmt(sim.proxima)}</span>
+      <span style="font-family:var(--mono);font-size:11px;font-weight:700;color:${agCor};white-space:nowrap;">aguenta ${agTxt}</span>
+    </div>`;
+  });
+  body.innerHTML=html;
+  const tot=document.getElementById('exp-total-risco');
+  if(tot){ tot.innerText=fmt(riscoTotal); tot.style.color=riscoTotal>0?'var(--loss)':'var(--win)'; }
+  const rod=document.getElementById('exposicao-rodape');
+  if(rod){
+    const capitalGlobal=state.bancaAtual+(parseFloat(state.bancoCapital)||0);
+    const pctRisco=capitalGlobal>0?(riscoTotal/capitalGlobal)*100:0;
+    rod.innerHTML=`<span>Risco acumulado: <b style="color:${pctRisco>10?'var(--loss)':'var(--text)'};font-family:var(--mono);">${pctRisco.toFixed(1)}%</b> do capital</span>
+      <span>Próx. rodada (todas): <b style="font-family:var(--mono);">${fmt(proximaTotal)}</b></span>
+      <span>Perdas assumidas: <b style="color:var(--loss);font-family:var(--mono);">${fmt(ms().perdasAssumidasTotal||0)}</b> (${ms().assumidasCount||0}x)</span>`;
+  }
+}
+
+// ── ESTATÍSTICA DE SEQUÊNCIAS ──
+function renderEstatisticas(){
+  const body=document.getElementById('estatisticas-body'); if(!body) return;
+  const eventos=ms().estatSequencias||[];
+  const totEl=document.getElementById('est-total-eventos');
+  if(totEl) totEl.innerText=eventos.length+' evento'+(eventos.length===1?'':'s');
+
+  // Streaks atuais por letra
+  const chips=document.getElementById('estat-streaks-atuais');
+  if(chips){
+    const letras=obterTodasLetrasConfiguradas();
+    chips.innerHTML=letras.map(l=>{
+      const s=(ms().streakPorLetra||{})[l]||0;
+      const cor=s>=8?'var(--loss)':(s>=4?'#F0A500':'var(--muted)');
+      return `<span style="background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:3px 10px;font-size:11px;font-family:var(--mono);color:${cor};font-weight:700;">${l}: ${s} sem vitória</span>`;
+    }).join('');
+  }
+
+  if(eventos.length===0){
+    body.innerHTML='<div style="padding:12px;text-align:center;color:var(--muted);font-size:12px;">Registre resultados para acumular dados. Cada vitória de uma letra fecha uma sequência e entra aqui.</div>';
+    const r=document.getElementById('estatisticas-rodape'); if(r) r.innerHTML='';
+    return;
+  }
+
+  // Distribuição observada
+  const cont={}; let maior=0;
+  eventos.forEach(e=>{ cont[e.c]=(cont[e.c]||0)+1; if(e.c>maior) maior=e.c; });
+  // p implícito médio (otimista) das letras configuradas
+  const letras=obterTodasLetrasConfiguradas();
+  const pMedio=letras.reduce((a,l)=>a+1/(ms().oddsPorLetra[l]||2),0)/letras.length;
+  const maxLinha=Math.min(maior,15);
+  let rows='';
+  for(let k=0;k<=maxLinha;k++){
+    const obs=cont[k]||0;
+    const obsPct=(obs/eventos.length)*100;
+    const teoPct=pMedio*Math.pow(1-pMedio,k)*100;
+    const barW=Math.min(100,obsPct);
+    rows+=`<div style="display:grid;grid-template-columns:38px 1fr 92px;gap:6px;align-items:center;padding:3px 0;border-bottom:1px solid var(--border2);font-size:11px;">
+      <span style="font-family:var(--mono);color:var(--muted);">${k}${k===maxLinha&&maior>15?'+':''}</span>
+      <div style="height:10px;background:var(--surface2);border-radius:3px;overflow:hidden;"><div style="height:100%;width:${barW}%;background:var(--accent);border-radius:3px;"></div></div>
+      <span style="font-family:var(--mono);text-align:right;">${obs}x · ${obsPct.toFixed(1)}% <span style="color:var(--muted);">(t:${teoPct.toFixed(1)}%)</span></span>
+    </div>`;
+  }
+  body.innerHTML=`<div style="display:grid;grid-template-columns:38px 1fr 92px;gap:6px;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:700;padding-bottom:4px;"><span>Seq.</span><span>Frequência observada</span><span style="text-align:right;">Obs (teórico)</span></div>${rows}`;
+
+  const rod=document.getElementById('estatisticas-rodape');
+  if(rod){
+    const media=eventos.reduce((a,e)=>a+e.c,0)/eventos.length;
+    rod.innerHTML=`<span>Maior sequência fechada: <b style="font-family:var(--mono);color:var(--loss);">${maior}</b></span>
+      <span>Média: <b style="font-family:var(--mono);">${media.toFixed(2)}</b></span>
+      <span>p implícito médio: <b style="font-family:var(--mono);">${(pMedio*100).toFixed(1)}%</b></span>`;
+  }
 }
 
 function renderHistorico(){
@@ -1352,9 +1566,12 @@ function atualizarPainelUI(forcarGrafico=false){
   const bar=document.getElementById('progresso-bar'); if(bar) bar.style.width=Math.min(100,pct)+'%';
 
   if(pct>=100&&!sinalizadoMeta){ sinalizadoMeta=true; document.getElementById('modal-meta').style.display='flex'; }
-  if(state.bancaAtual<=stopVal&&!sinalizadoStop){ sinalizadoStop=true; document.getElementById('modal-stop').style.display='flex'; }
+  if(state.bancaAtual<=stopVal&&!sinalizadoStop){ sinalizadoStop=true; ms().stopTravado=true; document.getElementById('modal-stop').style.display='flex'; }
 
-  renderLinhas(); renderCards(); renderHistorico(); atualizarBotaoModoUI(); atualizarLayoutContadoresPorModo();
+  const banner=document.getElementById('banner-stop');
+  if(banner) banner.style.display=ms().stopTravado?'block':'none';
+
+  renderLinhas(); renderCards(); renderHistorico(); renderExposicao(); renderEstatisticas(); atualizarBotaoModoUI(); atualizarLayoutContadoresPorModo();
   if(document.getElementById('grafico')&&document.getElementById('grafico').classList.contains('active')) renderizarGrafico();
 }
 </script>
