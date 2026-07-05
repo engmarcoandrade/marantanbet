@@ -347,6 +347,20 @@ tbody tr:last-child td { border-bottom:none; }
 </div>
 
 
+<!-- MODAL AVISO RISCO GALES -->
+<div id="modal-risco-gales" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-body" style="text-align:center;">
+      <div style="font-size:36px; margin-bottom:10px;">⚠️</div>
+      <div class="m-title" style="color:var(--loss);">Atenção — Risco de Gale</div>
+      <p id="modal-risco-gales-msg" style="font-size:13px; color:var(--muted); margin-top:6px; line-height:1.6;"></p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-confirm" style="background:var(--loss);" onclick="fecharModal('modal-risco-gales')">Entendido</button>
+    </div>
+  </div>
+</div>
+
 <!-- TOAST -->
 <div id="toast-processamento" class="toast">
   <div class="toast-header"><span>⚙️ Processando lotes...</span><span id="toast-percentual">0%</span></div>
@@ -718,7 +732,8 @@ const DEFAULT_STATE = {
 };
 
 let state = JSON.parse(JSON.stringify(DEFAULT_STATE));
-let modoAtivo = 'real'; // 'real' ou 'virtual'
+let modoAtivo = 'real';
+const lotesAvisadosRisco = new Set(); // controla quais lotes já receberam aviso 70% // 'real' ou 'virtual'
 let sinalizadoMeta=false, sinalizadoStop=false, chartInstance=null, filtroAtualExibicao='all', sheetsTimeout=null;
 
 // Atalho: state atual do modo ativo
@@ -1110,6 +1125,8 @@ function processarWinSeq(seq,odd){
   seq.perdasAcumuladas=0; seq.streakLoss=0;
   seq.apostaAtual=getValorApostaBase(odd);
   seq.status=ms().modoPosWin==="BLINDAR"?"FINISHED":"PENDING";
+  // Libera aviso para esse lote — pode receber novo alerta se entrar em sequência novamente
+  lotesAvisadosRisco.delete(`${modoAtivo}_${seq.id}`);
 }
 
 function processarPerdaSeq(seq,odd){
@@ -1130,9 +1147,25 @@ function processarPerdaSeq(seq,odd){
     ms().assumidasCount=(ms().assumidasCount||0)+1;
     seq.perdasAcumuladas=0; seq.streakLoss=0;
     seq.apostaAtual=getValorApostaBase(odd);
+    lotesAvisadosRisco.delete(`${modoAtivo}_${seq.id}`); // libera aviso para próxima sequência
     return {assumida:true, motivo:estourouGales?'teto de gales':'stop por lote', valor:valorAssumido};
   }
   seq.apostaAtual=proximaAposta;
+
+  // ── Aviso em 70% do teto de gales ──
+  const maxG=ms().maxGales||4;
+  const pct70=Math.ceil(maxG*0.7);
+  const chaveAviso=`${modoAtivo}_${seq.id}`;
+  if(seq.streakLoss>=pct70 && !lotesAvisadosRisco.has(chaveAviso)){
+    lotesAvisadosRisco.add(chaveAviso);
+    const msg=document.getElementById('modal-risco-gales-msg');
+    if(msg){
+      const letra=seq.letraRandomica||'?';
+      msg.innerHTML=`O lote <b>#${seq.id}</b> (Letra <b>${letra}</b>) atingiu <b>${seq.streakLoss} derrotas consecutivas</b>.<br>O teto configurado é <b>${maxG} gales</b> — você está em <b>${Math.round((seq.streakLoss/maxG)*100)}%</b> do limite.<br><br>Avalie se deseja continuar ou assumir a perda manualmente.`;
+    }
+    document.getElementById('modal-risco-gales').style.display='flex';
+  }
+
   return {assumida:false};
 }
 
