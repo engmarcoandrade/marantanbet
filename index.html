@@ -495,6 +495,10 @@ tbody tr:last-child td { border-bottom:none; }
 
   <!-- ABA: LOTES -->
   <div id="lotes" class="tab-content">
+    <div style="display:flex; gap:6px; margin-bottom:8px; flex-wrap:wrap;">
+      <button id="btn-sort-id" class="filter-btn active" onclick="alterarOrdemLotes('id')">📋 Por Número</button>
+      <button id="btn-sort-risco" class="filter-btn" onclick="alterarOrdemLotes('risco')">🔴 Por Risco</button>
+    </div>
     <div class="table-wrap">
       <table>
         <thead>
@@ -504,6 +508,7 @@ tbody tr:last-child td { border-bottom:none; }
             <th>Odd</th>
             <th>Risco</th>
             <th>Aposta</th>
+            <th>Seq.</th>
             <th>V/D</th>
             <th>Status</th>
             <th>Ações</th>
@@ -733,7 +738,8 @@ const DEFAULT_STATE = {
 
 let state = JSON.parse(JSON.stringify(DEFAULT_STATE));
 let modoAtivo = 'real';
-const lotesAvisadosRisco = new Set(); // controla quais lotes já receberam aviso 70% // 'real' ou 'virtual'
+const lotesAvisadosRisco = new Set();
+let ordemLotes = 'id'; // 'id' ou 'risco' // controla quais lotes já receberam aviso 70% // 'real' ou 'virtual'
 let sinalizadoMeta=false, sinalizadoStop=false, chartInstance=null, filtroAtualExibicao='all', sheetsTimeout=null;
 
 // Atalho: state atual do modo ativo
@@ -1238,6 +1244,13 @@ function alterarFiltroExibicao(tipo){
   renderLinhas();
 }
 
+function alterarOrdemLotes(ordem){
+  ordemLotes=ordem;
+  document.getElementById('btn-sort-id').className='filter-btn'+(ordem==='id'?' active':'');
+  document.getElementById('btn-sort-risco').className='filter-btn'+(ordem==='risco'?' active':'');
+  renderLinhas();
+}
+
 function fecharEtapa(){
   const banco=parseFloat(state.bancoCapital)||0;
   const totalAtual=state.bancaAtual+banco;
@@ -1271,17 +1284,53 @@ function confirmarConclusaoEtapa(){
   preencherCamposConfig();
 }
 
+function corSeq(streak, maxG){
+  if(!streak||streak===0) return 'var(--muted)';
+  const pct=streak/maxG;
+  if(pct>=0.7) return 'var(--loss)';
+  if(pct>=0.4) return '#F0A500';
+  return 'var(--win)';
+}
+
 function renderLinhas(){
   const tbody=document.getElementById('tabela-linhas-lotes'); if(!tbody) return;
-  let html=''; const total=ms().sequencias.length;
-  for(let i=0;i<total;i++){
-    const seq=ms().sequencias[i];
-    if(filtroAtualExibicao==='pending'&&seq.status==='FINISHED') continue;
-    if(filtroAtualExibicao==='loss'&&seq.perdasAcumuladas===0) continue;
+  const maxG=ms().maxGales||4;
+
+  // Montar lista com índice original para ações individuais
+  let lista=ms().sequencias.map((seq,i)=>({seq,i}));
+
+  // Filtro
+  if(filtroAtualExibicao==='pending') lista=lista.filter(({seq})=>seq.status!=='FINISHED');
+  if(filtroAtualExibicao==='loss') lista=lista.filter(({seq})=>seq.perdasAcumuladas>0);
+
+  // Ordenação
+  if(ordemLotes==='risco'){
+    lista.sort((a,b)=>(b.seq.streakLoss||0)-(a.seq.streakLoss||0)||(b.seq.perdasAcumuladas-a.seq.perdasAcumuladas));
+  }
+
+  let html='';
+  lista.forEach(({seq,i})=>{
     const l=seq.letraRandomica; const odd=ms().oddsPorLetra[l]||1.80;
     const rowCls=seq.status==='FINISHED'?'row-finished':(seq.perdasAcumuladas>0?'row-loss':'');
-    html+=`<tr class="${rowCls}"><td class="t-mono">#${String(seq.id).padStart(3,'0')}</td><td><span class="lote-badge">${l}</span></td><td class="t-mono">@${odd.toFixed(2)}</td><td class="t-mono ${seq.perdasAcumuladas>0?'t-loss':''}">${fmt(seq.perdasAcumuladas)}</td><td class="t-mono"><b>${seq.status==='FINISHED'?fmt(0):fmt(sniperArredondarAposta(seq.apostaAtual))}</b></td><td><span class="t-win">${seq.winsEtapa}</span>/<span class="t-loss">${seq.lossesEtapa}</span></td><td>${seq.status==='FINISHED'?'<span class="status-ok">OK</span>':'<span class="status-pend">Pend</span>'}</td><td><div style="display:flex;gap:3px;"><button class="tbl-btn-win" onclick="registrarApostaIndividual(${i},'WIN',false)">Vit</button><button class="tbl-btn-loss" onclick="registrarApostaIndividual(${i},'LOSS',false)">Der</button><button class="tbl-btn-eq" onclick="distributingRiscoLoteCritico(${i})">⚖️</button></div></td></tr>`;
-  }
+    const streak=seq.streakLoss||0;
+    const seqCor=corSeq(streak,maxG);
+    const seqTxt=streak>0?`<b style="color:${seqCor};">${streak}/${maxG}</b>`:`<span style="color:var(--muted);">—</span>`;
+    html+=`<tr class="${rowCls}">
+      <td class="t-mono">#${String(seq.id).padStart(3,'0')}</td>
+      <td><span class="lote-badge">${l}</span></td>
+      <td class="t-mono">@${odd.toFixed(2)}</td>
+      <td class="t-mono ${seq.perdasAcumuladas>0?'t-loss':''}">${fmt(seq.perdasAcumuladas)}</td>
+      <td class="t-mono"><b>${seq.status==='FINISHED'?fmt(0):fmt(sniperArredondarAposta(seq.apostaAtual))}</b></td>
+      <td class="t-mono" style="text-align:center;">${seqTxt}</td>
+      <td><span class="t-win">${seq.winsEtapa}</span>/<span class="t-loss">${seq.lossesEtapa}</span></td>
+      <td>${seq.status==='FINISHED'?'<span class="status-ok">OK</span>':'<span class="status-pend">Pend</span>'}</td>
+      <td><div style="display:flex;gap:3px;">
+        <button class="tbl-btn-win" onclick="registrarApostaIndividual(${i},'WIN',false)">Vit</button>
+        <button class="tbl-btn-loss" onclick="registrarApostaIndividual(${i},'LOSS',false)">Der</button>
+        <button class="tbl-btn-eq" onclick="distributingRiscoLoteCritico(${i})">⚖️</button>
+      </div></td>
+    </tr>`;
+  });
   tbody.innerHTML=html;
 }
 
