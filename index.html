@@ -240,7 +240,7 @@ tbody tr:last-child td { border-bottom:none; }
 .btn-secondary { width:100%; padding:10px; background:var(--surface2); color:var(--text); border:1px solid var(--border); border-radius:var(--radius); font-size:13px; font-weight:600; cursor:pointer; font-family:var(--sans); }
 .btn-danger { width:100%; padding:10px; background:transparent; color:var(--loss); border:1px dashed var(--loss-border); border-radius:var(--radius); font-size:13px; font-weight:700; cursor:pointer; font-family:var(--sans); margin-top:6px; }
 .backup-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:6px; }
-.odds-item { display:grid; grid-template-columns:80px 1fr; gap:6px; background:var(--surface2); padding:8px; border:1px solid var(--border); border-radius:var(--radius-sm); margin-bottom:6px; }
+.odds-item { display:grid; grid-template-columns:70px 70px 1fr; gap:6px; background:var(--surface2); padding:8px; border:1px solid var(--border); border-radius:var(--radius-sm); margin-bottom:6px; }
 
 /* ── HISTÓRICO ── */
 .hist-list { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
@@ -348,6 +348,19 @@ tbody tr:last-child td { border-bottom:none; }
 
 
 <!-- MODAL AVISO RISCO GALES -->
+<div id="modal-meta-letra" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-body" style="text-align:center;">
+      <div style="font-size:36px; margin-bottom:10px;">🏆</div>
+      <div class="m-title" style="color:var(--win);">Missão Cumprida</div>
+      <p id="modal-meta-letra-msg" style="font-size:13px; color:var(--muted); margin-top:6px; line-height:1.6;"></p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-confirm" style="background:var(--win);" onclick="fecharModal('modal-meta-letra')">Entendido</button>
+    </div>
+  </div>
+</div>
+
 <div id="modal-risco-gales" class="modal-overlay">
   <div class="modal-box">
     <div class="modal-body" style="text-align:center;">
@@ -572,6 +585,20 @@ tbody tr:last-child td { border-bottom:none; }
         <div class="form-group"><label class="cfg-label">Meta Base por Letra (%)</label><input type="number" id="cfg-aposta-base-pct" class="cfg-input" step="0.001" value="1.0"></div>
         <div class="form-group"><label class="cfg-label">Qtd. Lotes</label><input type="number" id="cfg-lote" class="cfg-input" value="500"></div>
       </div>
+      <div class="form-row2">
+        <div class="form-group">
+          <label class="cfg-label">⚙️ Modo de Progressão</label>
+          <select id="cfg-modo-progressao" class="cfg-select" onchange="atualizarVisibilidadeIncremento()">
+            <option value="RECUPERACAO">Recuperação (perdas + meta)</option>
+            <option value="PERCENTUAL">Percentual Fixo (composto)</option>
+          </select>
+        </div>
+        <div class="form-group" id="wrap-incr-fixo" style="display:none;">
+          <label class="cfg-label">Incremento por Aposta (%)</label>
+          <input type="number" id="cfg-incr-fixo" class="cfg-input" step="0.1" value="10" min="0.1">
+        </div>
+      </div>
+      <p id="nota-modo-progressao" style="font-size:10px;color:var(--muted);line-height:1.5;margin:-4px 0 10px;display:none;">No modo <b>Percentual Fixo</b>, a aposta é multiplicada pelo incremento após <b>cada resultado (vitória ou derrota)</b> e <b>não volta à base após vitórias</b> nem na virada de rodada. O valor só retorna à base quando o teto de gales ou o stop por lote dispara (perda assumida). <b style="color:var(--loss);">Atenção:</b> o crescimento é composto e contínuo — a 10%, a aposta dobra a cada ~7 resultados. Os stops permanecem ativos como proteção.</p>
       <div class="form-group">
         <label class="cfg-label">Letras Ativas</label>
         <input type="number" id="cfg-aleatoriedade" class="cfg-input" value="6" min="1" max="26" oninput="ajustarCamposDeOddsMenu()">
@@ -666,6 +693,10 @@ tbody tr:last-child td { border-bottom:none; }
       <div id="estatisticas-rodape" style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:6px; margin-top:8px; padding-top:8px; border-top:1px solid var(--border2); font-size:11px; color:var(--muted);"></div>
       <p style="font-size:10px;color:var(--muted);line-height:1.5;margin-top:8px;">O "teórico" usa a probabilidade implícita da odd (1/odd) — que é <b>otimista</b>, pois inclui a margem da casa; a probabilidade real de vitória é menor. Se o observado acompanhar o teórico, os resultados se comportam como aleatórios e independentes: não há padrão explorável, e sequências longas continuarão aparecendo.</p>
     </div>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+      <span style="font-size:12px; font-weight:700; color:var(--muted);">Etapas concluídas</span>
+      <button id="btn-sort-hist" onclick="alternarOrdenacaoHistorico()" style="background:var(--surface); border:1px solid var(--border); color:var(--text); padding:5px 10px; border-radius:var(--radius-sm); font-size:11px; font-weight:700; cursor:pointer; font-family:var(--sans);">📅 Cronológica</button>
+    </div>
     <div class="hist-list" id="hist-list-container">
       <div style="padding:24px;text-align:center;color:var(--muted);font-size:13px;">Nenhuma etapa concluída ainda.</div>
     </div>
@@ -723,6 +754,8 @@ const DEFAULT_MODO = {
   modoPosWin:"BLINDAR", modoDistribuicao:"PROPORCIONAL", marantanLancamentosRodada:{},
   sequencias:[], historico:[], vitoriasRodadaVoltarInicial:0,
   maxGales:4, stopLotePercent:5.0,
+  modoProgressao:"RECUPERACAO", incrFixoPercent:10.0,
+  metaPorLetra:{"A":1.0,"B":1.0,"C":1.0,"D":1.0,"E":1.0,"F":1.0}, lucroLetraEtapa:{}, letrasMetaCumprida:{},
   estatSequencias:[], streakPorLetra:{}, perdasAssumidasTotal:0, assumidasCount:0, stopTravado:false
 };
 
@@ -862,6 +895,11 @@ function aplicarBlindagemDeVariaveis(){
     if(m.diasAcomp===undefined) m.diasAcomp=30;
     if(m.maxGales===undefined) m.maxGales=4;
     if(m.stopLotePercent===undefined) m.stopLotePercent=5.0;
+    if(!m.modoProgressao) m.modoProgressao="RECUPERACAO";
+    if(m.incrFixoPercent===undefined) m.incrFixoPercent=10.0;
+    if(!m.metaPorLetra) m.metaPorLetra={"A":1.0,"B":1.0,"C":1.0,"D":1.0,"E":1.0,"F":1.0};
+    if(!m.lucroLetraEtapa) m.lucroLetraEtapa={};
+    if(!m.letrasMetaCumprida) m.letrasMetaCumprida={};
     if(!m.estatSequencias) m.estatSequencias=[];
     if(!m.streakPorLetra) m.streakPorLetra={};
     if(m.perdasAssumidasTotal===undefined) m.perdasAssumidasTotal=0;
@@ -1008,6 +1046,7 @@ function gerarEstruturaLotesIniciais(){
   while(pool.length<total) pool.push(letras[0]);
   if(pool.length>total) pool=pool.slice(0,total);
   const seqs=Array.from({length:total},(_,i)=>{ const l=pool[i]; const o=ms().oddsPorLetra[l]||2; return { id:i+1, apostaAtual:getValorApostaBase(o), streakLoss:0, letraRandomica:l, winsEtapa:0, lossesEtapa:0, perdasAcumuladas:0, status:'PENDING' }; }); ms().sequencias=seqs;
+  ms().lucroLetraEtapa={}; ms().letrasMetaCumprida={};
   ms().marantanLancamentosRodada={};
   ms().letrasBloqueadasRodada={};
   ms().stopTravado=false; // nova grade = decisão deliberada; destrava o stop
@@ -1037,7 +1076,10 @@ function confirmarEncerramentoRodadaReal(){
     livresIdx.forEach((si,ai)=>{ ms().sequencias[si].letraRandomica=livresLetras[ai]; });
   }
   // Recalcular aposta base de lotes sem perda com nova letra/odd
-  ms().sequencias.forEach(s=>{ if(s.status==='PENDING'&&s.perdasAcumuladas===0){ const odd=ms().oddsPorLetra[s.letraRandomica]||2; s.apostaAtual=getValorApostaBase(odd); } });
+  // (no modo PERCENTUAL a aposta não volta à base na virada de rodada — continua o composto)
+  if(ms().modoProgressao!=="PERCENTUAL"){
+    ms().sequencias.forEach(s=>{ if(s.status==='PENDING'&&s.perdasAcumuladas===0){ const odd=ms().oddsPorLetra[s.letraRandomica]||2; s.apostaAtual=getValorApostaBase(odd); } });
+  }
   salvarDadosEAtualizarTudo();
 }
 
@@ -1053,10 +1095,11 @@ function ajustarCamposDeOddsMenu(usarState=false){
   const az="ABCDEFGHIJKLMNOPQRSTUVWXYZ"; let html='';
   for(let i=0;i<Math.min(n,26);i++){
     const l=az[i];
-    let odd=1.80; let nota="";
+    let odd=1.80; let nota=""; let metaL=1.0;
     if(usarState&&ms().oddsPorLetra&&ms().oddsPorLetra[l]!==undefined) odd=ms().oddsPorLetra[l];
     if(usarState&&ms().anotacoesPorLetra&&ms().anotacoesPorLetra[l]) nota=ms().anotacoesPorLetra[l];
-    html+=`<div class="odds-item"><div><div class="cfg-label" style="margin-bottom:4px;">Odd ${l}</div><input type="number" id="cfg-odd-letra-${l}" class="cfg-input" style="font-size:13px;padding:6px 8px;" step="0.01" value="${odd.toFixed(2)}"></div><div><div class="cfg-label" style="margin-bottom:4px;">Nota ${l}</div><input type="text" id="cfg-nota-letra-${l}" class="cfg-input" style="font-size:12px;padding:6px 8px;font-family:var(--sans);" value="${nota}" placeholder="Mercado..."></div></div>`;
+    if(usarState&&ms().metaPorLetra&&ms().metaPorLetra[l]!==undefined) metaL=ms().metaPorLetra[l];
+    html+=`<div class="odds-item"><div><div class="cfg-label" style="margin-bottom:4px;">Odd ${l}</div><input type="number" id="cfg-odd-letra-${l}" class="cfg-input" style="font-size:13px;padding:6px 8px;" step="0.01" value="${odd.toFixed(2)}"></div><div><div class="cfg-label" style="margin-bottom:4px;">Meta ${l} (%)</div><input type="number" id="cfg-meta-letra-${l}" class="cfg-input" style="font-size:13px;padding:6px 8px;" step="0.1" min="0" value="${metaL}"></div><div><div class="cfg-label" style="margin-bottom:4px;">Nota ${l}</div><input type="text" id="cfg-nota-letra-${l}" class="cfg-input" style="font-size:12px;padding:6px 8px;font-family:var(--sans);" value="${nota}" placeholder="Mercado..."></div></div>`;
   }
   container.innerHTML=html;
 }
@@ -1091,14 +1134,17 @@ function salvarConfiguracoes(){
   ms().loteQtd=parseInt(document.getElementById('cfg-lote').value)||500;
   ms().aleatoriedade=parseInt(document.getElementById('cfg-aleatoriedade').value)||6;
   ms().modoDistribuicao=document.getElementById('cfg-modo-distribuicao').value;
+  ms().modoProgressao=document.getElementById('cfg-modo-progressao').value;
+  ms().incrFixoPercent=parseFloat(document.getElementById('cfg-incr-fixo').value)||10.0;
   ms().metaDiaria=parseFloat(document.getElementById('cfg-meta-diaria').value)||1.0;
   ms().diasAcomp=parseInt(document.getElementById('cfg-dias-acomp').value)||30;
-  ms().oddsPorLetra={}; ms().anotacoesPorLetra={};
+  ms().oddsPorLetra={}; ms().anotacoesPorLetra={}; ms().metaPorLetra={};
   const az="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
   for(let i=0;i<Math.min(ms().aleatoriedade,26);i++){
     const l=az[i];
-    const oi=document.getElementById(`cfg-odd-letra-${l}`); const ni=document.getElementById(`cfg-nota-letra-${l}`);
+    const oi=document.getElementById(`cfg-odd-letra-${l}`); const ni=document.getElementById(`cfg-nota-letra-${l}`); const mi=document.getElementById(`cfg-meta-letra-${l}`);
     ms().oddsPorLetra[l]=oi?parseFloat(oi.value)||1.80:1.80; ms().anotacoesPorLetra[l]=ni?ni.value:"";
+    ms().metaPorLetra[l]=mi?(parseFloat(mi.value)||0):1.0;
   }
   gerarEstruturaLotesIniciais(); alert("Configurações salvas e grade recriada!");
 }
@@ -1128,22 +1174,56 @@ function processarWinSeq(seq,odd){
   seq.winsEtapa++;
   const val=sniperArredondarAposta(seq.apostaAtual);
   state.bancaAtual+=(val*(odd-1));
-  seq.perdasAcumuladas=0; seq.streakLoss=0;
-  seq.apostaAtual=getValorApostaBase(odd);
+  const lw=seq.letraRandomica;
+  if(!ms().lucroLetraEtapa) ms().lucroLetraEtapa={};
+  ms().lucroLetraEtapa[lw]=(ms().lucroLetraEtapa[lw]||0)+(val*(odd-1));
+  if(ms().modoProgressao==="PERCENTUAL"){
+    // Percentual Fixo: vitória NÃO volta à base — segue incrementando de forma composta.
+    // O ganho abate o risco acumulado do lote (exposição líquida), mantendo o stop por lote coerente.
+    seq.perdasAcumuladas=Math.max(0, roundedFixo(seq.perdasAcumuladas-(val*(odd-1))));
+    seq.streakLoss=0;
+    seq.apostaAtual=seq.apostaAtual*(1+((ms().incrFixoPercent||10)/100));
+  } else {
+    seq.perdasAcumuladas=0; seq.streakLoss=0;
+    seq.apostaAtual=getValorApostaBase(odd);
+  }
   seq.status=ms().modoPosWin==="BLINDAR"?"FINISHED":"PENDING";
   // Libera aviso para esse lote — pode receber novo alerta se entrar em sequência novamente
   lotesAvisadosRisco.delete(`${modoAtivo}_${seq.id}`);
+  verificarMetaLetra(lw);
+}
+
+function verificarMetaLetra(l){
+  if(!ms().metaPorLetra||ms().metaPorLetra[l]===undefined) return;
+  if(!ms().letrasMetaCumprida) ms().letrasMetaCumprida={};
+  if(ms().letrasMetaCumprida[l]) return; // avisa uma única vez por etapa
+  const metaPct=parseFloat(ms().metaPorLetra[l])||0;
+  if(metaPct<=0) return; // meta 0 = desativada para essa letra
+  const banco=parseFloat(state.bancoCapital)||0;
+  const baseCapital=state.bancaInicioEtapa+banco;
+  const alvo=baseCapital*(metaPct/100);
+  const lucro=(ms().lucroLetraEtapa&&ms().lucroLetraEtapa[l])||0;
+  if(lucro>=alvo){
+    ms().letrasMetaCumprida[l]=true;
+    const msg=document.getElementById('modal-meta-letra-msg');
+    if(msg) msg.innerHTML=`A letra <b>${l}</b> cumpriu a missão! 🎯<br><br>Lucro líquido acumulado na etapa: <b style="color:var(--win);">${fmt(lucro)}</b><br>Meta configurada: <b>${metaPct.toFixed(2)}%</b> sobre o capital do início da etapa (${fmt(alvo)}).<br><br>Considere <b>blindar os lotes dessa letra</b> ou concluir a etapa para proteger o resultado obtido.`;
+    const modal=document.getElementById('modal-meta-letra'); if(modal) modal.style.display='flex';
+  }
 }
 
 function processarPerdaSeq(seq,odd){
   seq.lossesEtapa++;
   const val=sniperArredondarAposta(seq.apostaAtual);
   state.bancaAtual-=val;
+  if(!ms().lucroLetraEtapa) ms().lucroLetraEtapa={};
+  ms().lucroLetraEtapa[seq.letraRandomica]=(ms().lucroLetraEtapa[seq.letraRandomica]||0)-val;
   seq.perdasAcumuladas+=val;
   seq.streakLoss=(seq.streakLoss||0)+1;
   const capitalGlobal=state.bancaAtual+(parseFloat(state.bancoCapital)||0);
   const limiteLote=capitalGlobal*((ms().stopLotePercent||5)/100);
-  const proximaAposta=(seq.perdasAcumuladas+getValorApostaBase(odd))/(odd-1);
+  const proximaAposta=ms().modoProgressao==="PERCENTUAL"
+    ? seq.apostaAtual*(1+((ms().incrFixoPercent||10)/100))
+    : (seq.perdasAcumuladas+getValorApostaBase(odd))/(odd-1);
   const estourouGales=seq.streakLoss>=(ms().maxGales||4);
   const estourouLote=seq.perdasAcumuladas>=limiteLote||proximaAposta>=limiteLote;
   if(estourouGales||estourouLote){
@@ -1225,7 +1305,7 @@ function distributingRiscoLoteCritico(indexAlvo){
   if(outros.length===0||lc.perdasAcumuladas<=0){ alert("⚠️ Não há outros lotes disponíveis para receber o risco."); return; }
   if(confirm("⚖️ Diluir o risco acumulado entre os outros lotes ativos?")){
     const frac=lc.perdasAcumuladas/outros.length; const oddLc=ms().oddsPorLetra[lc.letraRandomica]||2; lc.perdasAcumuladas=0; lc.apostaAtual=getValorApostaBase(oddLc);
-    ms().sequencias.forEach(seq=>{ if(seq.status==='PENDING'&&seq.id!==lc.id){ seq.perdasAcumuladas=roundedFixo(seq.perdasAcumuladas+frac); const odd=ms().oddsPorLetra[seq.letraRandomica]||2; seq.apostaAtual=(seq.perdasAcumuladas+getValorApostaBase(odd))/(odd-1); } });
+    ms().sequencias.forEach(seq=>{ if(seq.status==='PENDING'&&seq.id!==lc.id){ seq.perdasAcumuladas=roundedFixo(seq.perdasAcumuladas+frac); if(ms().modoProgressao!=="PERCENTUAL"){ const odd=ms().oddsPorLetra[seq.letraRandomica]||2; seq.apostaAtual=(seq.perdasAcumuladas+getValorApostaBase(odd))/(odd-1); } } });
     dispararAnimacaoToastLotes(()=>{ salvarDadosEAtualizarTudo(); });
   }
 }
@@ -1414,6 +1494,9 @@ function preencherCamposConfig(){
   document.getElementById('cfg-aleatoriedade').value=ms().aleatoriedade;
   document.getElementById('cfg-data-inicio').value=ms().dataInicioCiclo||hojeISO;
   document.getElementById('cfg-modo-distribuicao').value=ms().modoDistribuicao||"PROPORCIONAL";
+  document.getElementById('cfg-modo-progressao').value=ms().modoProgressao||"RECUPERACAO";
+  document.getElementById('cfg-incr-fixo').value=ms().incrFixoPercent||10.0;
+  atualizarVisibilidadeIncremento();
   document.getElementById('cfg-meta-diaria').value=ms().metaDiaria||1.0;
   document.getElementById('cfg-dias-acomp').value=ms().diasAcomp||30;
   document.getElementById('cfg-sheets-url').value=state.sheetsUrl||"";
@@ -1422,6 +1505,12 @@ function preencherCamposConfig(){
   calcularSomaCapitalGeralUI();
 }
 
+function atualizarVisibilidadeIncremento(){
+  const sel=document.getElementById('cfg-modo-progressao'); if(!sel) return;
+  const perc=sel.value==="PERCENTUAL";
+  const wrap=document.getElementById('wrap-incr-fixo'); if(wrap) wrap.style.display=perc?'block':'none';
+  const nota=document.getElementById('nota-modo-progressao'); if(nota) nota.style.display=perc?'block':'none';
+}
 function alternarModoPosWin(){ ms().modoPosWin=ms().modoPosWin==="BLINDAR"?"RESETAR":"BLINDAR"; salvarDadosEAtualizarTudo(); }
 function atualizarBotaoModoUI(){ aplicarNomesModos(); const btn=document.getElementById('btn-toggle-modo-pos-win'); if(!btn) return; btn.className="btn-modo "+(ms().modoPosWin==="BLINDAR"?"blindar":"resetar"); btn.innerText=ms().modoPosWin==="BLINDAR"?"🔒 Pós-Win: Blindar":"🔄 Pós-Win: Resetar"; }
 function atualizarLayoutContadoresPorModo(){ const r=document.getElementById('wrapper-contador-resetar'); if(!r) return; if(ms().modoPosWin==="BLINDAR"){ r.style.display='none'; }else{ r.style.display='block'; document.getElementById('lbl-vitorias-resetar-contador').innerText=ms().vitoriasRodadaVoltarInicial; } }
@@ -1451,7 +1540,7 @@ function simularSobrevivenciaLetra(l){
     const total=sim.reduce((a,c)=>a+c.stake,0);
     if(total>banca) break;
     banca-=total; rodadas++;
-    sim.forEach(s=>{ s.acc+=s.stake; s.stake=(s.acc+base)/(odd-1); });
+    sim.forEach(s=>{ s.acc+=s.stake; s.stake=ms().modoProgressao==="PERCENTUAL"?s.stake*(1+((ms().incrFixoPercent||10)/100)):(s.acc+base)/(odd-1); });
   }
   return {
     rodadas, proxima,
@@ -1548,11 +1637,27 @@ function renderEstatisticas(){
   }
 }
 
+let histSortMode='cron'; // 'cron' | 'pior' | 'melhor'
+function alternarOrdenacaoHistorico(){
+  histSortMode = histSortMode==='cron' ? 'pior' : (histSortMode==='pior' ? 'melhor' : 'cron');
+  const btn=document.getElementById('btn-sort-hist');
+  if(btn){
+    if(histSortMode==='cron'){ btn.innerHTML='📅 Cronológica'; btn.style.color='var(--text)'; btn.style.borderColor='var(--border)'; }
+    else if(histSortMode==='pior'){ btn.innerHTML='⚠️ Pior resultado'; btn.style.color='var(--loss)'; btn.style.borderColor='var(--loss-border)'; }
+    else { btn.innerHTML='🏆 Melhor resultado'; btn.style.color='var(--win)'; btn.style.borderColor='var(--win-border)'; }
+  }
+  renderHistorico();
+}
 function renderHistorico(){
   const container=document.getElementById('hist-list-container'); if(!container) return;
   if(!ms().historico||ms().historico.length===0){ container.innerHTML='<div style="padding:24px;text-align:center;color:var(--muted);font-size:13px;">Nenhuma etapa concluída ainda.</div>'; return; }
   let html='';
-  ms().historico.forEach((h,idx)=>{
+  // Ordena por % da meta (normalizado); fallback para lucro absoluto. Preserva o índice original para exclusão.
+  const chaveRisco=h=>(typeof h.pct==='number'?h.pct:(h.lucro||0));
+  let itens=ms().historico.map((h,idx)=>({h,idx}));
+  if(histSortMode==='pior') itens.sort((a,b)=>chaveRisco(a.h)-chaveRisco(b.h));
+  else if(histSortMode==='melhor') itens.sort((a,b)=>chaveRisco(b.h)-chaveRisco(a.h));
+  itens.forEach(({h,idx})=>{
     const cor=h.lucro>=0?'var(--win)':'var(--loss)';
     const totalReal=h.totalPos||h.bancaPos||0;
     const previsto=calcularPrevistoNaData(h.dataCalendario);
