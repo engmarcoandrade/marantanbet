@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#0D1117">
 <title>Método Marantan</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox=%270 0 48 48%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Crect x=%271.5%27 y=%271.5%27 width=%2745%27 height=%2745%27 rx=%2711%27 fill=%27%23161B22%27 stroke=%27%2330363D%27 stroke-width=%271.5%27/%3E%3Cpath d=%27M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3Cpath d=%27M30.5 9.5 L37.5 9 L36.8 16%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
@@ -75,6 +76,8 @@ header { background:var(--surface); border-bottom:1px solid var(--border); paddi
 .hdr-linha-top { display:flex; justify-content:space-between; align-items:center; gap:8px; }
 .app-logo { font-family:var(--mono); font-size:15px; font-weight:700; color:var(--text); letter-spacing:.04em; }
 .app-logo span { color:var(--accent); }
+.app-logo-wrap { display:flex; align-items:center; gap:8px; min-width:0; }
+.app-logo-mark { width:30px; height:30px; flex-shrink:0; display:block; }
 .etapa-chip { background:var(--surface2); border:1px solid var(--border); border-radius:20px; padding:4px 12px; font-size:12px; font-weight:600; color:var(--muted); white-space:nowrap; }
 .etapa-chip b { color:var(--accent); }
 .hdr-btns { display:flex; gap:6px; flex-shrink:0; }
@@ -154,6 +157,13 @@ header { background:var(--surface); border-bottom:1px solid var(--border); paddi
 .letra-card.is-finished { border-color:var(--win-border); opacity:.6; }
 .letra-card.is-locked { border-color:var(--purple-border); }
 .letra-card.is-done { opacity:.5; filter:grayscale(30%); }
+.cards-grid.list-view { grid-template-columns:1fr; gap:5px; }
+.letra-card.linha { flex-direction:row; align-items:center; gap:8px; padding:6px 10px; flex-wrap:wrap; }
+.letra-card.linha .lr-meta { flex:1; min-width:110px; }
+.letra-card.linha .lr-meta > div { margin-top:0 !important; }
+.letra-card.linha .lr-amount { font-family:var(--mono); font-size:12px; font-weight:700; min-width:64px; }
+.letra-card.linha .lr-counters { font-size:10px; font-family:var(--mono); white-space:nowrap; }
+.letra-card.linha .card-btns { margin:0; }
 .card-top { display:flex; justify-content:space-between; align-items:center; }
 .letra-badge { width:22px; height:22px; border-radius:5px; display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:12px; font-weight:700; background:var(--accent-dim); border:1px solid var(--accent-border); color:var(--accent); flex-shrink:0; }
 .letra-badge.loss { background:var(--loss-dim); border-color:var(--loss-border); color:var(--loss); }
@@ -284,6 +294,7 @@ tbody tr:last-child td { border-bottom:none; }
   .cards-grid { gap:6px; }
   .letra-card { padding:10px; }
   .app-logo { font-size:14px; }
+  .app-logo-mark { width:26px; height:26px; }
   .etapa-chip { padding:4px 10px; font-size:11px; }
   .hdr-btn { padding:6px 8px; font-size:11px; }
   .modo-btn { padding:8px; font-size:12px; }
@@ -383,7 +394,18 @@ tbody tr:last-child td { border-bottom:none; }
 <!-- HEADER -->
 <header>
   <div class="hdr-linha-top">
-    <div class="app-logo">MARAN<span>TAN</span></div>
+    <div class="app-logo-wrap">
+      <svg class="app-logo-mark" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect x="1.5" y="1.5" width="45" height="45" rx="11" fill="var(--surface2)" stroke="var(--border)" stroke-width="1.5"/>
+        <rect x="9"  y="30" width="5" height="9"  rx="1.5" fill="var(--accent-dim)"/>
+        <rect x="17" y="25" width="5" height="14" rx="1.5" fill="var(--accent-dim)"/>
+        <rect x="25" y="20" width="5" height="19" rx="1.5" fill="var(--accent-dim)"/>
+        <rect x="33" y="15" width="5" height="24" rx="1.5" fill="var(--accent-dim)"/>
+        <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div class="app-logo">MARAN<span>TAN</span></div>
+    </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
       <button class="hdr-btn" id="btn-tema" onclick="alternarTema()" title="Alternar tema">🌙</button>
@@ -503,7 +525,11 @@ tbody tr:last-child td { border-bottom:none; }
       </div>
     </div>
 
+    <div style="display:flex; justify-content:flex-end; margin-bottom:6px;">
+      <button id="btn-vista-operacao" class="hdr-btn" onclick="alternarVistaOperacao()">☰ Ver em linhas</button>
+    </div>
     <div class="cards-grid" id="container-letras-linhas"></div>
+    <div id="rodape-soma-letras" style="margin-top:8px; font-size:11px; font-family:var(--mono); color:var(--muted); text-align:right;"></div>
   </div>
 
   <!-- ABA: LOTES -->
@@ -754,7 +780,7 @@ const DEFAULT_MODO = {
   modoPosWin:"BLINDAR", modoDistribuicao:"PROPORCIONAL", marantanLancamentosRodada:{},
   sequencias:[], historico:[], vitoriasRodadaVoltarInicial:0,
   maxGales:4, stopLotePercent:5.0,
-  modoProgressao:"RECUPERACAO", incrFixoPercent:10.0,
+  modoProgressao:"RECUPERACAO", incrFixoPercent:10.0, vistaOperacao:"cards",
   metaPorLetra:{"A":1.0,"B":1.0,"C":1.0,"D":1.0,"E":1.0,"F":1.0}, lucroLetraEtapa:{}, letrasMetaCumprida:{},
   estatSequencias:[], streakPorLetra:{}, perdasAssumidasTotal:0, assumidasCount:0, stopTravado:false
 };
@@ -897,6 +923,7 @@ function aplicarBlindagemDeVariaveis(){
     if(m.stopLotePercent===undefined) m.stopLotePercent=5.0;
     if(!m.modoProgressao) m.modoProgressao="RECUPERACAO";
     if(m.incrFixoPercent===undefined) m.incrFixoPercent=10.0;
+    if(!m.vistaOperacao) m.vistaOperacao="cards";
     if(!m.metaPorLetra) m.metaPorLetra={"A":1.0,"B":1.0,"C":1.0,"D":1.0,"E":1.0,"F":1.0};
     if(!m.lucroLetraEtapa) m.lucroLetraEtapa={};
     if(!m.letrasMetaCumprida) m.letrasMetaCumprida={};
@@ -1025,7 +1052,10 @@ function openTab(tabId){
   if(tabId==='config') preencherScriptBox();
 }
 
-function getValorApostaBase(odd){ const capitalTotal=state.bancaAtual+(parseFloat(state.bancoCapital)||0); const lucroDesejado=capitalTotal*(ms().apostaBasePercent/100); return lucroDesejado/((odd||2)-1); }
+// Base FIXA por etapa: calculada sobre o capital global (plataforma + banco) do INÍCIO da etapa.
+// Só é recalculada ao concluir etapa / salvar config / ajustar banca (quando bancaInicioEtapa muda).
+function getLucroDesejadoBase(){ const capitalInicioEtapa=state.bancaInicioEtapa+(parseFloat(state.bancoCapital)||0); return capitalInicioEtapa*(ms().apostaBasePercent/100); }
+function getValorApostaBase(odd){ return getLucroDesejadoBase()/((odd||2)-1); }
 function obterTodasLetrasConfiguradas(){ const n=Math.min(ms().aleatoriedade||6,26); const az="ABCDEFGHIJKLMNOPQRSTUVWXYZ"; let l=[]; for(let i=0;i<n;i++) l.push(az[i]); return l; }
 function calcularSomaCapitalGeralUI(){ const b=parseFloat(document.getElementById('cfg-banco-capital').value)||0; const c=parseFloat(document.getElementById('cfg-banca-capital').value)||0; document.getElementById('cfg-banca-total-disabled').value=(b+c).toFixed(2); }
 
@@ -1075,10 +1105,12 @@ function confirmarEncerramentoRodadaReal(){
     for(let i=livresLetras.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [livresLetras[i],livresLetras[j]]=[livresLetras[j],livresLetras[i]]; }
     livresIdx.forEach((si,ai)=>{ ms().sequencias[si].letraRandomica=livresLetras[ai]; });
   }
-  // Recalcular aposta base de lotes sem perda com nova letra/odd
-  // (no modo PERCENTUAL a aposta não volta à base na virada de rodada — continua o composto)
+  // Recalcular apostas com a odd da NOVA letra sorteada:
+  // — lotes sem perda voltam à base; lotes COM perdas têm a recuperação recalculada para a odd nova
+  //   (antes, um lote com perdas mantinha a aposta dimensionada para a odd da letra antiga)
+  // (no modo PERCENTUAL a aposta não volta à base nem é recalculada — continua o composto)
   if(ms().modoProgressao!=="PERCENTUAL"){
-    ms().sequencias.forEach(s=>{ if(s.status==='PENDING'&&s.perdasAcumuladas===0){ const odd=ms().oddsPorLetra[s.letraRandomica]||2; s.apostaAtual=getValorApostaBase(odd); } });
+    ms().sequencias.forEach(s=>{ if(s.status==='PENDING'){ const odd=ms().oddsPorLetra[s.letraRandomica]||2; s.apostaAtual=(s.perdasAcumuladas+getLucroDesejadoBase())/(odd-1); } });
   }
   salvarDadosEAtualizarTudo();
 }
@@ -1144,7 +1176,7 @@ function salvarConfiguracoes(){
     const l=az[i];
     const oi=document.getElementById(`cfg-odd-letra-${l}`); const ni=document.getElementById(`cfg-nota-letra-${l}`); const mi=document.getElementById(`cfg-meta-letra-${l}`);
     ms().oddsPorLetra[l]=oi?parseFloat(oi.value)||1.80:1.80; ms().anotacoesPorLetra[l]=ni?ni.value:"";
-    ms().metaPorLetra[l]=mi?(parseFloat(mi.value)||0):1.0;
+    const vMeta=mi?parseFloat(mi.value):NaN; ms().metaPorLetra[l]=isNaN(vMeta)?1.0:vMeta; // vazio → default 1.0; "0" digitado → desativa
   }
   gerarEstruturaLotesIniciais(); alert("Configurações salvas e grade recriada!");
 }
@@ -1187,10 +1219,18 @@ function processarWinSeq(seq,odd){
     seq.perdasAcumuladas=0; seq.streakLoss=0;
     seq.apostaAtual=getValorApostaBase(odd);
   }
-  seq.status=ms().modoPosWin==="BLINDAR"?"FINISHED":"PENDING";
+  // Verifica a meta da letra ANTES de decidir o status — assim a vitória que cruza a meta já blinda o lote
+  verificarMetaLetra(lw);
+  if(ms().modoPosWin==="BLINDAR"){
+    const temMeta=ms().metaPorLetra&&parseFloat(ms().metaPorLetra[lw])>0;
+    // Com meta definida (>0): só blinda quando a letra cumpriu a missão; até lá, o lote segue apostando.
+    // Meta 0/desativada: comportamento original (blinda em qualquer vitória).
+    seq.status=(!temMeta||(ms().letrasMetaCumprida&&ms().letrasMetaCumprida[lw]))?"FINISHED":"PENDING";
+  } else {
+    seq.status="PENDING";
+  }
   // Libera aviso para esse lote — pode receber novo alerta se entrar em sequência novamente
   lotesAvisadosRisco.delete(`${modoAtivo}_${seq.id}`);
-  verificarMetaLetra(lw);
 }
 
 function verificarMetaLetra(l){
@@ -1223,7 +1263,7 @@ function processarPerdaSeq(seq,odd){
   const limiteLote=capitalGlobal*((ms().stopLotePercent||5)/100);
   const proximaAposta=ms().modoProgressao==="PERCENTUAL"
     ? seq.apostaAtual*(1+((ms().incrFixoPercent||10)/100))
-    : (seq.perdasAcumuladas+getValorApostaBase(odd))/(odd-1);
+    : (seq.perdasAcumuladas+getLucroDesejadoBase())/(odd-1);
   const estourouGales=seq.streakLoss>=(ms().maxGales||4);
   const estourouLote=seq.perdasAcumuladas>=limiteLote||proximaAposta>=limiteLote;
   if(estourouGales||estourouLote){
@@ -1305,7 +1345,7 @@ function distributingRiscoLoteCritico(indexAlvo){
   if(outros.length===0||lc.perdasAcumuladas<=0){ alert("⚠️ Não há outros lotes disponíveis para receber o risco."); return; }
   if(confirm("⚖️ Diluir o risco acumulado entre os outros lotes ativos?")){
     const frac=lc.perdasAcumuladas/outros.length; const oddLc=ms().oddsPorLetra[lc.letraRandomica]||2; lc.perdasAcumuladas=0; lc.apostaAtual=getValorApostaBase(oddLc);
-    ms().sequencias.forEach(seq=>{ if(seq.status==='PENDING'&&seq.id!==lc.id){ seq.perdasAcumuladas=roundedFixo(seq.perdasAcumuladas+frac); if(ms().modoProgressao!=="PERCENTUAL"){ const odd=ms().oddsPorLetra[seq.letraRandomica]||2; seq.apostaAtual=(seq.perdasAcumuladas+getValorApostaBase(odd))/(odd-1); } } });
+    ms().sequencias.forEach(seq=>{ if(seq.status==='PENDING'&&seq.id!==lc.id){ seq.perdasAcumuladas=roundedFixo(seq.perdasAcumuladas+frac); if(ms().modoProgressao!=="PERCENTUAL"){ const odd=ms().oddsPorLetra[seq.letraRandomica]||2; seq.apostaAtual=(seq.perdasAcumuladas+getLucroDesejadoBase())/(odd-1); } } });
     dispararAnimacaoToastLotes(()=>{ salvarDadosEAtualizarTudo(); });
   }
 }
@@ -1414,6 +1454,15 @@ function renderLinhas(){
   tbody.innerHTML=html;
 }
 
+function renderRodapeSomaLetras(){
+  const el=document.getElementById('rodape-soma-letras'); if(!el) return;
+  const contas=ms().lucroLetraEtapa||{};
+  const soma=Object.values(contas).reduce((a,c)=>a+(parseFloat(c)||0),0);
+  if(Object.keys(contas).length===0){ el.innerText=''; return; }
+  const cor=soma>=0?'var(--win)':'var(--loss)';
+  el.innerHTML=`Σ letras = <b style="color:${cor};">${fmt(soma)}</b> <span style="opacity:.7;">(lucro em apostas da etapa)</span>`;
+}
+
 function renderCards(){
   const container=document.getElementById('container-letras-linhas'); if(!container) return;
   const az="ABCDEFGHIJKLMNOPQRSTUVWXYZ"; let html='';
@@ -1454,10 +1503,53 @@ function renderCards(){
     const lockCls=isFixed?'ll-lock locked':'ll-lock';
     const checked=isFixed?'checked':'';
 
-    html+=`<div class="${cardCls}">
+    // ── Barra de progresso da meta da letra ──
+    let metaBarHtml='';
+    const metaPctL=(ms().metaPorLetra&&parseFloat(ms().metaPorLetra[l]))||0;
+    if(metaPctL>0){
+      const bancoMB=parseFloat(state.bancoCapital)||0;
+      const alvoL=(state.bancaInicioEtapa+bancoMB)*(metaPctL/100);
+      const lucroL=(ms().lucroLetraEtapa&&ms().lucroLetraEtapa[l])||0;
+      const progL=alvoL>0?Math.max(0,Math.min(100,(lucroL/alvoL)*100)):0;
+      const cumprida=(ms().letrasMetaCumprida&&ms().letrasMetaCumprida[l])||progL>=100;
+      const corBarra=cumprida?'var(--win)':(lucroL<0?'var(--loss)':'#F0A500');
+      const lblDireita=cumprida?'🎯 100%':(lucroL<0?fmt(lucroL):Math.round(progL)+'%');
+      const corLbl=cumprida?'var(--win)':(lucroL<0?'var(--loss)':'var(--text)');
+      metaBarHtml=`<div style="margin-top:2px;">
+        <div style="display:flex;justify-content:space-between;font-size:9px;font-family:var(--mono);color:var(--muted);margin-bottom:2px;">
+          <span>Meta ${metaPctL}% (${fmt(alvoL)})</span>
+          <span style="color:${corLbl};font-weight:700;">${lblDireita}</span>
+        </div>
+        <div style="height:4px;background:var(--surface2);border:1px solid var(--border);border-radius:99px;overflow:hidden;">
+          <div style="height:100%;width:${progL}%;background:${corBarra};border-radius:99px;transition:width .3s;"></div>
+        </div>
+      </div>`;
+    }
+
+    if((ms().vistaOperacao||'cards')==='linhas'){
+      // ── Vista em LINHAS: mesma informação e mesmos botões, layout horizontal compacto ──
+      html+=`<div class="${cardCls} linha">
+        <div class="${badgeCls}">${l}</div>
+        ${pillHtml}
+        <div class="lr-amount ${allFinished?'ok':''}">${amountTxt}</div>
+        <div class="lr-meta">${metaBarHtml||'<span style="color:var(--muted);font-size:10px;">sem meta</span>'}</div>
+        <div class="lr-counters">
+          <span style="color:var(--win);font-weight:700;">A=${totalWinsLetra}</span>
+          <span style="color:var(--muted);"> · </span>
+          <span style="color:var(--loss);font-weight:700;">E=${totalLossLetra}</span>
+        </div>
+        <div class="card-btns">
+          <button class="btn-win" onclick="executarAcaoEmMassaCard('${l}','WIN')">V</button>
+          <button class="btn-loss" onclick="executarAcaoEmMassaCard('${l}','LOSS')">D</button>
+        </div>
+        <label class="switch" title="📌 Fixar letra na rodada"><input type="checkbox" ${checked} onchange="toggleLockChaveSeletora('${l}',this)"><span class="slider"></span></label>
+      </div>`;
+    } else {
+      html+=`<div class="${cardCls}">
       <div class="card-top"><div class="${badgeCls}">${l}</div>${pillHtml}</div>
       <div class="${amountCls}">${amountTxt}</div>
       <div class="card-meta">${metaTxt}</div>
+      ${metaBarHtml}
       <div style="font-size:10px; font-family:var(--mono); margin-top:1px;">
         <span style="color:var(--win);font-weight:700;">A=${totalWinsLetra}</span>
         <span style="color:var(--muted);"> · </span>
@@ -1472,8 +1564,18 @@ function renderCards(){
         <label class="switch"><input type="checkbox" ${checked} onchange="toggleLockChaveSeletora('${l}',this)"><span class="slider"></span></label>
       </div>
     </div>`;
+    }
   }
+  container.classList.toggle('list-view',(ms().vistaOperacao||'cards')==='linhas');
+  const btnV=document.getElementById('btn-vista-operacao');
+  if(btnV) btnV.innerText=(ms().vistaOperacao||'cards')==='linhas'?'🔲 Ver em cards':'☰ Ver em linhas';
   container.innerHTML=html;
+}
+
+function alternarVistaOperacao(){
+  ms().vistaOperacao=(ms().vistaOperacao||'cards')==='cards'?'linhas':'cards';
+  renderCards();
+  salvarDadosEAtualizarTudo();
 }
 
 function toggleLockBtn(letra, el){
@@ -1533,14 +1635,14 @@ function simularSobrevivenciaLetra(l){
   const odd=ms().oddsPorLetra[l]||2;
   const base=getValorApostaBase(odd);
   let sim=ativos.map(s=>({acc:s.perdasAcumuladas, stake:sniperArredondarAposta(s.apostaAtual)}));
-  let banca=state.bancaAtual;
+  let banca=state.bancaAtual+(parseFloat(state.bancoCapital)||0); // global: banco é reserva do mesmo dinheiro
   let rodadas=0;
   const proxima=sim.reduce((a,c)=>a+c.stake,0);
   for(let i=0;i<21;i++){
     const total=sim.reduce((a,c)=>a+c.stake,0);
     if(total>banca) break;
     banca-=total; rodadas++;
-    sim.forEach(s=>{ s.acc+=s.stake; s.stake=ms().modoProgressao==="PERCENTUAL"?s.stake*(1+((ms().incrFixoPercent||10)/100)):(s.acc+base)/(odd-1); });
+    sim.forEach(s=>{ s.acc+=s.stake; s.stake=ms().modoProgressao==="PERCENTUAL"?s.stake*(1+((ms().incrFixoPercent||10)/100)):(s.acc+getLucroDesejadoBase())/(odd-1); });
   }
   return {
     rodadas, proxima,
@@ -1791,7 +1893,7 @@ function atualizarPainelUI(forcarGrafico=false){
   const capitalGlobal=state.bancaAtual+banco;
   const baseEtapa=state.bancaInicioEtapa+banco;
   const metaVal=baseEtapa*(1+ms().metaPercent/100);
-  const stopVal=state.bancaInicioEtapa*(1-ms().stopLossPercent/100);
+  const stopVal=baseEtapa*(1-ms().stopLossPercent/100); // global: plataforma + banco
   const lucroEtapa=state.bancaAtual-state.bancaInicioEtapa;
   const lucroNecessario=metaVal-baseEtapa;
   if(!state.resultadosReaisGrafico||state.resultadosReaisGrafico.length===0) state.resultadosReaisGrafico=[state.bancaInicial];
@@ -1810,7 +1912,7 @@ function atualizarPainelUI(forcarGrafico=false){
   el('kpi-meta',fmt(metaVal));
   el('kpi-meta-sub','+'+ms().metaPercent+'% sobre capital global');
   el('kpi-stoploss',fmt(stopVal));
-  el('kpi-stop-sub','-'+ms().stopLossPercent+'% da etapa');
+  el('kpi-stop-sub','-'+ms().stopLossPercent+'% do capital global');
   el('hdr-etapa','#'+ms().etapaAtual);
   el('lbl-etapa-num','#'+ms().etapaAtual);
   el('lbl-lucro-etapa',fmt(lucroEtapa));
@@ -1838,12 +1940,12 @@ function atualizarPainelUI(forcarGrafico=false){
   const bar=document.getElementById('progresso-bar'); if(bar) bar.style.width=Math.min(100,pct)+'%';
 
   if(pct>=100&&!sinalizadoMeta){ sinalizadoMeta=true; document.getElementById('modal-meta').style.display='flex'; }
-  if(state.bancaAtual<=stopVal&&!sinalizadoStop){ sinalizadoStop=true; ms().stopTravado=true; document.getElementById('modal-stop').style.display='flex'; }
+  if(capitalGlobal<=stopVal&&!sinalizadoStop){ sinalizadoStop=true; ms().stopTravado=true; document.getElementById('modal-stop').style.display='flex'; }
 
   const banner=document.getElementById('banner-stop');
   if(banner) banner.style.display=ms().stopTravado?'block':'none';
 
-  renderLinhas(); renderCards(); renderHistorico(); renderExposicao(); renderEstatisticas(); atualizarBotaoModoUI(); atualizarLayoutContadoresPorModo();
+  renderLinhas(); renderCards(); renderRodapeSomaLetras(); renderHistorico(); renderExposicao(); renderEstatisticas(); atualizarBotaoModoUI(); atualizarLayoutContadoresPorModo();
   if(document.getElementById('grafico')&&document.getElementById('grafico').classList.contains('active')) renderizarGrafico();
 }
 </script>
