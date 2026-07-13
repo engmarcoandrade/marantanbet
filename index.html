@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#0D1117">
-<title>Método Marantan</title>
+<title>Método Marantan v30.3</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox=%270 0 48 48%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Crect x=%271.5%27 y=%271.5%27 width=%2745%27 height=%2745%27 rx=%2711%27 fill=%27%23161B22%27 stroke=%27%2330363D%27 stroke-width=%271.5%27/%3E%3Cpath d=%27M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3Cpath d=%27M30.5 9.5 L37.5 9 L36.8 16%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -16,7 +16,7 @@
   --border: #30363D;
   --border2: #21262D;
   --text: #E6EDF3;
-  --muted: #8B949E;
+  --muted: #ADBAC7;
   --accent: #2D7FF9;
   --accent-dim: rgba(45,127,249,0.12);
   --accent-border: rgba(45,127,249,0.35);
@@ -42,7 +42,7 @@ body.light-mode {
   --border: #D0D7DE;
   --border2: #EAEEF2;
   --text: #1F2328;
-  --muted: #656D76;
+  --muted: #3D444D;
 }
 * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 html, body { height:100%; }
@@ -130,9 +130,10 @@ header { background:var(--surface); border-bottom:1px solid var(--border); paddi
 /* ── LINHAS DE LETRAS ── */
 .letra-linha { display:flex; align-items:center; gap:5px; background:var(--surface); border:1px solid var(--border); border-radius:7px; padding:6px 8px; margin-bottom:4px; }
 .letra-linha.has-loss { border-color:var(--loss-border); background:color-mix(in srgb, var(--surface) 94%, #F85149); }
-.letra-linha.is-finished { border-color:var(--win-border); opacity:.6; }
+.letra-linha.is-finished { border-color:var(--win); border-left:4px solid var(--win); }
 .letra-linha.is-locked { border-color:var(--purple-border); }
-.letra-linha.is-done { opacity:.55; }
+.letra-linha.is-done { border-color:var(--muted); border-left:4px solid var(--muted); background:var(--surface2); }
+.letra-linha * { opacity:1 !important; }
 .ll-badge { width:24px; height:24px; border-radius:5px; display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:11px; font-weight:700; background:var(--accent-dim); border:1px solid var(--accent-border); color:var(--accent); flex-shrink:0; }
 .ll-badge.loss { background:var(--loss-dim); border-color:var(--loss-border); color:var(--loss); }
 .ll-badge.ok { background:var(--win-dim); border-color:var(--win-border); color:var(--win); }
@@ -152,25 +153,55 @@ header { background:var(--surface); border-bottom:1px solid var(--border); paddi
 
 /* ── CARDS LETRAS ── */
 .cards-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:6px; }
-.letra-card { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:6px 5px; display:flex; flex-direction:column; gap:4px; transition:opacity .2s; }
-.letra-card.has-loss { border-color:var(--loss-border); background:color-mix(in srgb, var(--surface) 94%, #F85149); }
-.letra-card.is-finished { border-color:var(--win-border); opacity:.6; }
-.letra-card.is-locked { border-color:var(--purple-border); }
-.letra-card.is-done { opacity:.5; filter:grayscale(30%); }
-.cards-grid.list-view { grid-template-columns:1fr; gap:5px; }
-.letra-card.linha { flex-direction:row; align-items:center; gap:8px; padding:6px 10px; flex-wrap:wrap; }
-.letra-card.linha .lr-meta { flex:1; min-width:110px; }
+.letra-card { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:6px 5px; display:flex; flex-direction:column; gap:4px; transition:border-color .2s; }
+.letra-card * { opacity:1 !important; }
+.letra-card.has-loss { border-color:var(--loss); border-left:4px solid var(--loss); background:var(--surface); }
+.letra-card.is-finished { border-color:var(--win); border-left:4px solid var(--win); background:var(--surface); }
+.letra-card.is-locked { border-color:var(--purple); border-left:4px solid var(--purple); }
+.letra-card.is-done { border-color:var(--win); border-left:4px solid var(--win); background:var(--surface2); }
+.letra-card.is-done .card-amount, .letra-card.is-done .lr-amount { color:var(--win); }
+/* "já lancei nesta rodada": apenas um traço superior discreto — fundo e texto intactos */
+.letra-card.lancado-rodada { border-top:2px solid var(--accent); }
+.letra-linha.lancado-rodada { border-top:2px solid var(--accent); }
+.letra-card.is-done .card-meta, .letra-card.is-finished .card-meta { color:var(--text); }
+.cards-grid.list-view { display:block; }
+.cards-grid.list-view .letra-card.linha { margin-bottom:5px; }
+/* Vista em linhas: grid de colunas fixas — cada dado no seu lugar, colunas alinhadas entre as linhas */
+.letra-card.linha {
+  display:grid;
+  grid-template-columns: 30px 92px minmax(90px,1fr) minmax(120px,1.6fr) 74px 78px 40px;
+  align-items:center; gap:10px; padding:8px 10px;
+}
+.letra-card.linha .lr-badge  { justify-self:start; }
+.letra-card.linha .lr-pill   { justify-self:start; }
+.letra-card.linha .lr-amount { font-family:var(--mono); font-size:13px; font-weight:700; text-align:right; }
+.letra-card.linha .lr-meta   { min-width:0; }
 .letra-card.linha .lr-meta > div { margin-top:0 !important; }
-.letra-card.linha .lr-amount { font-family:var(--mono); font-size:12px; font-weight:700; min-width:64px; }
-.letra-card.linha .lr-counters { font-size:10px; font-family:var(--mono); white-space:nowrap; }
-.letra-card.linha .card-btns { margin:0; }
+.letra-card.linha .lr-counters { font-size:11px; font-family:var(--mono); white-space:nowrap; text-align:center; }
+.letra-card.linha .card-btns { margin:0; display:flex; gap:5px; }
+.letra-card.linha .card-btns button { flex:1; padding:6px 0; font-size:12px; }
+.letra-card.linha .lr-lock { justify-self:center; }
+/* Cabeçalho de colunas da vista em linhas */
+.linhas-header {
+  display:grid;
+  grid-template-columns: 30px 92px minmax(90px,1fr) minmax(120px,1.6fr) 74px 78px 40px;
+  gap:10px; padding:0 10px 5px; font-size:9px; font-family:var(--mono);
+  color:var(--muted); font-weight:700; letter-spacing:.04em; text-transform:uppercase;
+}
+.linhas-header .h-amount { text-align:right; }
+.linhas-header .h-count, .linhas-header .h-lock { text-align:center; }
+@media (max-width:520px){
+  .letra-card.linha, .linhas-header { grid-template-columns: 26px 84px minmax(64px,.9fr) minmax(90px,1.4fr) 58px 70px 34px; gap:6px; padding-left:7px; padding-right:7px; }
+  .letra-card.linha .lr-amount { font-size:12px; }
+  .letra-card.linha .lr-counters { font-size:10px; }
+}
 .card-top { display:flex; justify-content:space-between; align-items:center; }
 .letra-badge { width:22px; height:22px; border-radius:5px; display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:12px; font-weight:700; background:var(--accent-dim); border:1px solid var(--accent-border); color:var(--accent); flex-shrink:0; }
 .letra-badge.loss { background:var(--loss-dim); border-color:var(--loss-border); color:var(--loss); }
 .letra-badge.ok { background:var(--win-dim); border-color:var(--win-border); color:var(--win); }
 .letra-badge.locked { background:var(--purple-dim); border-color:var(--purple-border); color:var(--purple); }
-.card-pill { font-size:9px; font-weight:700; padding:1px 5px; border-radius:20px; }
-.pill-neutral { background:var(--surface2); color:var(--muted); border:1px solid var(--border); }
+.card-pill { font-size:9px; font-weight:700; padding:2px 6px; border-radius:20px; white-space:nowrap; letter-spacing:.02em; }
+.pill-neutral { background:var(--surface2); color:var(--text); border:1px solid var(--border); font-weight:700; }
 .pill-loss { background:var(--loss-dim); color:var(--loss); border:1px solid var(--loss-border); }
 .pill-ok { background:var(--win-dim); color:var(--win); border:1px solid var(--win-border); }
 .pill-locked { background:var(--purple-dim); color:var(--purple); border:1px solid var(--purple-border); }
@@ -178,7 +209,7 @@ header { background:var(--surface); border-bottom:1px solid var(--border); paddi
 .pill-loss-done { background:var(--loss-dim); color:var(--loss); border:1px solid var(--loss-border); }
 .card-amount { font-family:var(--mono); font-size:11px; font-weight:700; color:var(--text); line-height:1.2; }
 .card-amount.ok { color:var(--win); }
-.card-meta { font-size:9px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.card-meta { font-size:10px; color:var(--text); opacity:.85; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .card-meta .risk { color:var(--loss); font-weight:600; }
 .card-btns { display:grid; grid-template-columns:1fr 1fr; gap:4px; }
 .btn-win { background:var(--win-dim); border:1px solid var(--win-border); color:var(--win); padding:5px 0; border-radius:4px; font-size:11px; font-weight:700; cursor:pointer; text-align:center; font-family:var(--sans); }
@@ -217,7 +248,8 @@ table { width:100%; border-collapse:collapse; min-width:540px; }
 thead th { background:var(--surface2); color:var(--muted); font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; padding:10px 12px; border-bottom:1px solid var(--border); position:sticky; top:0; z-index:10; text-align:left; }
 tbody td { padding:8px 12px; border-bottom:1px solid var(--border2); font-size:12px; color:var(--text); }
 tbody tr:last-child td { border-bottom:none; }
-.row-finished { opacity:.5; }
+.row-finished { border-left:4px solid var(--win); background:var(--surface2); }
+.row-finished * { opacity:1 !important; }
 .row-loss { background:rgba(248,81,73,.04); }
 .t-mono { font-family:var(--mono); font-weight:600; }
 .t-win { color:var(--win); font-weight:700; }
@@ -404,7 +436,7 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">MARAN<span>TAN</span></div>
+      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v30.3</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
@@ -1245,8 +1277,14 @@ function verificarMetaLetra(l){
   const lucro=(ms().lucroLetraEtapa&&ms().lucroLetraEtapa[l])||0;
   if(lucro>=alvo){
     ms().letrasMetaCumprida[l]=true;
+    // Missão da letra cumprida: blinda TODOS os lotes ativos dessa letra (não só o que venceu),
+    // desde que o modo pós-vitória seja BLINDAR. Assim a letra sai de "Pendentes" por inteiro.
+    let blindados=0;
+    if(ms().modoPosWin==="BLINDAR"){
+      ms().sequencias.forEach(s=>{ if(s.letraRandomica===l&&s.status!=='FINISHED'){ s.status='FINISHED'; blindados++; } });
+    }
     const msg=document.getElementById('modal-meta-letra-msg');
-    if(msg) msg.innerHTML=`A letra <b>${l}</b> cumpriu a missão! 🎯<br><br>Lucro líquido acumulado na etapa: <b style="color:var(--win);">${fmt(lucro)}</b><br>Meta configurada: <b>${metaPct.toFixed(2)}%</b> sobre o capital do início da etapa (${fmt(alvo)}).<br><br>Considere <b>blindar os lotes dessa letra</b> ou concluir a etapa para proteger o resultado obtido.`;
+    if(msg) msg.innerHTML=`A letra <b>${l}</b> cumpriu a missão! 🎯<br><br>Lucro líquido acumulado na etapa: <b style="color:var(--win);">${fmt(lucro)}</b><br>Meta configurada: <b>${metaPct.toFixed(2)}%</b> sobre o capital do início da etapa (${fmt(alvo)}).<br><br>${blindados>0?`<b>${blindados} lote(s)</b> dessa letra foram <b>🔒 blindados</b> — a letra sai de "Pendentes".`:'Modo <b>Resetar</b> ativo: os lotes seguem operando. Blinde manualmente se quiser proteger o resultado.'}`;
     const modal=document.getElementById('modal-meta-letra'); if(modal) modal.style.display='flex';
   }
 }
@@ -1420,7 +1458,15 @@ function renderLinhas(){
   let lista=ms().sequencias.map((seq,i)=>({seq,i}));
 
   // Filtro
-  if(filtroAtualExibicao==='pending') lista=lista.filter(({seq})=>seq.status!=='FINISHED');
+  // "Pendentes" = ainda há missão a cumprir. Um lote sai de pendente se:
+  //   (a) ele próprio foi blindado (FINISHED), OU
+  //   (b) a LETRA dele já cumpriu a meta — a missão daquela letra acabou, mesmo que
+  //       outros lotes da letra não tenham sido blindados individualmente.
+  if(filtroAtualExibicao==='pending') lista=lista.filter(({seq})=>{
+    if(seq.status==='FINISHED') return false;
+    const metaCumprida=ms().letrasMetaCumprida&&ms().letrasMetaCumprida[seq.letraRandomica];
+    return !metaCumprida;
+  });
   if(filtroAtualExibicao==='loss') lista=lista.filter(({seq})=>seq.perdasAcumuladas>0);
 
   // Ordenação
@@ -1483,7 +1529,11 @@ function renderCards(){
     if(isFixed) cardCls+=' is-locked';
     else if(allFinished) cardCls+=' is-finished';
     else if(temPerda) cardCls+=' has-loss';
-    if(lanc!==''&&!isFixed) cardCls+=' is-done';
+    // 'is-done' = MISSÃO CUMPRIDA (letra finalizada), não "já lancei nesta rodada".
+    // Lançar V/D numa rodada NÃO muda mais a aparência de fundo do card — a letra segue ativa.
+    if(allFinished&&!isFixed) cardCls+=' is-done';
+    // Marca discreta de "já lancei nesta rodada" (sem esmaecer, sem mudar fundo)
+    if(lanc!==''&&!allFinished) cardCls+=' lancado-rodada';
 
     let badgeCls='letra-badge';
     if(isFixed) badgeCls+=' locked';
@@ -1491,11 +1541,11 @@ function renderCards(){
     else if(temPerda) badgeCls+=' loss';
 
     let pillHtml='';
-    if(isFixed) pillHtml=`<span class="card-pill pill-locked">FIXO</span>`;
-    else if(allFinished) pillHtml=`<span class="card-pill pill-ok">OK</span>`;
-    else if(lanc==='WIN') pillHtml=`<span class="card-pill pill-win-done">VIT</span>`;
-    else if(lanc==='LOSS') pillHtml=`<span class="card-pill pill-loss-done">RED</span>`;
-    else pillHtml=`<span class="card-pill pill-neutral">${lotesAtivos}L</span>`;
+    if(isFixed) pillHtml=`<span class="card-pill pill-locked">📌 FIXO</span>`;
+    else if(allFinished) pillHtml=`<span class="card-pill pill-ok">🔒 BLINDADA</span>`;
+    else if(lanc==='WIN') pillHtml=`<span class="card-pill pill-win-done">▲ VIT</span>`;
+    else if(lanc==='LOSS') pillHtml=`<span class="card-pill pill-loss-done">▼ RED</span>`;
+    else pillHtml=`<span class="card-pill pill-neutral">${lotesAtivos}L ATIVOS</span>`;
 
     const amountCls=allFinished?'card-amount ok':'card-amount';
     const amountTxt=allFinished?'Finalizado':fmt(totalAposta);
@@ -1529,20 +1579,20 @@ function renderCards(){
     if((ms().vistaOperacao||'cards')==='linhas'){
       // ── Vista em LINHAS: mesma informação e mesmos botões, layout horizontal compacto ──
       html+=`<div class="${cardCls} linha">
-        <div class="${badgeCls}">${l}</div>
-        ${pillHtml}
+        <div class="${badgeCls} lr-badge">${l}</div>
+        <div class="lr-pill">${pillHtml}</div>
         <div class="lr-amount ${allFinished?'ok':''}">${amountTxt}</div>
-        <div class="lr-meta">${metaBarHtml||'<span style="color:var(--muted);font-size:10px;">sem meta</span>'}</div>
+        <div class="lr-meta">${metaBarHtml||'<span style="color:var(--muted);font-size:10px;">— sem meta —</span>'}</div>
         <div class="lr-counters">
-          <span style="color:var(--win);font-weight:700;">A=${totalWinsLetra}</span>
+          <span style="color:var(--win);font-weight:700;">▲${totalWinsLetra}</span>
           <span style="color:var(--muted);"> · </span>
-          <span style="color:var(--loss);font-weight:700;">E=${totalLossLetra}</span>
+          <span style="color:var(--loss);font-weight:700;">▼${totalLossLetra}</span>
         </div>
         <div class="card-btns">
           <button class="btn-win" onclick="executarAcaoEmMassaCard('${l}','WIN')">V</button>
           <button class="btn-loss" onclick="executarAcaoEmMassaCard('${l}','LOSS')">D</button>
         </div>
-        <label class="switch" title="📌 Fixar letra na rodada"><input type="checkbox" ${checked} onchange="toggleLockChaveSeletora('${l}',this)"><span class="slider"></span></label>
+        <label class="switch lr-lock" title="📌 Fixar letra na rodada"><input type="checkbox" ${checked} onchange="toggleLockChaveSeletora('${l}',this)"><span class="slider"></span></label>
       </div>`;
     } else {
       html+=`<div class="${cardCls}">
@@ -1566,7 +1616,11 @@ function renderCards(){
     </div>`;
     }
   }
-  container.classList.toggle('list-view',(ms().vistaOperacao||'cards')==='linhas');
+  const ehLinhas=(ms().vistaOperacao||'cards')==='linhas';
+  if(ehLinhas){
+    html='<div class="linhas-header"><span>LET</span><span>STATUS</span><span class="h-amount">APOSTA</span><span>PROGRESSO DA META</span><span class="h-count">A / E</span><span class="h-count">LANÇAR</span><span class="h-lock">📌</span></div>'+html;
+  }
+  container.classList.toggle('list-view',ehLinhas);
   const btnV=document.getElementById('btn-vista-operacao');
   if(btnV) btnV.innerText=(ms().vistaOperacao||'cards')==='linhas'?'🔲 Ver em cards':'☰ Ver em linhas';
   container.innerHTML=html;
