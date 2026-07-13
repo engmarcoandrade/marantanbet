@@ -1400,6 +1400,7 @@ function alterarFiltroExibicao(tipo){
   document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
   const btn=document.getElementById('btn-filter-'+tipo); if(btn) btn.classList.add('active');
   renderLinhas();
+  renderCards(); // o filtro também vale para os cards de letras da Operação
 }
 
 function alterarOrdemLotes(ordem){
@@ -1511,7 +1512,7 @@ function renderRodapeSomaLetras(){
 
 function renderCards(){
   const container=document.getElementById('container-letras-linhas'); if(!container) return;
-  const az="ABCDEFGHIJKLMNOPQRSTUVWXYZ"; let html='';
+  const az="ABCDEFGHIJKLMNOPQRSTUVWXYZ"; let html=''; let letrasVisiveis=0;
   for(let i=0;i<Math.min(ms().aleatoriedade,26);i++){
     const l=az[i];
     const lanc=ms().marantanLancamentosRodada?(ms().marantanLancamentosRodada[l]||""):"";
@@ -1524,6 +1525,14 @@ function renderCards(){
     const allFinished=lotesAtivos===0;
     const totalWinsLetra=ms().sequencias.filter(s=>s.letraRandomica===l).reduce((a,c)=>a+c.winsEtapa,0);
     const totalLossLetra=ms().sequencias.filter(s=>s.letraRandomica===l).reduce((a,c)=>a+c.lossesEtapa,0);
+    const metaCumpridaL=!!(ms().letrasMetaCumprida&&ms().letrasMetaCumprida[l]);
+
+    // ── FILTRO (mesma regra da grade de lotes) ──
+    // Pendentes: oculta letras finalizadas (todos os lotes blindados) ou com a missão cumprida.
+    // Com Perda: mostra só letras que carregam risco acumulado.
+    if(filtroAtualExibicao==='pending' && (allFinished||metaCumpridaL)) continue;
+    if(filtroAtualExibicao==='loss' && !temPerda) continue;
+    letrasVisiveis++;
 
     let cardCls='letra-card';
     if(isFixed) cardCls+=' is-locked';
@@ -1617,6 +1626,16 @@ function renderCards(){
     }
   }
   const ehLinhas=(ms().vistaOperacao||'cards')==='linhas';
+  if(letrasVisiveis===0){
+    const txt=filtroAtualExibicao==='pending'
+      ? '🎯 Todas as letras cumpriram a missão nesta etapa.'
+      : (filtroAtualExibicao==='loss' ? '✅ Nenhuma letra com risco acumulado.' : 'Nenhuma letra para exibir.');
+    container.classList.remove('list-view');
+    container.innerHTML=`<div style="grid-column:1/-1; padding:22px; text-align:center; color:var(--text); font-size:13px; background:var(--surface); border:1px solid var(--border); border-radius:8px;">${txt}</div>`;
+    const bV=document.getElementById('btn-vista-operacao');
+    if(bV) bV.innerText=ehLinhas?'🔲 Ver em cards':'☰ Ver em linhas';
+    return;
+  }
   if(ehLinhas){
     html='<div class="linhas-header"><span>LET</span><span>STATUS</span><span class="h-amount">APOSTA</span><span>PROGRESSO DA META</span><span class="h-count">A / E</span><span class="h-count">LANÇAR</span><span class="h-lock">📌</span></div>'+html;
   }
