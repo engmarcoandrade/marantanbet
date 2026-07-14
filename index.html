@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#0D1117">
-<title>Método Marantan v30.3</title>
+<title>Método Marantan v31.0</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox=%270 0 48 48%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Crect x=%271.5%27 y=%271.5%27 width=%2745%27 height=%2745%27 rx=%2711%27 fill=%27%23161B22%27 stroke=%27%2330363D%27 stroke-width=%271.5%27/%3E%3Cpath d=%27M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3Cpath d=%27M30.5 9.5 L37.5 9 L36.8 16%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -391,6 +391,39 @@ tbody tr:last-child td { border-bottom:none; }
 
 
 <!-- MODAL AVISO RISCO GALES -->
+<div id="modal-conferencia" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-body">
+      <div class="m-title">⚖️ Conferir Saldo</div>
+      <p style="font-size:12px; color:var(--text); line-height:1.6; margin:6px 0 12px;">
+        Odds pagas ligeiramente diferentes do previsto fazem o saldo calculado divergir do saldo real da casa.
+        Informe o valor <b>real</b> da plataforma e o app registra a diferença como resultado da etapa.
+      </p>
+
+      <div style="background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px; margin-bottom:12px;">
+        <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:6px;">
+          <span style="color:var(--muted);">Saldo calculado pelo app</span>
+          <b style="font-family:var(--mono);" id="conf-calculado">R$ 0,00</b>
+        </div>
+        <div style="display:flex; justify-content:space-between; font-size:12px;">
+          <span style="color:var(--muted);">Diferença</span>
+          <b style="font-family:var(--mono);" id="conf-diferenca">—</b>
+        </div>
+      </div>
+
+      <label class="cfg-label">Saldo real na plataforma (R$)</label>
+      <input type="number" id="conf-real" class="cfg-input" step="0.01" placeholder="0,00" oninput="calcularDiferencaConferencia()">
+      <p style="font-size:10px; color:var(--muted); line-height:1.5; margin-top:8px;">
+        Não altera o banco de reserva, as apostas dos lotes nem os riscos acumulados — apenas acerta o caixa.
+      </p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="fecharModal('modal-conferencia')">Cancelar</button>
+      <button class="btn-confirm" onclick="confirmarConferencia()">Atualizar saldo</button>
+    </div>
+  </div>
+</div>
+
 <div id="modal-meta-letra" class="modal-overlay">
   <div class="modal-box">
     <div class="modal-body" style="text-align:center;">
@@ -436,7 +469,7 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v30.3</span></div>
+      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v31.0</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
@@ -486,6 +519,10 @@ tbody tr:last-child td { border-bottom:none; }
     </div>
     <div style="display:none;" id="kpi-banca"></div>
     <div style="display:none;" id="kpi-banco-sub"></div>
+
+    <button onclick="abrirModalConferencia()" style="width:100%; margin-bottom:10px; background:var(--surface); border:1px solid var(--border); color:var(--text); padding:9px; border-radius:var(--radius-sm); font-size:12px; font-weight:700; cursor:pointer; font-family:var(--sans);">
+      ⚖️ Conferir saldo com a casa
+    </button>
 
     <div class="progress-card">
       <div class="progress-header">
@@ -741,6 +778,18 @@ tbody tr:last-child td { border-bottom:none; }
 
   <!-- ABA: HISTÓRICO -->
   <div id="historico" class="tab-content">
+
+    <div class="progress-card" style="margin-bottom:10px;">
+      <div class="progress-header">
+        <span>🎯 Tenho vantagem, ou tive sorte?</span>
+      </div>
+      <p style="font-size:11px;color:var(--text);line-height:1.6;margin:0 0 10px;">
+        Nenhuma progressão de aposta transforma expectativa negativa em positiva — ela só muda <b>quando</b> a perda chega.
+        A única coisa que gera lucro é <b>acertar mais do que a odd exige</b>. É isso que este painel mede, sem indulgência.
+      </p>
+      <div id="painel-vantagem"></div>
+    </div>
+
     <div class="progress-card" id="card-estatisticas" style="margin-bottom:10px;">
       <div class="progress-header">
         <span>📊 Sequências sem Vitória (por letra)</span>
@@ -814,7 +863,7 @@ const DEFAULT_MODO = {
   maxGales:4, stopLotePercent:5.0,
   modoProgressao:"RECUPERACAO", incrFixoPercent:10.0, vistaOperacao:"cards",
   metaPorLetra:{"A":1.0,"B":1.0,"C":1.0,"D":1.0,"E":1.0,"F":1.0}, lucroLetraEtapa:{}, letrasMetaCumprida:{},
-  estatSequencias:[], streakPorLetra:{}, perdasAssumidasTotal:0, assumidasCount:0, stopTravado:false
+  estatSequencias:[], streakPorLetra:{}, registroApostas:[], perdasAssumidasTotal:0, assumidasCount:0, stopTravado:false
 };
 
 const DEFAULT_STATE = {
@@ -960,6 +1009,8 @@ function aplicarBlindagemDeVariaveis(){
     if(!m.lucroLetraEtapa) m.lucroLetraEtapa={};
     if(!m.letrasMetaCumprida) m.letrasMetaCumprida={};
     if(!m.estatSequencias) m.estatSequencias=[];
+    if(!m.registroApostas) m.registroApostas=[];
+    if(!m.ajustesConferencia) m.ajustesConferencia=[];
     if(!m.streakPorLetra) m.streakPorLetra={};
     if(m.perdasAssumidasTotal===undefined) m.perdasAssumidasTotal=0;
     if(m.assumidasCount===undefined) m.assumidasCount=0;
@@ -1234,8 +1285,15 @@ function registrarEventoLetra(l,resultado){
 }
 
 // ── MOTOR DE RESULTADO POR LOTE (com teto de gales e stop por lote) ──
+function registrarAposta(letra,odd,venceu){
+  if(!ms().registroApostas) ms().registroApostas=[];
+  ms().registroApostas.push({l:letra, o:odd, w:venceu?1:0, d:new Date().toISOString()});
+  if(ms().registroApostas.length>20000) ms().registroApostas.splice(0,ms().registroApostas.length-20000);
+}
+
 function processarWinSeq(seq,odd){
   seq.winsEtapa++;
+  registrarAposta(seq.letraRandomica,odd,true);
   const val=sniperArredondarAposta(seq.apostaAtual);
   state.bancaAtual+=(val*(odd-1));
   const lw=seq.letraRandomica;
@@ -1265,6 +1323,45 @@ function processarWinSeq(seq,odd){
   lotesAvisadosRisco.delete(`${modoAtivo}_${seq.id}`);
 }
 
+function abrirModalConferencia(){
+  document.getElementById('conf-calculado').innerText=fmt(state.bancaAtual);
+  const inp=document.getElementById('conf-real');
+  inp.value=state.bancaAtual.toFixed(2);
+  calcularDiferencaConferencia();
+  document.getElementById('modal-conferencia').style.display='flex';
+}
+
+function calcularDiferencaConferencia(){
+  const real=parseFloat(document.getElementById('conf-real').value);
+  const el=document.getElementById('conf-diferenca');
+  if(isNaN(real)){ el.innerText='—'; el.style.color='var(--muted)'; return; }
+  const dif=real-state.bancaAtual;
+  const sinal=dif>0?'+':'';
+  el.innerText=sinal+fmt(dif);
+  el.style.color=Math.abs(dif)<0.005?'var(--muted)':(dif>0?'var(--win)':'var(--loss)');
+}
+
+function confirmarConferencia(){
+  const real=parseFloat(document.getElementById('conf-real').value);
+  if(isNaN(real)||real<0){ alert('Informe um valor válido.'); return; }
+  const dif=real-state.bancaAtual;
+  if(Math.abs(dif)<0.005){ fecharModal('modal-conferencia'); return; }
+
+  // Ajuste de CAIXA: acerta o saldo real da plataforma.
+  // Não mexe em bancaInicioEtapa (a base da etapa permanece fixa, como definido),
+  // então a diferença aparece corretamente como lucro/prejuízo da etapa.
+  // Não mexe no banco de reserva, nas apostas dos lotes nem nos riscos acumulados.
+  state.bancaAtual=real;
+
+  // Registra o ajuste para rastreabilidade
+  if(!ms().ajustesConferencia) ms().ajustesConferencia=[];
+  ms().ajustesConferencia.push({d:new Date().toISOString(), dif:dif, saldo:real});
+  if(ms().ajustesConferencia.length>500) ms().ajustesConferencia.splice(0,ms().ajustesConferencia.length-500);
+
+  fecharModal('modal-conferencia');
+  salvarDadosEAtualizarTudo();
+}
+
 function verificarMetaLetra(l){
   if(!ms().metaPorLetra||ms().metaPorLetra[l]===undefined) return;
   if(!ms().letrasMetaCumprida) ms().letrasMetaCumprida={};
@@ -1291,6 +1388,7 @@ function verificarMetaLetra(l){
 
 function processarPerdaSeq(seq,odd){
   seq.lossesEtapa++;
+  registrarAposta(seq.letraRandomica,odd,false);
   const val=sniperArredondarAposta(seq.apostaAtual);
   state.bancaAtual-=val;
   if(!ms().lucroLetraEtapa) ms().lucroLetraEtapa={};
@@ -1759,6 +1857,99 @@ function renderExposicao(){
 }
 
 // ── ESTATÍSTICA DE SEQUÊNCIAS ──
+// ════════════════════════════════════════════════════════════════
+// PAINEL DE SIGNIFICÂNCIA ESTATÍSTICA — "Eu tenho vantagem ou tive sorte?"
+// ════════════════════════════════════════════════════════════════
+
+// Ponto de equilíbrio: com que taxa de acerto o EV = 0 numa dada odd.
+// EV = p*(odd-1) - (1-p) = 0  →  p = 1/odd
+function breakevenDeOdd(odd){ return 1/odd; }
+
+// Intervalo de confiança de Wilson (95%) — correto para amostras pequenas,
+// ao contrário da aproximação normal ingênua.
+function wilsonIC(vitorias, total){
+  if(total===0) return {baixo:0, alto:1, p:0};
+  const z=1.96, p=vitorias/total, n=total;
+  const den=1+(z*z)/n;
+  const centro=p+(z*z)/(2*n);
+  const margem=z*Math.sqrt((p*(1-p)+(z*z)/(4*n))/n);
+  return { p:p, baixo:Math.max(0,(centro-margem)/den), alto:Math.min(1,(centro+margem)/den) };
+}
+
+// Veredito honesto: a taxa observada é distinguível de sorte?
+function vereditoEstatistico(vitorias,total,breakeven){
+  const ic=wilsonIC(vitorias,total);
+  if(total<100) return {cod:'INSUF', ic:ic, txt:'AMOSTRA INSUFICIENTE', det:`${total} apostas. Nada aqui é conclusivo — nem a favor, nem contra. Ruído puro abaixo de ~100 apostas.`};
+  if(ic.baixo>breakeven)  return {cod:'VANTAGEM', ic:ic, txt:'VANTAGEM COMPROVADA', det:`Mesmo no pior cenário do intervalo de confiança (${(ic.baixo*100).toFixed(1)}%), você está acima do ponto de equilíbrio (${(breakeven*100).toFixed(1)}%). Isso é vantagem real, não sorte.`};
+  if(ic.alto<breakeven)   return {cod:'DESVANTAGEM', ic:ic, txt:'DESVANTAGEM COMPROVADA', det:`Mesmo no melhor cenário do intervalo (${(ic.alto*100).toFixed(1)}%), você está abaixo do ponto de equilíbrio (${(breakeven*100).toFixed(1)}%). Este mercado está custando dinheiro de forma consistente.`};
+  return {cod:'INCONCLUSIVO', ic:ic, txt:'INDISTINGUÍVEL DE SORTE', det:`O intervalo de confiança (${(ic.baixo*100).toFixed(1)}% – ${(ic.alto*100).toFixed(1)}%) atravessa o ponto de equilíbrio (${(breakeven*100).toFixed(1)}%). Com estes dados, não é possível afirmar que existe vantagem. Mais apostas são necessárias.`};
+}
+
+function renderPainelVantagem(){
+  const box=document.getElementById('painel-vantagem'); if(!box) return;
+  const reg=ms().registroApostas||[];
+
+  if(reg.length===0){
+    box.innerHTML=`<div style="padding:20px;text-align:center;color:var(--text);font-size:13px;background:var(--surface);border:1px solid var(--border);border-radius:8px;">Nenhuma aposta registrada ainda.<br><span style="color:var(--muted);font-size:11px;">A medição começa no próximo resultado lançado.</span></div>`;
+    return;
+  }
+
+  // ── Agregado global ──
+  const totalG=reg.length, winsG=reg.reduce((a,c)=>a+c.w,0);
+  const oddMedia=reg.reduce((a,c)=>a+(c.o||2),0)/totalG;
+  const beG=breakevenDeOdd(oddMedia);
+  const vG=vereditoEstatistico(winsG,totalG,beG);
+
+  const cores={INSUF:'var(--muted)', INCONCLUSIVO:'#F0A500', VANTAGEM:'var(--win)', DESVANTAGEM:'var(--loss)'};
+  const icones={INSUF:'⏳', INCONCLUSIVO:'❓', VANTAGEM:'✔️', DESVANTAGEM:'✖️'};
+
+  let html=`
+  <div style="background:var(--surface);border:1px solid var(--border);border-left:5px solid ${cores[vG.cod]};border-radius:8px;padding:14px;margin-bottom:10px;">
+    <div style="font-size:10px;color:var(--muted);font-family:var(--mono);font-weight:700;letter-spacing:.06em;margin-bottom:6px;">VEREDITO GLOBAL — TODAS AS LETRAS</div>
+    <div style="font-size:16px;font-weight:800;color:${cores[vG.cod]};font-family:var(--mono);margin-bottom:8px;">${icones[vG.cod]} ${vG.txt}</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px;">
+      <div><div style="font-size:9px;color:var(--muted);font-family:var(--mono);">TAXA DE ACERTO</div><div style="font-size:17px;font-weight:800;font-family:var(--mono);color:var(--text);">${(vG.ic.p*100).toFixed(1)}%</div></div>
+      <div><div style="font-size:9px;color:var(--muted);font-family:var(--mono);">PONTO DE EQUILÍBRIO</div><div style="font-size:17px;font-weight:800;font-family:var(--mono);color:var(--text);">${(beG*100).toFixed(1)}%</div></div>
+      <div><div style="font-size:9px;color:var(--muted);font-family:var(--mono);">APOSTAS</div><div style="font-size:17px;font-weight:800;font-family:var(--mono);color:var(--text);">${totalG}</div></div>
+    </div>
+    <div style="font-size:11px;color:var(--text);line-height:1.6;">${vG.det}</div>
+    <div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:8px;">Intervalo de confiança 95%: ${(vG.ic.baixo*100).toFixed(1)}% – ${(vG.ic.alto*100).toFixed(1)}% · Odd média ${oddMedia.toFixed(2)}</div>
+  </div>`;
+
+  // ── Por letra ──
+  const porLetra={};
+  reg.forEach(r=>{ if(!porLetra[r.l]) porLetra[r.l]={n:0,w:0,so:0}; porLetra[r.l].n++; porLetra[r.l].w+=r.w; porLetra[r.l].so+=(r.o||2); });
+
+  html+=`<div style="font-size:10px;color:var(--muted);font-family:var(--mono);font-weight:700;letter-spacing:.06em;margin:12px 0 6px;">DESEMPENHO POR MERCADO (LETRA)</div>`;
+
+  Object.keys(porLetra).sort().forEach(l=>{
+    const d=porLetra[l], be=breakevenDeOdd(d.so/d.n), v=vereditoEstatistico(d.w,d.n,be);
+    const pctBar=Math.max(0,Math.min(100,v.ic.p*100));
+    const bePos=Math.max(0,Math.min(100,be*100));
+    html+=`
+    <div style="background:var(--surface);border:1px solid var(--border);border-left:4px solid ${cores[v.cod]};border-radius:8px;padding:10px;margin-bottom:6px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-family:var(--mono);font-weight:800;font-size:14px;color:var(--text);">${l}</span>
+          <span style="font-size:10px;font-weight:700;color:${cores[v.cod]};font-family:var(--mono);">${icones[v.cod]} ${v.txt}</span>
+        </div>
+        <span style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);">${(v.ic.p*100).toFixed(1)}% <span style="color:var(--muted);font-size:10px;">(${d.w}/${d.n})</span></span>
+      </div>
+      <div style="position:relative;height:8px;background:var(--surface2);border:1px solid var(--border);border-radius:99px;overflow:hidden;">
+        <div style="position:absolute;left:0;top:0;height:100%;width:${pctBar}%;background:${cores[v.cod]};"></div>
+        <div style="position:absolute;left:${bePos}%;top:-2px;width:2px;height:12px;background:var(--text);" title="Ponto de equilíbrio"></div>
+      </div>
+      <div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:5px;">IC95%: ${(v.ic.baixo*100).toFixed(1)}–${(v.ic.alto*100).toFixed(1)}% · equilíbrio ${(be*100).toFixed(1)}% (traço) · odd méd. ${(d.so/d.n).toFixed(2)}</div>
+    </div>`;
+  });
+
+  html+=`<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:11px;margin-top:10px;font-size:11px;color:var(--text);line-height:1.6;">
+    <b>Como ler:</b> o traço vertical é o ponto de equilíbrio — a taxa de acerto mínima para não perder dinheiro naquela odd. Estar acima dele por sorte é comum em amostras pequenas; por isso o veredito só afirma vantagem quando o <b>intervalo inteiro</b> está acima da linha. Abaixo de 100 apostas, nada é conclusivo.
+  </div>`;
+
+  box.innerHTML=html;
+}
+
 function renderEstatisticas(){
   const body=document.getElementById('estatisticas-body'); if(!body) return;
   const eventos=ms().estatSequencias||[];
@@ -2018,7 +2209,7 @@ function atualizarPainelUI(forcarGrafico=false){
   const banner=document.getElementById('banner-stop');
   if(banner) banner.style.display=ms().stopTravado?'block':'none';
 
-  renderLinhas(); renderCards(); renderRodapeSomaLetras(); renderHistorico(); renderExposicao(); renderEstatisticas(); atualizarBotaoModoUI(); atualizarLayoutContadoresPorModo();
+  renderLinhas(); renderCards(); renderRodapeSomaLetras(); renderHistorico(); renderExposicao(); renderEstatisticas(); renderPainelVantagem(); atualizarBotaoModoUI(); atualizarLayoutContadoresPorModo();
   if(document.getElementById('grafico')&&document.getElementById('grafico').classList.contains('active')) renderizarGrafico();
 }
 </script>
