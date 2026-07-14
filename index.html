@@ -1349,7 +1349,8 @@ function reabrirLetra(l){
   const msg=document.getElementById('modal-reabrir-msg');
   if(msg) msg.innerHTML=`Você está prestes a <b>reabrir a letra ${l}</b>, que já cumpriu a missão.<br><br>
     Lucro travado nesta etapa: <b style="color:var(--win);">${fmt(lucro)}</b> (meta era ${metaPct}%)<br>
-    Lotes que voltarão a operar: <b>${lotes}</b><br><br>
+    Lotes que voltarão a operar: <b>${lotes}</b><br>
+    Aposta de reabertura: <b style="color:var(--accent);">${fmt(getValorApostaBase(ms().oddsPorLetra[l]||2))}</b> <span style="font-size:11px;color:var(--muted);">(volta à base, risco zerado)</span><br><br>
     <b style="color:#F0A500;">⚠️ O lucro desta letra deixa de estar protegido.</b> A partir daqui ele volta a ficar exposto ao risco, e o resultado acumulado pode ser reduzido ou revertido pelas próximas apostas.<br><br>
     <span style="font-size:11px;color:var(--muted);">Lembre-se: uma letra que bateu a meta não é uma letra "quente" — a próxima aposta nela tem exatamente a mesma expectativa de antes.</span>`;
   document.getElementById('modal-reabrir').style.display='flex';
@@ -1358,8 +1359,18 @@ function reabrirLetra(l){
 function confirmarReabertura(){
   const l=letraParaReabrir; if(!l) return;
 
-  // Reabre os lotes da letra
-  ms().sequencias.forEach(s=>{ if(s.letraRandomica===l&&s.status==='FINISHED') s.status='PENDING'; });
+  // Reabre os lotes da letra em ESTADO DE ORIGEM: aposta volta à base, risco acumulado zerado,
+  // sequência de gales reiniciada. Reabrir é recomeçar do zero — não retomar de onde parou.
+  // (Também no modo PERCENTUAL: o composto reinicia, senão a reabertura herdaria uma aposta inflada.)
+  const oddL=ms().oddsPorLetra[l]||2;
+  ms().sequencias.forEach(s=>{
+    if(s.letraRandomica===l&&s.status==='FINISHED'){
+      s.status='PENDING';
+      s.apostaAtual=getValorApostaBase(oddL);
+      s.perdasAcumuladas=0;
+      s.streakLoss=0;
+    }
+  });
 
   // Zera o marcador de meta cumprida → a letra volta a perseguir a meta,
   // e o lucro JÁ OBTIDO permanece na conta (lucroLetraEtapa não é zerado).
