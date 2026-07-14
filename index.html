@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#0D1117">
-<title>Método Marantan v31.0</title>
+<title>Método Marantan v31.1</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox=%270 0 48 48%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Crect x=%271.5%27 y=%271.5%27 width=%2745%27 height=%2745%27 rx=%2711%27 fill=%27%23161B22%27 stroke=%27%2330363D%27 stroke-width=%271.5%27/%3E%3Cpath d=%27M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3Cpath d=%27M30.5 9.5 L37.5 9 L36.8 16%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -179,6 +179,8 @@ header { background:var(--surface); border-bottom:1px solid var(--border); paddi
 .letra-card.linha .lr-meta > div { margin-top:0 !important; }
 .letra-card.linha .lr-counters { font-size:11px; font-family:var(--mono); white-space:nowrap; text-align:center; }
 .letra-card.linha .card-btns { margin:0; display:flex; gap:5px; }
+.btn-reabrir { width:100%; background:var(--surface2); border:1px solid var(--accent); color:var(--accent); padding:6px; border-radius:var(--radius-sm); font-size:11px; font-weight:700; cursor:pointer; font-family:var(--sans); }
+.btn-reabrir:hover { background:var(--accent-dim); }
 .letra-card.linha .card-btns button { flex:1; padding:6px 0; font-size:12px; }
 .letra-card.linha .lr-lock { justify-self:center; }
 /* Cabeçalho de colunas da vista em linhas */
@@ -391,6 +393,19 @@ tbody tr:last-child td { border-bottom:none; }
 
 
 <!-- MODAL AVISO RISCO GALES -->
+<div id="modal-reabrir" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-body">
+      <div class="m-title">🔓 Reabrir Letra</div>
+      <p id="modal-reabrir-msg" style="font-size:12px; color:var(--text); line-height:1.6; margin-top:8px;"></p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="fecharModal('modal-reabrir'); letraParaReabrir=null;">Manter protegida</button>
+      <button class="btn-confirm" onclick="confirmarReabertura()">Reabrir mesmo assim</button>
+    </div>
+  </div>
+</div>
+
 <div id="modal-conferencia" class="modal-overlay">
   <div class="modal-box">
     <div class="modal-body">
@@ -469,7 +484,7 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v31.0</span></div>
+      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v31.1</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
@@ -1011,6 +1026,7 @@ function aplicarBlindagemDeVariaveis(){
     if(!m.estatSequencias) m.estatSequencias=[];
     if(!m.registroApostas) m.registroApostas=[];
     if(!m.ajustesConferencia) m.ajustesConferencia=[];
+    if(!m.reaberturas) m.reaberturas=[];
     if(!m.streakPorLetra) m.streakPorLetra={};
     if(m.perdasAssumidasTotal===undefined) m.perdasAssumidasTotal=0;
     if(m.assumidasCount===undefined) m.assumidasCount=0;
@@ -1321,6 +1337,43 @@ function processarWinSeq(seq,odd){
   }
   // Libera aviso para esse lote — pode receber novo alerta se entrar em sequência novamente
   lotesAvisadosRisco.delete(`${modoAtivo}_${seq.id}`);
+}
+
+let letraParaReabrir=null;
+
+function reabrirLetra(l){
+  letraParaReabrir=l;
+  const lucro=(ms().lucroLetraEtapa&&ms().lucroLetraEtapa[l])||0;
+  const metaPct=(ms().metaPorLetra&&parseFloat(ms().metaPorLetra[l]))||0;
+  const lotes=ms().sequencias.filter(s=>s.letraRandomica===l).length;
+  const msg=document.getElementById('modal-reabrir-msg');
+  if(msg) msg.innerHTML=`Você está prestes a <b>reabrir a letra ${l}</b>, que já cumpriu a missão.<br><br>
+    Lucro travado nesta etapa: <b style="color:var(--win);">${fmt(lucro)}</b> (meta era ${metaPct}%)<br>
+    Lotes que voltarão a operar: <b>${lotes}</b><br><br>
+    <b style="color:#F0A500;">⚠️ O lucro desta letra deixa de estar protegido.</b> A partir daqui ele volta a ficar exposto ao risco, e o resultado acumulado pode ser reduzido ou revertido pelas próximas apostas.<br><br>
+    <span style="font-size:11px;color:var(--muted);">Lembre-se: uma letra que bateu a meta não é uma letra "quente" — a próxima aposta nela tem exatamente a mesma expectativa de antes.</span>`;
+  document.getElementById('modal-reabrir').style.display='flex';
+}
+
+function confirmarReabertura(){
+  const l=letraParaReabrir; if(!l) return;
+
+  // Reabre os lotes da letra
+  ms().sequencias.forEach(s=>{ if(s.letraRandomica===l&&s.status==='FINISHED') s.status='PENDING'; });
+
+  // Zera o marcador de meta cumprida → a letra volta a perseguir a meta,
+  // e o lucro JÁ OBTIDO permanece na conta (lucroLetraEtapa não é zerado).
+  // Consequência: a barra continua em 100% e a meta pode ser cumprida de novo
+  // assim que houver qualquer novo lucro. É proposital — o lucro anterior é real e não some.
+  if(ms().letrasMetaCumprida) delete ms().letrasMetaCumprida[l];
+
+  // Registra a reabertura (rastreabilidade)
+  if(!ms().reaberturas) ms().reaberturas=[];
+  ms().reaberturas.push({d:new Date().toISOString(), l:l, lucroNoMomento:(ms().lucroLetraEtapa&&ms().lucroLetraEtapa[l])||0});
+
+  letraParaReabrir=null;
+  fecharModal('modal-reabrir');
+  salvarDadosEAtualizarTudo();
 }
 
 function abrirModalConferencia(){
@@ -1696,8 +1749,10 @@ function renderCards(){
           <span style="color:var(--loss);font-weight:700;">▼${totalLossLetra}</span>
         </div>
         <div class="card-btns">
-          <button class="btn-win" onclick="executarAcaoEmMassaCard('${l}','WIN')">V</button>
-          <button class="btn-loss" onclick="executarAcaoEmMassaCard('${l}','LOSS')">D</button>
+          ${(allFinished||metaCumpridaL)
+            ? `<button class="btn-reabrir" onclick="reabrirLetra('${l}')" style="flex:1;">🔓 Reabrir</button>`
+            : `<button class="btn-win" onclick="executarAcaoEmMassaCard('${l}','WIN')">V</button>
+          <button class="btn-loss" onclick="executarAcaoEmMassaCard('${l}','LOSS')">D</button>`}
         </div>
         <label class="switch lr-lock" title="📌 Fixar letra na rodada"><input type="checkbox" ${checked} onchange="toggleLockChaveSeletora('${l}',this)"><span class="slider"></span></label>
       </div>`;
@@ -1712,10 +1767,12 @@ function renderCards(){
         <span style="color:var(--muted);"> · </span>
         <span style="color:var(--loss);font-weight:700;">E=${totalLossLetra}</span>
       </div>
-      <div class="card-btns">
+      ${(allFinished||metaCumpridaL)
+        ? `<button class="btn-reabrir" onclick="reabrirLetra('${l}')">🔓 Reabrir letra</button>`
+        : `<div class="card-btns">
         <button class="btn-win" onclick="executarAcaoEmMassaCard('${l}','WIN')">V</button>
         <button class="btn-loss" onclick="executarAcaoEmMassaCard('${l}','LOSS')">D</button>
-      </div>
+      </div>`}
       <div class="lock-row">
         <span class="lock-label">📌 Fixar</span>
         <label class="switch"><input type="checkbox" ${checked} onchange="toggleLockChaveSeletora('${l}',this)"><span class="slider"></span></label>
