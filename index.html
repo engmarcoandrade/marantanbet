@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#0D1117">
-<title>Método Marantan v31.1</title>
+<title>Método Marantan v32.1</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox=%270 0 48 48%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Crect x=%271.5%27 y=%271.5%27 width=%2745%27 height=%2745%27 rx=%2711%27 fill=%27%23161B22%27 stroke=%27%2330363D%27 stroke-width=%271.5%27/%3E%3Cpath d=%27M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3Cpath d=%27M30.5 9.5 L37.5 9 L36.8 16%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -81,10 +81,6 @@ header { background:var(--surface); border-bottom:1px solid var(--border); paddi
 .etapa-chip { background:var(--surface2); border:1px solid var(--border); border-radius:20px; padding:4px 12px; font-size:12px; font-weight:600; color:var(--muted); white-space:nowrap; }
 .etapa-chip b { color:var(--accent); }
 .hdr-btns { display:flex; gap:6px; flex-shrink:0; }
-.modo-selector { display:flex; background:var(--surface2); border:1px solid var(--border); border-radius:20px; overflow:hidden; gap:0; width:100%; }
-.modo-btn { flex:1; background:transparent; border:none; color:var(--muted); padding:7px 12px; font-size:12px; font-weight:700; cursor:pointer; font-family:var(--sans); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; transition:all .2s; }
-.modo-btn.active.real { background:var(--win); color:#fff; border-radius:20px; }
-.modo-btn.active.virtual { background:var(--purple); color:#fff; border-radius:20px; }
 .hdr-btn { background:var(--surface2); border:1px solid var(--border); color:var(--muted); padding:6px 10px; border-radius:var(--radius-sm); font-size:12px; font-weight:600; cursor:pointer; font-family:var(--sans); white-space:nowrap; }
 .hdr-btn:active { opacity:.7; }
 .hdr-btn.danger { color:var(--loss); border-color:var(--loss-border); }
@@ -331,8 +327,7 @@ tbody tr:last-child td { border-bottom:none; }
   .app-logo-mark { width:26px; height:26px; }
   .etapa-chip { padding:4px 10px; font-size:11px; }
   .hdr-btn { padding:6px 8px; font-size:11px; }
-  .modo-btn { padding:8px; font-size:12px; }
-}
+  }
 </style>
 </head>
 <body>
@@ -484,17 +479,13 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v31.1</span></div>
+      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v32.1</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
       <button class="hdr-btn" id="btn-tema" onclick="alternarTema()" title="Alternar tema">🌙</button>
       <button class="hdr-btn danger" id="btn-panic-sair">Sair</button>
     </div>
-  </div>
-  <div class="modo-selector">
-    <button id="btn-modo-real" class="modo-btn active real" onclick="alternarModo('real')">⚽ Real</button>
-    <button id="btn-modo-virtual" class="modo-btn" onclick="alternarModo('virtual')">🎮 Virtual</button>
   </div>
 </header>
 
@@ -648,8 +639,7 @@ tbody tr:last-child td { border-bottom:none; }
     <div class="cfg-section">
       <div class="cfg-title accent">🏷️ Nomes dos Modos</div>
       <div class="form-row2">
-        <div class="form-group"><label class="cfg-label">Nome do Modo 1 (Real)</label><input type="text" id="cfg-nome-real" class="cfg-input" style="font-family:var(--sans);" maxlength="18" placeholder="Real"></div>
-        <div class="form-group"><label class="cfg-label">Nome do Modo 2 (Virtual)</label><input type="text" id="cfg-nome-virtual" class="cfg-input" style="font-family:var(--sans);" maxlength="18" placeholder="Virtual"></div>
+
       </div>
       <button class="btn-secondary" onclick="salvarNomesModos()">💾 Salvar Nomes</button>
       <p style="font-size:10px;color:var(--muted);line-height:1.5;margin-top:8px;">Renomeia os botões no topo. Os dados de cada modo são preservados — muda só o rótulo. Deixe em branco para voltar ao padrão.</p>
@@ -881,30 +871,25 @@ const DEFAULT_MODO = {
   estatSequencias:[], streakPorLetra:{}, registroApostas:[], perdasAssumidasTotal:0, assumidasCount:0, stopTravado:false
 };
 
-const DEFAULT_STATE = {
+const DEFAULT_STATE = Object.assign({}, DEFAULT_MODO, {
   bancoCapital:0.00, sheetsUrl:"", ultimoTimestampSinc:0,
-  nomeReal:"Real", nomeVirtual:"Virtual",
-  // Plataforma é COMPARTILHADA entre Real e Virtual — é o mesmo dinheiro
   bancaInicial:100.00, bancaAtual:100.00, bancaInicioEtapa:100.00,
-  resultadosReaisGrafico:[100.00],
-  real: JSON.parse(JSON.stringify(DEFAULT_MODO)),
-  virtual: JSON.parse(JSON.stringify(DEFAULT_MODO))
-};
+  resultadosReaisGrafico:[100.00]
+});
 
 let state = JSON.parse(JSON.stringify(DEFAULT_STATE));
-let modoAtivo = 'real';
 const lotesAvisadosRisco = new Set();
-let ordemLotes = 'id'; // 'id' ou 'risco' // controla quais lotes já receberam aviso 70% // 'real' ou 'virtual'
+let ordemLotes = 'id'; // 'id' ou 'risco'
 let sinalizadoMeta=false, sinalizadoStop=false, chartInstance=null, filtroAtualExibicao='all', sheetsTimeout=null;
 
-// Atalho: state atual do modo ativo
-function ms(){ return state[modoAtivo]; }
+// Estado único (modo Real/Virtual removido na v32.0). ms() mantido por compatibilidade.
+function ms(){ return state; }
 
 const fmt = (v) => v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 
 function fecharModal(id){ document.getElementById(id).style.display='none'; }
 
-const GS_SCRIPT_CODE = '// MÉTODO MARANTAN — Codigo.gs — V29.4\n\nfunction doPost(e) {\n  var lock = LockService.getScriptLock();\n  try {\n    lock.waitLock(10000);\n    var ss = SpreadsheetApp.getActiveSpreadsheet();\n    if (!e || !e.postData || !e.postData.contents) {\n      return ContentService.createTextOutput(JSON.stringify({ "status": "error", "message": "Corpo vazio." })).setMimeType(ContentService.MimeType.JSON);\n    }\n    var state = JSON.parse(e.postData.contents);\n    if (state.bancoCapital === undefined || !state.real) {\n      return ContentService.createTextOutput(JSON.stringify({ "status": "error", "message": "Estrutura inválida." })).setMimeType(ContentService.MimeType.JSON);\n    }\n    PropertiesService.getScriptProperties().setProperty(\'marantan_state\', e.postData.contents);\n    var sheetDash = ss.getSheetByName("Dashboard") || ss.insertSheet("Dashboard");\n    sheetDash.clear();\n    sheetDash.appendRow(["MÉTODO MARANTAN", "V29.4"]);\n    sheetDash.appendRow(["Modo", "Banca Ativa", "Etapa", "Última Sinc"]);\n    sheetDash.appendRow(["Real", parseFloat(state.real.bancaAtual)||0, parseInt(state.real.etapaAtual)||1, new Date(state.ultimoTimestampSinc||Date.now()).toLocaleString("pt-BR")]);\n    sheetDash.appendRow(["Virtual", parseFloat(state.virtual.bancaAtual)||0, parseInt(state.virtual.etapaAtual)||1, ""]);\n    sheetDash.appendRow(["Banco (Reserva)", parseFloat(state.bancoCapital)||0, "", ""]);\n    sheetDash.getRange("B3:B5").setNumberFormat("R$ #,##0.00");\n    [\'real\',\'virtual\'].forEach(function(modo) {\n      var m = state[modo];\n      var sheetHist = ss.getSheetByName("Hist_"+modo) || ss.insertSheet("Hist_"+modo);\n      sheetHist.clear();\n      sheetHist.appendRow(["Etapa", "Data", "Horário", "Lucro", "Saldo Final", "% Meta"]);\n      if (m.historico && m.historico.length > 0) {\n        var dadosHist = m.historico.map(function(h,i){ return [parseInt(h.etapa)||(i+1), h.dataCalendario||"", h.data||"", parseFloat(h.lucro)||0, parseFloat(h.bancaPos)||0, (parseFloat(h.pct)||0)/100]; });\n        sheetHist.getRange(2,1,dadosHist.length,6).setValues(dadosHist);\n        sheetHist.getRange(2,4,dadosHist.length,2).setNumberFormat("R$ #,##0.00");\n        sheetHist.getRange(2,6,dadosHist.length,1).setNumberFormat("0.0%");\n      }\n      var sheetLotes = ss.getSheetByName("Lotes_"+modo) || ss.insertSheet("Lotes_"+modo);\n      sheetLotes.clear();\n      sheetLotes.appendRow(["Lote ID", "Letra", "Aposta", "Risco Acum.", "Vitórias", "Derrotas", "Status"]);\n      if (m.sequencias && m.sequencias.length > 0) {\n        var dadosLotes = m.sequencias.map(function(s,j){ return [parseInt(s.id)||(j+1),(s.letraRandomica||"A").toUpperCase(),parseFloat(s.apostaAtual)||0.01,parseFloat(s.perdasAcumuladas)||0,parseInt(s.winsEtapa)||0,parseInt(s.lossesEtapa)||0,s.status||"PENDING"]; });\n        sheetLotes.getRange(2,1,dadosLotes.length,7).setValues(dadosLotes);\n        sheetLotes.getRange(2,3,dadosLotes.length,2).setNumberFormat("R$ #,##0.00");\n      }\n    });\n    SpreadsheetApp.flush();\n    return ContentService.createTextOutput(JSON.stringify({ "status": "success" })).setMimeType(ContentService.MimeType.JSON);\n  } catch (error) {\n    return ContentService.createTextOutput(JSON.stringify({ "status": "error", "message": error.toString() })).setMimeType(ContentService.MimeType.JSON);\n  } finally { lock.releaseLock(); }\n}\n\nfunction doGet(e) {\n  try {\n    var saved = PropertiesService.getScriptProperties().getProperty(\'marantan_state\');\n    if (saved) { return ContentService.createTextOutput(saved).setMimeType(ContentService.MimeType.JSON); }\n    return ContentService.createTextOutput(JSON.stringify({ "status": "ready", "version": "29.4" })).setMimeType(ContentService.MimeType.JSON);\n  } catch (error) {\n    return ContentService.createTextOutput(JSON.stringify({ "status": "error", "message": error.toString() })).setMimeType(ContentService.MimeType.JSON);\n  }\n}';
+const GS_SCRIPT_CODE = "// MÉTODO MARANTAN — Codigo.gs — V32.0\n\nfunction doPost(e) {\n  var lock = LockService.getScriptLock();\n  try {\n    lock.waitLock(10000);\n    var ss = SpreadsheetApp.getActiveSpreadsheet();\n    if (!e || !e.postData || !e.postData.contents) {\n      return ContentService.createTextOutput(JSON.stringify({ \"status\": \"error\", \"message\": \"Corpo vazio.\" })).setMimeType(ContentService.MimeType.JSON);\n    }\n    var state = JSON.parse(e.postData.contents);\n    if (state.bancoCapital === undefined || !state.sequencias) {\n      return ContentService.createTextOutput(JSON.stringify({ \"status\": \"error\", \"message\": \"Estrutura inválida.\" })).setMimeType(ContentService.MimeType.JSON);\n    }\n    PropertiesService.getScriptProperties().setProperty('marantan_state', e.postData.contents);\n    var sheetDash = ss.getSheetByName(\"Dashboard\") || ss.insertSheet(\"Dashboard\");\n    sheetDash.clear();\n    sheetDash.appendRow([\"MÉTODO MARANTAN\", \"V32.0\"]);\n    sheetDash.appendRow([\"Banca Ativa\", \"Etapa\", \"Última Sinc\"]);\n    sheetDash.appendRow([parseFloat(state.bancaAtual)||0, parseInt(state.etapaAtual)||1, new Date(state.ultimoTimestampSinc||Date.now()).toLocaleString(\"pt-BR\")]);\n    sheetDash.appendRow([\"Banco (Reserva)\", parseFloat(state.bancoCapital)||0, \"\"]);\n    var sheetHist = ss.getSheetByName(\"Historico\") || ss.insertSheet(\"Historico\");\n    sheetHist.clear();\n    sheetHist.appendRow([\"Etapa\", \"Data\", \"Horário\", \"Lucro\", \"Saldo Final\", \"% Meta\"]);\n    if (state.historico && state.historico.length > 0) {\n      var dadosHist = state.historico.map(function(h,i){ return [parseInt(h.etapa)||(i+1), h.dataCalendario||\"\", h.data||\"\", parseFloat(h.lucro)||0, parseFloat(h.bancaPos)||0, (parseFloat(h.pct)||0)/100]; });\n      sheetHist.getRange(2,1,dadosHist.length,6).setValues(dadosHist);\n      sheetHist.getRange(2,4,dadosHist.length,2).setNumberFormat(\"R$ #,##0.00\");\n      sheetHist.getRange(2,6,dadosHist.length,1).setNumberFormat(\"0.0%\");\n    }\n    var sheetLotes = ss.getSheetByName(\"Lotes\") || ss.insertSheet(\"Lotes\");\n    sheetLotes.clear();\n    sheetLotes.appendRow([\"Lote ID\", \"Letra\", \"Aposta\", \"Risco Acum.\", \"Vitórias\", \"Derrotas\", \"Status\"]);\n    if (state.sequencias && state.sequencias.length > 0) {\n      var dadosLotes = state.sequencias.map(function(s,j){ return [parseInt(s.id)||(j+1),(s.letraRandomica||\"A\").toUpperCase(),parseFloat(s.apostaAtual)||0.01,parseFloat(s.perdasAcumuladas)||0,parseInt(s.winsEtapa)||0,parseInt(s.lossesEtapa)||0,s.status||\"PENDING\"]; });\n      sheetLotes.getRange(2,1,dadosLotes.length,7).setValues(dadosLotes);\n      sheetLotes.getRange(2,3,dadosLotes.length,2).setNumberFormat(\"R$ #,##0.00\");\n    }\n    SpreadsheetApp.flush();\n    return ContentService.createTextOutput(JSON.stringify({ \"status\": \"success\" })).setMimeType(ContentService.MimeType.JSON);\n  } catch (error) {\n    return ContentService.createTextOutput(JSON.stringify({ \"status\": \"error\", \"message\": error.toString() })).setMimeType(ContentService.MimeType.JSON);\n  } finally { lock.releaseLock(); }\n}\n\nfunction doGet(e) {\n  try {\n    var saved = PropertiesService.getScriptProperties().getProperty('marantan_state');\n    if (saved) { return ContentService.createTextOutput(saved).setMimeType(ContentService.MimeType.JSON); }\n    return ContentService.createTextOutput(JSON.stringify({ \"status\": \"ready\", \"version\": \"32.0\" })).setMimeType(ContentService.MimeType.JSON);\n  } catch (error) {\n    return ContentService.createTextOutput(JSON.stringify({ \"status\": \"error\", \"message\": error.toString() })).setMimeType(ContentService.MimeType.JSON);\n  }\n}";
 
 function copiarScriptGS(){
   const box = document.getElementById('gs-code-box');
@@ -922,31 +907,11 @@ function preencherScriptBox(){
   if(box && !box.value) box.value = GS_SCRIPT_CODE;
 }
 
-function emojiRealVirtual(modo){ return modo==='real'?'⚽':'🎮'; }
-function aplicarNomesModos(){
-  const br=document.getElementById('btn-modo-real');
-  const bv=document.getElementById('btn-modo-virtual');
-  if(br) br.innerText='⚽ '+(state.nomeReal||'Real');
-  if(bv) bv.innerText='🎮 '+(state.nomeVirtual||'Virtual');
-}
-function salvarNomesModos(){
-  const r=document.getElementById('cfg-nome-real').value.trim();
-  const v=document.getElementById('cfg-nome-virtual').value.trim();
-  state.nomeReal=r||'Real';
-  state.nomeVirtual=v||'Virtual';
-  aplicarNomesModos();
-  salvarDadosEAtualizarTudo();
-  alert('✅ Nomes atualizados!');
-}
+function emojiRealVirtual(){ return '⚽'; }
+function aplicarNomesModos(){ /* modos removidos v32.0 */ }
+function salvarNomesModos(){ /* modos removidos v32.0 */ }
 
-function alternarModo(modo){
-  modoAtivo=modo;
-  sinalizadoMeta=false; sinalizadoStop=false;
-  document.getElementById('btn-modo-real').className='modo-btn'+(modo==='real'?' active real':'');
-  document.getElementById('btn-modo-virtual').className='modo-btn'+(modo==='virtual'?' active virtual':'');
-  aplicarNomesModos();
-  preencherCamposConfig(); ajustarCamposDeOddsMenu(true); atualizarPainelUI(true);
-}
+function alternarModo(){ /* removido v32.0 */ }
 
 function atualizarStatusSheets(status){
   const dot=document.getElementById('sheets-dot'); const txt=document.getElementById('sheets-text');
@@ -989,49 +954,60 @@ function aplicarBlindagemDeVariaveis(){
   if(state.bancoCapital===undefined) state.bancoCapital=0.00;
   if(!state.ultimoTimestampSinc) state.ultimoTimestampSinc=0;
   if(!state.sheetsUrl) state.sheetsUrl="";
-  if(state.nomeReal===undefined||state.nomeReal==="") state.nomeReal="Real";
-  if(state.nomeVirtual===undefined||state.nomeVirtual==="") state.nomeVirtual="Virtual";
-  // Plataforma compartilhada — nível state, não por modo
+  // ── MIGRAÇÃO v32.0: estado nested (real/virtual) → estado único ──
+  // Estados salvos antes da v32.0 guardavam a operação em state.real.
+  // Promovemos esses dados para o nível raiz e descartamos o virtual.
+  if(state.real && typeof state.real==='object'){
+    Object.assign(state, state.real);
+    delete state.real;
+    delete state.virtual;
+  }
+  delete state.nomeReal; delete state.nomeVirtual;
+
+  // Plataforma / banca (nível raiz)
   if(state.bancaAtual===undefined) state.bancaAtual=100.00;
   if(state.bancaInicial===undefined) state.bancaInicial=state.bancaAtual;
   if(state.bancaInicioEtapa===undefined) state.bancaInicioEtapa=state.bancaAtual;
   if(!state.resultadosReaisGrafico||state.resultadosReaisGrafico.length===0) state.resultadosReaisGrafico=[state.bancaInicial];
-  // Garantir que ambos os modos existam
-  ['real','virtual'].forEach(modo=>{
-    if(!state[modo]) state[modo]=JSON.parse(JSON.stringify(DEFAULT_MODO));
-    const m=state[modo];
-    if(!m.marantanLancamentosRodada) m.marantanLancamentosRodada={};
-    if(!m.oddsPorLetra) m.oddsPorLetra={"A":1.80,"B":1.80,"C":1.80,"D":1.80,"E":1.80,"F":1.80};
-    if(!m.anotacoesPorLetra) m.anotacoesPorLetra={"A":"","B":"","C":"","D":"","E":"","F":""};
-    if(!m.letrasBloqueadasRodada) m.letrasBloqueadasRodada={};
-    if(!m.modoPosWin) m.modoPosWin="BLINDAR";
-    if(!m.modoDistribuicao) m.modoDistribuicao="PROPORCIONAL";
-    if(!m.dataInicioCiclo) m.dataInicioCiclo=hojeISO;
-    if(!m.historico) m.historico=[];
-    if(!m.aleatoriedade) m.aleatoriedade=6;
-    if(!m.sequencias) m.sequencias=[];
-    if(m.vitoriasRodadaVoltarInicial===undefined) m.vitoriasRodadaVoltarInicial=0;
-    if(m.loteQtd===undefined) m.loteQtd=500;
-    if(m.apostaBasePercent===undefined) m.apostaBasePercent=1.0;
-    if(m.metaDiaria===undefined) m.metaDiaria=1.0;
-    if(m.diasAcomp===undefined) m.diasAcomp=30;
-    if(m.maxGales===undefined) m.maxGales=4;
-    if(m.stopLotePercent===undefined) m.stopLotePercent=5.0;
-    if(!m.modoProgressao) m.modoProgressao="RECUPERACAO";
-    if(m.incrFixoPercent===undefined) m.incrFixoPercent=10.0;
-    if(!m.vistaOperacao) m.vistaOperacao="cards";
-    if(!m.metaPorLetra) m.metaPorLetra={"A":1.0,"B":1.0,"C":1.0,"D":1.0,"E":1.0,"F":1.0};
-    if(!m.lucroLetraEtapa) m.lucroLetraEtapa={};
-    if(!m.letrasMetaCumprida) m.letrasMetaCumprida={};
-    if(!m.estatSequencias) m.estatSequencias=[];
-    if(!m.registroApostas) m.registroApostas=[];
-    if(!m.ajustesConferencia) m.ajustesConferencia=[];
-    if(!m.reaberturas) m.reaberturas=[];
-    if(!m.streakPorLetra) m.streakPorLetra={};
-    if(m.perdasAssumidasTotal===undefined) m.perdasAssumidasTotal=0;
-    if(m.assumidasCount===undefined) m.assumidasCount=0;
-    if(m.stopTravado===undefined) m.stopTravado=false;
-  });
+
+  // Defaults de todos os campos operacionais, agora direto em state
+  const m=state;
+  if(!m.marantanLancamentosRodada) m.marantanLancamentosRodada={};
+  if(!m.oddsPorLetra) m.oddsPorLetra={"A":1.80,"B":1.80,"C":1.80,"D":1.80,"E":1.80,"F":1.80};
+  if(!m.anotacoesPorLetra) m.anotacoesPorLetra={"A":"","B":"","C":"","D":"","E":"","F":""};
+  if(!m.letrasBloqueadasRodada) m.letrasBloqueadasRodada={};
+  if(!m.modoPosWin) m.modoPosWin="BLINDAR";
+  if(!m.modoDistribuicao) m.modoDistribuicao="PROPORCIONAL";
+  if(!m.dataInicioCiclo) m.dataInicioCiclo=hojeISO;
+  if(!m.historico) m.historico=[];
+  if(!m.aleatoriedade) m.aleatoriedade=6;
+  if(!m.sequencias) m.sequencias=[];
+  if(m.etapaAtual===undefined) m.etapaAtual=1;
+  if(m.metaPercent===undefined) m.metaPercent=5.0;
+  if(m.stopLossPercent===undefined) m.stopLossPercent=15.0;
+  if(m.vitoriasRodadaVoltarInicial===undefined) m.vitoriasRodadaVoltarInicial=0;
+  if(m.loteQtd===undefined) m.loteQtd=500;
+  if(m.apostaBasePercent===undefined) m.apostaBasePercent=1.0;
+  if(m.metaDiaria===undefined) m.metaDiaria=1.0;
+  if(m.diasAcomp===undefined) m.diasAcomp=30;
+  if(m.maxGales===undefined) m.maxGales=4;
+  if(m.stopLotePercent===undefined) m.stopLotePercent=5.0;
+  if(!m.modoProgressao) m.modoProgressao="RECUPERACAO";
+  if(m.incrFixoPercent===undefined) m.incrFixoPercent=10.0;
+  if(!m.vistaOperacao) m.vistaOperacao="cards";
+  if(!m.chartMode) m.chartMode="DATA";
+  if(!m.metaPorLetra) m.metaPorLetra={"A":1.0,"B":1.0,"C":1.0,"D":1.0,"E":1.0,"F":1.0};
+  if(!m.lucroLetraEtapa) m.lucroLetraEtapa={};
+  if(!m.letrasMetaCumprida) m.letrasMetaCumprida={};
+  if(!m.estatSequencias) m.estatSequencias=[];
+  if(!m.registroApostas) m.registroApostas=[];
+  if(!m.ajustesConferencia) m.ajustesConferencia=[];
+  if(!m.reaberturas) m.reaberturas=[];
+  if(!m.lucroLetraArquivado) m.lucroLetraArquivado={};
+  if(!m.streakPorLetra) m.streakPorLetra={};
+  if(m.perdasAssumidasTotal===undefined) m.perdasAssumidasTotal=0;
+  if(m.assumidasCount===undefined) m.assumidasCount=0;
+  if(m.stopTravado===undefined) m.stopTravado=false;
 }
 
 async function testarConexaoSheets(){
@@ -1085,8 +1061,7 @@ async function carregarDaNuvem(){
       SHEETS_URL_MEMORIA=url;
       state=data;
       aplicarBlindagemDeVariaveis();
-      if(!state.real.sequencias||state.real.sequencias.length===0){ modoAtivo='real'; gerarEstruturaLotesIniciais(); }
-      if(!state.virtual.sequencias||state.virtual.sequencias.length===0){ modoAtivo='virtual'; gerarEstruturaLotesIniciais(); modoAtivo='real'; }
+      if(!state.sequencias||state.sequencias.length===0){ gerarEstruturaLotesIniciais(); }
       try{ preencherCamposConfig(); ajustarCamposDeOddsMenu(true); atualizarPainelUI(true); }
       catch(e){ console.warn('Aviso ao renderizar após carregar (dados OK):', e); }
       atualizarStatusSheets('on');
@@ -1175,7 +1150,7 @@ function gerarEstruturaLotesIniciais(){
   while(pool.length<total) pool.push(letras[0]);
   if(pool.length>total) pool=pool.slice(0,total);
   const seqs=Array.from({length:total},(_,i)=>{ const l=pool[i]; const o=ms().oddsPorLetra[l]||2; return { id:i+1, apostaAtual:getValorApostaBase(o), streakLoss:0, letraRandomica:l, winsEtapa:0, lossesEtapa:0, perdasAcumuladas:0, status:'PENDING' }; }); ms().sequencias=seqs;
-  ms().lucroLetraEtapa={}; ms().letrasMetaCumprida={};
+  ms().lucroLetraEtapa={}; ms().letrasMetaCumprida={}; ms().lucroLetraArquivado={};
   ms().marantanLancamentosRodada={};
   ms().letrasBloqueadasRodada={};
   ms().stopTravado=false; // nova grade = decisão deliberada; destrava o stop
@@ -1301,10 +1276,18 @@ function registrarEventoLetra(l,resultado){
 }
 
 // ── MOTOR DE RESULTADO POR LOTE (com teto de gales e stop por lote) ──
+const MERCADO_LABELS={RESULTADO:"🎯 Resultado",AMBOS_MARCAM:"⚽ Ambos Marcam",AMBOS_NAO:"🚫 Ambos Não Marcam",OVER:"⬆️ Over",UNDER:"⬇️ Under",DUPLA:"➕ Dupla Chance",OUTRO:"📌 Outro"};
+
 function registrarAposta(letra,odd,venceu){
   if(!ms().registroApostas) ms().registroApostas=[];
-  ms().registroApostas.push({l:letra, o:odd, w:venceu?1:0, d:new Date().toISOString()});
+  ms().registroApostas.push({l:letra, o:odd, w:venceu?1:0, m:(ms().mercadoAtivo||"RESULTADO"), d:new Date().toISOString()});
   if(ms().registroApostas.length>20000) ms().registroApostas.splice(0,ms().registroApostas.length-20000);
+}
+
+function mudarMercadoAtivo(){
+  const sel=document.getElementById('sel-mercado-ativo'); if(!sel) return;
+  ms().mercadoAtivo=sel.value;
+  salvarDadosEAtualizarTudo();
 }
 
 function processarWinSeq(seq,odd){
@@ -1336,7 +1319,7 @@ function processarWinSeq(seq,odd){
     seq.status="PENDING";
   }
   // Libera aviso para esse lote — pode receber novo alerta se entrar em sequência novamente
-  lotesAvisadosRisco.delete(`${modoAtivo}_${seq.id}`);
+  lotesAvisadosRisco.delete(`op_${seq.id}`);
 }
 
 let letraParaReabrir=null;
@@ -1372,11 +1355,15 @@ function confirmarReabertura(){
     }
   });
 
-  // Zera o marcador de meta cumprida → a letra volta a perseguir a meta,
-  // e o lucro JÁ OBTIDO permanece na conta (lucroLetraEtapa não é zerado).
-  // Consequência: a barra continua em 100% e a meta pode ser cumprida de novo
-  // assim que houver qualquer novo lucro. É proposital — o lucro anterior é real e não some.
+  // Novo desafio: a barra de progresso zera e a letra persegue a meta do zero.
+  // O lucro já obtido é preservado num acumulador separado (lucroLetraArquivado) —
+  // o dinheiro é real e já está na banca; apenas sai do contador visível da letra
+  // para a barra poder recomeçar. O Σ letras continua batendo com o lucro da etapa
+  // porque soma o arquivado + o contador atual.
   if(ms().letrasMetaCumprida) delete ms().letrasMetaCumprida[l];
+  if(!ms().lucroLetraArquivado) ms().lucroLetraArquivado={};
+  ms().lucroLetraArquivado[l]=(ms().lucroLetraArquivado[l]||0)+((ms().lucroLetraEtapa&&ms().lucroLetraEtapa[l])||0);
+  if(ms().lucroLetraEtapa) ms().lucroLetraEtapa[l]=0;
 
   // Registra a reabertura (rastreabilidade)
   if(!ms().reaberturas) ms().reaberturas=[];
@@ -1473,7 +1460,7 @@ function processarPerdaSeq(seq,odd){
     ms().assumidasCount=(ms().assumidasCount||0)+1;
     seq.perdasAcumuladas=0; seq.streakLoss=0;
     seq.apostaAtual=getValorApostaBase(odd);
-    lotesAvisadosRisco.delete(`${modoAtivo}_${seq.id}`); // libera aviso para próxima sequência
+    lotesAvisadosRisco.delete(`op_${seq.id}`); // libera aviso para próxima sequência
     return {assumida:true, motivo:estourouGales?'teto de gales':'stop por lote', valor:valorAssumido};
   }
   seq.apostaAtual=proximaAposta;
@@ -1481,7 +1468,7 @@ function processarPerdaSeq(seq,odd){
   // ── Aviso em 70% do teto de gales ──
   const maxG=ms().maxGales||4;
   const pct70=Math.ceil(maxG*0.7);
-  const chaveAviso=`${modoAtivo}_${seq.id}`;
+  const chaveAviso=`op_${seq.id}`;
   if(seq.streakLoss>=pct70 && !lotesAvisadosRisco.has(chaveAviso)){
     lotesAvisadosRisco.add(chaveAviso);
     const msg=document.getElementById('modal-risco-gales-msg');
@@ -1666,14 +1653,17 @@ function renderLinhas(){
 function renderRodapeSomaLetras(){
   const el=document.getElementById('rodape-soma-letras'); if(!el) return;
   const contas=ms().lucroLetraEtapa||{};
-  const soma=Object.values(contas).reduce((a,c)=>a+(parseFloat(c)||0),0);
-  if(Object.keys(contas).length===0){ el.innerText=''; return; }
+  const arq=ms().lucroLetraArquivado||{};
+  let soma=Object.values(contas).reduce((a,c)=>a+(parseFloat(c)||0),0);
+  soma+=Object.values(arq).reduce((a,c)=>a+(parseFloat(c)||0),0);
+  if(Object.keys(contas).length===0&&Object.keys(arq).length===0){ el.innerText=''; return; }
   const cor=soma>=0?'var(--win)':'var(--loss)';
   el.innerHTML=`Σ letras = <b style="color:${cor};">${fmt(soma)}</b> <span style="opacity:.7;">(lucro em apostas da etapa)</span>`;
 }
 
 function renderCards(){
   const container=document.getElementById('container-letras-linhas'); if(!container) return;
+  const selMerc=document.getElementById('sel-mercado-ativo'); if(selMerc) selMerc.value=ms().mercadoAtivo||'RESULTADO';
   const az="ABCDEFGHIJKLMNOPQRSTUVWXYZ"; let html=''; let letrasVisiveis=0;
   for(let i=0;i<Math.min(ms().aleatoriedade,26);i++){
     const l=az[i];
@@ -1841,8 +1831,6 @@ function preencherCamposConfig(){
   document.getElementById('cfg-meta-diaria').value=ms().metaDiaria||1.0;
   document.getElementById('cfg-dias-acomp').value=ms().diasAcomp||30;
   document.getElementById('cfg-sheets-url').value=state.sheetsUrl||"";
-  const cnr=document.getElementById('cfg-nome-real'); if(cnr) cnr.value=(state.nomeReal&&state.nomeReal!=='Real')?state.nomeReal:'';
-  const cnv=document.getElementById('cfg-nome-virtual'); if(cnv) cnv.value=(state.nomeVirtual&&state.nomeVirtual!=='Virtual')?state.nomeVirtual:'';
   calcularSomaCapitalGeralUI();
 }
 
@@ -2010,6 +1998,35 @@ function renderPainelVantagem(){
       <div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:5px;">IC95%: ${(v.ic.baixo*100).toFixed(1)}–${(v.ic.alto*100).toFixed(1)}% · equilíbrio ${(be*100).toFixed(1)}% (traço) · odd méd. ${(d.so/d.n).toFixed(2)}</div>
     </div>`;
   });
+
+  // ── Por MERCADO (a quebra que responde "onde tenho vantagem?") ──
+  const temMercado=reg.some(r=>r.m);
+  if(temMercado){
+    const porMerc={};
+    reg.forEach(r=>{ const k=r.m||'RESULTADO'; if(!porMerc[k]) porMerc[k]={n:0,w:0,so:0}; porMerc[k].n++; porMerc[k].w+=r.w; porMerc[k].so+=(r.o||2); });
+    html+=`<div style="font-size:10px;color:var(--muted);font-family:var(--mono);font-weight:700;letter-spacing:.06em;margin:14px 0 6px;">DESEMPENHO POR TIPO DE MERCADO</div>`;
+    Object.keys(porMerc).sort((a,b)=>porMerc[b].n-porMerc[a].n).forEach(k=>{
+      const d=porMerc[k], be=breakevenDeOdd(d.so/d.n), v=vereditoEstatistico(d.w,d.n,be);
+      const pctBar=Math.max(0,Math.min(100,v.ic.p*100));
+      const bePos=Math.max(0,Math.min(100,be*100));
+      const lbl=(typeof MERCADO_LABELS!=='undefined'&&MERCADO_LABELS[k])?MERCADO_LABELS[k]:k;
+      html+=`
+      <div style="background:var(--surface);border:1px solid var(--border);border-left:4px solid ${cores[v.cod]};border-radius:8px;padding:10px;margin-bottom:6px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <span style="font-family:var(--sans);font-weight:800;font-size:12px;color:var(--text);">${lbl}</span>
+            <span style="font-size:10px;font-weight:700;color:${cores[v.cod]};font-family:var(--mono);">${icones[v.cod]} ${v.txt}</span>
+          </div>
+          <span style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);">${(v.ic.p*100).toFixed(1)}% <span style="color:var(--muted);font-size:10px;">(${d.w}/${d.n})</span></span>
+        </div>
+        <div style="position:relative;height:8px;background:var(--surface2);border:1px solid var(--border);border-radius:99px;overflow:hidden;">
+          <div style="position:absolute;left:0;top:0;height:100%;width:${pctBar}%;background:${cores[v.cod]};"></div>
+          <div style="position:absolute;left:${bePos}%;top:-2px;width:2px;height:12px;background:var(--text);"></div>
+        </div>
+        <div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:5px;">IC95%: ${(v.ic.baixo*100).toFixed(1)}–${(v.ic.alto*100).toFixed(1)}% · equilíbrio ${(be*100).toFixed(1)}% · odd méd. ${(d.so/d.n).toFixed(2)}</div>
+      </div>`;
+    });
+  }
 
   html+=`<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:11px;margin-top:10px;font-size:11px;color:var(--text);line-height:1.6;">
     <b>Como ler:</b> o traço vertical é o ponto de equilíbrio — a taxa de acerto mínima para não perder dinheiro naquela odd. Estar acima dele por sorte é comum em amostras pequenas; por isso o veredito só afirma vantagem quando o <b>intervalo inteiro</b> está acima da linha. Abaixo de 100 apostas, nada é conclusivo.
@@ -2258,7 +2275,7 @@ function atualizarPainelUI(forcarGrafico=false){
   if(faltaEl){ faltaEl.innerText=fmt(faltaOp); faltaEl.style.color=faltaOp<=0?'var(--win)':'var(--accent)'; }
 
   // Label do modo no chip de etapa
-  const chip=document.getElementById('hdr-etapa'); if(chip) chip.parentElement.title=modoAtivo.toUpperCase();
+  const chip=document.getElementById('hdr-etapa'); if(chip) chip.parentElement.title='OPERAÇÃO';
 
   el('progresso-inicial',fmt(baseEtapa));
   el('progresso-meta-fixa-dinamica',fmt(metaVal));
