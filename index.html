@@ -1027,7 +1027,6 @@ function aplicarBlindagemDeVariaveis(){
     if(!m.registroApostas) m.registroApostas=[];
     if(!m.ajustesConferencia) m.ajustesConferencia=[];
     if(!m.reaberturas) m.reaberturas=[];
-    if(!m.lucroLetraArquivado) m.lucroLetraArquivado={};
     if(!m.streakPorLetra) m.streakPorLetra={};
     if(m.perdasAssumidasTotal===undefined) m.perdasAssumidasTotal=0;
     if(m.assumidasCount===undefined) m.assumidasCount=0;
@@ -1176,7 +1175,7 @@ function gerarEstruturaLotesIniciais(){
   while(pool.length<total) pool.push(letras[0]);
   if(pool.length>total) pool=pool.slice(0,total);
   const seqs=Array.from({length:total},(_,i)=>{ const l=pool[i]; const o=ms().oddsPorLetra[l]||2; return { id:i+1, apostaAtual:getValorApostaBase(o), streakLoss:0, letraRandomica:l, winsEtapa:0, lossesEtapa:0, perdasAcumuladas:0, status:'PENDING' }; }); ms().sequencias=seqs;
-  ms().lucroLetraEtapa={}; ms().letrasMetaCumprida={}; ms().lucroLetraArquivado={};
+  ms().lucroLetraEtapa={}; ms().letrasMetaCumprida={};
   ms().marantanLancamentosRodada={};
   ms().letrasBloqueadasRodada={};
   ms().stopTravado=false; // nova grade = decisão deliberada; destrava o stop
@@ -1373,15 +1372,11 @@ function confirmarReabertura(){
     }
   });
 
-  // Novo desafio: a barra de progresso zera e a letra persegue a meta do zero.
-  // O lucro já obtido é preservado num acumulador separado (lucroLetraArquivado) —
-  // o dinheiro é real e já está na banca; apenas sai do contador visível da letra
-  // para a barra poder recomeçar. O Σ letras continua batendo com o lucro da etapa
-  // porque soma o arquivado + o contador atual.
+  // Zera o marcador de meta cumprida → a letra volta a perseguir a meta,
+  // e o lucro JÁ OBTIDO permanece na conta (lucroLetraEtapa não é zerado).
+  // Consequência: a barra continua em 100% e a meta pode ser cumprida de novo
+  // assim que houver qualquer novo lucro. É proposital — o lucro anterior é real e não some.
   if(ms().letrasMetaCumprida) delete ms().letrasMetaCumprida[l];
-  if(!ms().lucroLetraArquivado) ms().lucroLetraArquivado={};
-  ms().lucroLetraArquivado[l]=(ms().lucroLetraArquivado[l]||0)+((ms().lucroLetraEtapa&&ms().lucroLetraEtapa[l])||0);
-  if(ms().lucroLetraEtapa) ms().lucroLetraEtapa[l]=0;
 
   // Registra a reabertura (rastreabilidade)
   if(!ms().reaberturas) ms().reaberturas=[];
@@ -1671,10 +1666,8 @@ function renderLinhas(){
 function renderRodapeSomaLetras(){
   const el=document.getElementById('rodape-soma-letras'); if(!el) return;
   const contas=ms().lucroLetraEtapa||{};
-  const arq=ms().lucroLetraArquivado||{};
-  let soma=Object.values(contas).reduce((a,c)=>a+(parseFloat(c)||0),0);
-  soma+=Object.values(arq).reduce((a,c)=>a+(parseFloat(c)||0),0);
-  if(Object.keys(contas).length===0&&Object.keys(arq).length===0){ el.innerText=''; return; }
+  const soma=Object.values(contas).reduce((a,c)=>a+(parseFloat(c)||0),0);
+  if(Object.keys(contas).length===0){ el.innerText=''; return; }
   const cor=soma>=0?'var(--win)':'var(--loss)';
   el.innerHTML=`Σ letras = <b style="color:${cor};">${fmt(soma)}</b> <span style="opacity:.7;">(lucro em apostas da etapa)</span>`;
 }
