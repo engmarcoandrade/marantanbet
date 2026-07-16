@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#0D1117">
-<title>Método Marantan v32.2</title>
+<title>Método Marantan v32.3</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox=%270 0 48 48%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Crect x=%271.5%27 y=%271.5%27 width=%2745%27 height=%2745%27 rx=%2711%27 fill=%27%23161B22%27 stroke=%27%2330363D%27 stroke-width=%271.5%27/%3E%3Cpath d=%27M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3Cpath d=%27M30.5 9.5 L37.5 9 L36.8 16%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -479,7 +479,7 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v32.2</span></div>
+      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v32.3</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
@@ -935,18 +935,49 @@ function atualizarStatusSheets(status){
 async function salvarNaNuvem(sincrona=false){
   const url=state.sheetsUrl||SHEETS_URL_MEMORIA||"";
   if(!url||!url.startsWith("http")){ atualizarStatusSheets('err'); return; }
-  state.ultimoTimestampSinc=Date.now();
+  const ts=Date.now();
+  state.ultimoTimestampSinc=ts;
   const payload=JSON.stringify(state);
   if(sincrona&&navigator.sendBeacon){ navigator.sendBeacon(url,payload); return; }
   atualizarStatusSheets('sync');
   try{
     await fetch(url,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain"},body:payload});
-    atualizarStatusSheets('on');
-  }catch(err){ atualizarStatusSheets('err'); }
+    // no-cors é CEGO: o fetch "sucede" mesmo se o servidor rejeitou.
+    // Verificação real: lê de volta e confere se o timestamp gravado bate com o enviado.
+    const okReal=await verificarSincronizacaoReal(url,ts);
+    atualizarStatusSheets(okReal?'on':'err');
+    if(!okReal){ window.__ultimoErroSheets='O servidor não confirmou a gravação. Provável causa: o Codigo.gs no Apps Script está desatualizado (precisa ser o V32.0) ou a implantação expirou.'; }
+  }catch(err){ atualizarStatusSheets('err'); window.__ultimoErroSheets='Falha de rede ao salvar: '+err; }
+}
+
+// Lê o estado do servidor e confirma que a última gravação chegou.
+async function verificarSincronizacaoReal(url,tsEnviado){
+  try{
+    const r=await fetch(url+'?_v='+Date.now(),{method:'GET'});
+    if(!r.ok) return false;
+    const txt=await r.text();
+    const data=JSON.parse(txt);
+    // Aceita se o servidor tem o timestamp que acabamos de enviar (ou mais recente)
+    return typeof data.ultimoTimestampSinc==='number' && data.ultimoTimestampSinc>=tsEnviado;
+  }catch(e){ return false; }
 }
 
 function agendarSalvarNuvem(){ if(sheetsTimeout) clearTimeout(sheetsTimeout); sheetsTimeout=setTimeout(()=>{ salvarNaNuvem(); },2500); }
-async function forcarSalvamentoSheets(){ if(sheetsTimeout) clearTimeout(sheetsTimeout); await salvarNaNuvem(); alert("✅ Sincronizado!"); }
+async function forcarSalvamentoSheets(){
+  if(sheetsTimeout) clearTimeout(sheetsTimeout);
+  const url=state.sheetsUrl||SHEETS_URL_MEMORIA||"";
+  const ts=Date.now(); state.ultimoTimestampSinc=ts;
+  atualizarStatusSheets('sync');
+  try{
+    await fetch(url,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain"},body:JSON.stringify(state)});
+  }catch(e){}
+  // espera breve e confirma de verdade
+  await new Promise(r=>setTimeout(r,600));
+  const ok=await verificarSincronizacaoReal(url,ts);
+  atualizarStatusSheets(ok?'on':'err');
+  if(ok){ alert("✅ Sincronizado e confirmado pelo servidor."); }
+  else{ alert("⚠️ O app enviou os dados, mas o servidor NÃO confirmou a gravação.\n\nCausa mais provável: o Codigo.gs no Google Apps Script ainda não é o V32.0, ou a implantação precisa ser refeita.\n\nVá em Config → Integração, copie o script V32.0, cole no Apps Script e reimplante como \"Qualquer pessoa\"."); }
+}
 
 async function salvarManualSheets(){
   const btn = document.getElementById('btn-salvar-sheets');
@@ -1029,9 +1060,10 @@ async function testarConexaoSheets(){
   const r=await tentarUmaUrl(url);
   if(!div) return;
   if(r.ok){
-    const totLotes=(r.data.real&&r.data.real.sequencias?r.data.real.sequencias.length:0);
+    const totLotes=(r.data.sequencias?r.data.sequencias.length:0);
+    const tsSrv=r.data.ultimoTimestampSinc?new Date(r.data.ultimoTimestampSinc).toLocaleString('pt-BR'):'—';
     div.style.color='var(--win)';
-    div.innerText='✅ Conectado! Dados encontrados (banca '+fmt(r.data.bancaAtual||0)+', '+totLotes+' lotes no modo Real). Clique em "Salvar e Recriar Grade" para fixar esta URL.';
+    div.innerText='✅ Conectado! Banca '+fmt(r.data.bancaAtual||0)+', '+totLotes+' lotes. Última gravação no servidor: '+tsSrv+'.';
   } else if(r.ready){
     div.style.color='#F0A500';
     div.innerText='🟡 Implantação viva, mas ainda sem dados salvos. Faça uma operação e use "Salvar no Sheets agora".';
@@ -1048,7 +1080,9 @@ async function tentarUmaUrl(url){
     let data;
     try{ data=await response.json(); }
     catch(e){ return {ok:false, motivo:'A URL respondeu, mas não em formato JSON (provável tela de login — acesso da implantação não está como "Qualquer pessoa").'}; }
-    if(data&&typeof data==='object'&&data.real&&typeof data.real==='object'&&data.bancaInicial!==undefined) return {ok:true, data};
+    if(data&&typeof data==='object'&&data.bancaInicial!==undefined&&data.sequencias!==undefined) return {ok:true, data};
+    // Compat: estado ANTIGO ainda com .real no servidor (antes da migração v32) — ainda é conexão válida
+    if(data&&typeof data==='object'&&data.real&&typeof data.real==='object') return {ok:true, data};
     if(data&&data.status==='ready') return {ok:false, motivo:'A implantação está viva mas ainda não há dados salvos nela.', ready:true};
     return {ok:false, motivo:'A URL respondeu, mas sem os dados esperados.'};
   }catch(err){
