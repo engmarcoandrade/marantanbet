@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#0D1117">
-<title>Método Marantan v32.3</title>
+<title>Método Marantan v32.4</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox=%270 0 48 48%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Crect x=%271.5%27 y=%271.5%27 width=%2745%27 height=%2745%27 rx=%2711%27 fill=%27%23161B22%27 stroke=%27%2330363D%27 stroke-width=%271.5%27/%3E%3Cpath d=%27M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3Cpath d=%27M30.5 9.5 L37.5 9 L36.8 16%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -479,7 +479,7 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v32.3</span></div>
+      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v32.4</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
@@ -862,9 +862,9 @@ function alternarTema(){
   document.getElementById('btn-tema').innerText = isLight ? '☀️' : '🌙';
   document.querySelector('meta[name="theme-color"]').setAttribute('content', isLight ? '#F6F8FA' : '#0D1117');
 }
-let SHEETS_URL_MEMORIA = "https://script.google.com/macros/s/AKfycbzVYKWBmtYT06R7es8LVWKahmCpbFY9SNNRb_VWq6B0LE09vP6FKo8Yl5atgdrY-TRn/exec";
+let SHEETS_URL_MEMORIA = "https://script.google.com/macros/s/AKfycbwPoTDB8EaJ_di4urj_p6vZ_A-BRWxDf4MrupMgJa38vV-VN_eTQIVNQLQ8F5a2-g-k8Q/exec";
 // URLs de implantações anteriores — tentadas como fallback se a principal falhar
-const SHEETS_URLS_FALLBACK = ["https://script.google.com/macros/s/AKfycbx0oGZJBlmosWEoGoH1_tXsul_51XAXN6BkQkUGrbtkJPdgEZWia_05UmV0fn2WtUj0/exec"];
+const SHEETS_URLS_FALLBACK = [];
 
 const DEFAULT_MODO = {
   etapaAtual:1,
