@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#0D1117">
-<title>Método Marantan v32.1</title>
+<title>Método Marantan v32.2</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox=%270 0 48 48%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Crect x=%271.5%27 y=%271.5%27 width=%2745%27 height=%2745%27 rx=%2711%27 fill=%27%23161B22%27 stroke=%27%2330363D%27 stroke-width=%271.5%27/%3E%3Cpath d=%27M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3Cpath d=%27M30.5 9.5 L37.5 9 L36.8 16%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -46,7 +46,7 @@ body.light-mode {
 }
 * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 html, body { height:100%; }
-body { font-family: var(--sans); background: var(--bg); color: var(--text); font-size:14px; line-height:1.4; overflow-x:hidden; padding-bottom:16px; padding-top:calc(var(--hdr-h) + 62px + env(safe-area-inset-top)); }
+body { font-family: var(--sans); background: var(--bg); color: var(--text); font-size:14px; line-height:1.4; overflow-x:hidden; padding-bottom:16px; padding-top:calc(var(--hdr-h) + env(safe-area-inset-top)); }
 
 /* ── MODAIS ── */
 .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:1000; align-items:center; justify-content:center; padding:20px; }
@@ -86,7 +86,7 @@ header { background:var(--surface); border-bottom:1px solid var(--border); paddi
 .hdr-btn.danger { color:var(--loss); border-color:var(--loss-border); }
 
 /* ── BOTTOM NAV ── */
-.bottom-nav { position:fixed; top:calc(var(--hdr-h) + 30px + env(safe-area-inset-top)); left:0; right:0; background:var(--surface); border-bottom:1px solid var(--border); display:flex; z-index:199; }
+.bottom-nav { position:relative; margin-top:calc(30px + env(safe-area-inset-top)); background:var(--surface); border-bottom:1px solid var(--border); display:flex; z-index:199; }
 .nav-item { flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; padding:7px 4px 6px; cursor:pointer; border:none; background:transparent; color:var(--muted); font-family:var(--sans); }
 .nav-icon { font-size:20px; line-height:1; }
 .nav-label { font-size:10px; font-weight:600; }
@@ -479,7 +479,7 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v32.1</span></div>
+      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v32.2</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
@@ -495,6 +495,34 @@ tbody tr:last-child td { border-bottom:none; }
   <span class="sheets-text" id="sheets-text">Sheets não configurado</span>
   <button class="sheets-sync-btn" onclick="forcarSalvamentoSheets()">Forçar sync</button>
 </div>
+
+<!-- NAV DE ABAS (rola com a página) -->
+<nav class="bottom-nav">
+  <button class="nav-item active" id="nav-painel" onclick="openTab('painel')">
+    <span class="nav-icon">📊</span>
+    <span class="nav-label">Painel</span>
+  </button>
+  <button class="nav-item" id="nav-operacional" onclick="openTab('operacional')">
+    <span class="nav-icon">🎯</span>
+    <span class="nav-label">Operação</span>
+  </button>
+  <button class="nav-item" id="nav-grafico" onclick="openTab('grafico')">
+    <span class="nav-icon">📈</span>
+    <span class="nav-label">Gráfico</span>
+  </button>
+  <button class="nav-item" id="nav-lotes" onclick="openTab('lotes')">
+    <span class="nav-icon">📋</span>
+    <span class="nav-label">Lotes</span>
+  </button>
+  <button class="nav-item" id="nav-config" onclick="openTab('config')">
+    <span class="nav-icon">⚙️</span>
+    <span class="nav-label">Config</span>
+  </button>
+  <button class="nav-item" id="nav-historico" onclick="openTab('historico')">
+    <span class="nav-icon">📜</span>
+    <span class="nav-label">Histórico</span>
+  </button>
+</nav>
 
 <!-- CONTEÚDO DAS ABAS -->
 <div class="container">
@@ -636,21 +664,9 @@ tbody tr:last-child td { border-bottom:none; }
   <!-- ABA: CONFIG -->
   <div id="config" class="tab-content">
 
+    <!-- 1. CAPITAL -->
     <div class="cfg-section">
-      <div class="cfg-title accent">🏷️ Nomes dos Modos</div>
-      <div class="form-row2">
-
-      </div>
-      <button class="btn-secondary" onclick="salvarNomesModos()">💾 Salvar Nomes</button>
-      <p style="font-size:10px;color:var(--muted);line-height:1.5;margin-top:8px;">Renomeia os botões no topo. Os dados de cada modo são preservados — muda só o rótulo. Deixe em branco para voltar ao padrão.</p>
-    </div>
-
-    <div class="cfg-section">
-      <div class="cfg-title accent">⚙️ Parâmetros Operacionais</div>
-      <div class="form-group">
-        <label class="cfg-label">Data de Início do Ciclo</label>
-        <input type="date" id="cfg-data-inicio" class="cfg-input" onchange="alterarDataInicioCicloUI()">
-      </div>
+      <div class="cfg-title accent">💰 Capital</div>
       <div class="form-group">
         <label class="cfg-label">Divisão de Capital</label>
         <div class="form-row3">
@@ -667,23 +683,24 @@ tbody tr:last-child td { border-bottom:none; }
             <input type="number" id="cfg-banca-total-disabled" class="cfg-input" disabled>
           </div>
         </div>
+        <p style="font-size:10px;color:var(--muted);line-height:1.5;margin-top:8px;">O <b>Banco</b> é reserva de segurança; a <b>Plataforma</b> é o dinheiro em operação. Todas as contas (meta, stop, base) são globais — usam o total.</p>
       </div>
-      <div class="form-row2">
-        <div class="form-group"><label class="cfg-label">Meta Etapa (%)</label><input type="number" id="cfg-meta" class="cfg-input" value="5.0"></div>
-        <div class="form-group"><label class="cfg-label">Stop Loss (%)</label><input type="number" id="cfg-stoploss" class="cfg-input" value="15.0"></div>
+      <div class="form-group">
+        <label class="cfg-label">Data de Início do Ciclo</label>
+        <input type="date" id="cfg-data-inicio" class="cfg-input" onchange="alterarDataInicioCicloUI()">
       </div>
-      <div class="form-row2">
-        <div class="form-group"><label class="cfg-label">⛔ Teto de Gales (derrotas/lote)</label><input type="number" id="cfg-max-gales" class="cfg-input" value="4" min="1" max="20"></div>
-        <div class="form-group"><label class="cfg-label">⛔ Stop por Lote (% capital)</label><input type="number" id="cfg-stop-lote" class="cfg-input" step="0.1" value="5.0" min="0.1"></div>
-      </div>
-      <p style="font-size:10px;color:var(--muted);line-height:1.5;margin:-4px 0 10px;">Ao atingir o teto de gales ou o stop por lote, a perda é <b>assumida</b> e o lote volta à aposta base. Isso limita o dano das sequências longas — que são estatisticamente inevitáveis — em vez de persegui-las até quebrar a banca.</p>
-      <div class="form-row2">
-        <div class="form-group"><label class="cfg-label">Meta Diária (%)</label><input type="number" id="cfg-meta-diaria" class="cfg-input" step="0.1" value="1.0" placeholder="% ao dia"></div>
-        <div class="form-group"><label class="cfg-label">Dias de Acomp.</label><input type="number" id="cfg-dias-acomp" class="cfg-input" value="30" placeholder="Qtd. dias"></div>
-      </div>
+    </div>
+
+    <!-- 2. ESTRUTURA DE APOSTA -->
+    <div class="cfg-section">
+      <div class="cfg-title accent">🎲 Estrutura de Aposta</div>
       <div class="form-row2">
         <div class="form-group"><label class="cfg-label">Meta Base por Letra (%)</label><input type="number" id="cfg-aposta-base-pct" class="cfg-input" step="0.001" value="1.0"></div>
         <div class="form-group"><label class="cfg-label">Qtd. Lotes</label><input type="number" id="cfg-lote" class="cfg-input" value="500"></div>
+      </div>
+      <div class="form-group">
+        <label class="cfg-label">Letras Ativas</label>
+        <input type="number" id="cfg-aleatoriedade" class="cfg-input" value="6" min="1" max="26" oninput="ajustarCamposDeOddsMenu()">
       </div>
       <div class="form-row2">
         <div class="form-group">
@@ -698,15 +715,7 @@ tbody tr:last-child td { border-bottom:none; }
           <input type="number" id="cfg-incr-fixo" class="cfg-input" step="0.1" value="10" min="0.1">
         </div>
       </div>
-      <p id="nota-modo-progressao" style="font-size:10px;color:var(--muted);line-height:1.5;margin:-4px 0 10px;display:none;">No modo <b>Percentual Fixo</b>, a aposta é multiplicada pelo incremento após <b>cada resultado (vitória ou derrota)</b> e <b>não volta à base após vitórias</b> nem na virada de rodada. O valor só retorna à base quando o teto de gales ou o stop por lote dispara (perda assumida). <b style="color:var(--loss);">Atenção:</b> o crescimento é composto e contínuo — a 10%, a aposta dobra a cada ~7 resultados. Os stops permanecem ativos como proteção.</p>
-      <div class="form-group">
-        <label class="cfg-label">Letras Ativas</label>
-        <input type="number" id="cfg-aleatoriedade" class="cfg-input" value="6" min="1" max="26" oninput="ajustarCamposDeOddsMenu()">
-      </div>
-    </div>
-
-    <div class="cfg-section">
-      <div class="cfg-title purple">📐 Distribuição e Integração</div>
+      <p id="nota-modo-progressao" style="font-size:10px;color:var(--muted);line-height:1.5;margin:-4px 0 10px;display:none;">No modo <b>Percentual Fixo</b>, a aposta é multiplicada pelo incremento após <b>cada resultado (vitória ou derrota)</b> e <b>não volta à base após vitórias</b> nem na virada de rodada. O valor só retorna à base quando o teto de gales ou o stop por lote dispara. <b style="color:var(--loss);">Atenção:</b> o crescimento é composto — a 10%, a aposta dobra a cada ~7 resultados.</p>
       <div class="form-group">
         <label class="cfg-label">Modo de Distribuição</label>
         <select id="cfg-modo-distribuicao" class="cfg-select">
@@ -714,33 +723,60 @@ tbody tr:last-child td { border-bottom:none; }
           <option value="LINEAR">Linear Estrito (Igualitário)</option>
         </select>
       </div>
+    </div>
+
+    <!-- 3. METAS E LIMITES -->
+    <div class="cfg-section">
+      <div class="cfg-title win">🎯 Metas e Limites</div>
+      <div class="form-row2">
+        <div class="form-group"><label class="cfg-label">Meta Etapa (%)</label><input type="number" id="cfg-meta" class="cfg-input" value="5.0"></div>
+        <div class="form-group"><label class="cfg-label">Stop Loss (%)</label><input type="number" id="cfg-stoploss" class="cfg-input" value="15.0"></div>
+      </div>
+      <div class="form-row2">
+        <div class="form-group"><label class="cfg-label">⛔ Teto de Gales (derrotas/lote)</label><input type="number" id="cfg-max-gales" class="cfg-input" value="4" min="1" max="20"></div>
+        <div class="form-group"><label class="cfg-label">⛔ Stop por Lote (% capital)</label><input type="number" id="cfg-stop-lote" class="cfg-input" step="0.1" value="5.0" min="0.1"></div>
+      </div>
+      <p style="font-size:10px;color:var(--muted);line-height:1.5;margin:-4px 0 10px;">Ao atingir o teto de gales ou o stop por lote, a perda é <b>assumida</b> e o lote volta à aposta base — limitando o dano das sequências longas em vez de persegui-las até quebrar a banca.</p>
+      <div class="form-row2">
+        <div class="form-group"><label class="cfg-label">Meta Diária (%)</label><input type="number" id="cfg-meta-diaria" class="cfg-input" step="0.1" value="1.0" placeholder="% ao dia"></div>
+        <div class="form-group"><label class="cfg-label">Dias de Acomp.</label><input type="number" id="cfg-dias-acomp" class="cfg-input" value="30" placeholder="Qtd. dias"></div>
+      </div>
+    </div>
+
+    <!-- 4. ODDS E METAS POR LETRA -->
+    <div class="cfg-section">
+      <div class="cfg-title purple">🔤 Odds e Metas por Letra</div>
+      <div id="odds-inputs-placeholder"></div>
+    </div>
+
+    <button class="btn-save" onclick="salvarConfiguracoes()">💾 Salvar e Recriar Grade</button>
+
+    <!-- 5. INTEGRAÇÃO -->
+    <div class="cfg-section" style="margin-top:14px;">
+      <div class="cfg-title" style="color:var(--muted);">🔗 Integração Google Sheets</div>
       <div class="form-group">
         <label class="cfg-label">URL Google Sheets</label>
         <input type="text" id="cfg-sheets-url" class="cfg-input" style="font-family:var(--sans);font-size:12px;" placeholder="https://script.google.com/macros/s/.../exec">
         <button class="btn-secondary" style="margin-top:8px;" onclick="testarConexaoSheets()">🔌 Testar Conexão</button>
         <div id="cfg-teste-resultado" style="font-size:11px;line-height:1.5;margin-top:8px;"></div>
       </div>
+      <div style="margin-top:10px;">
+        <div class="cfg-label" style="margin-bottom:6px;">📋 Script do Apps Script</div>
+        <p style="font-size:11px;color:var(--muted);margin-bottom:8px;font-family:var(--sans);">Cole este código no Apps Script vinculado à planilha e reimplante.</p>
+        <textarea id="gs-code-box" readonly style="width:100%;height:140px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--muted);font-family:var(--mono);font-size:10px;padding:10px;resize:none;outline:none;line-height:1.5;"></textarea>
+        <button onclick="copiarScriptGS()" style="width:100%;margin-top:6px;padding:9px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--sans);">📋 Copiar Script</button>
+      </div>
     </div>
 
+    <!-- 6. BACKUP E RESET -->
     <div class="cfg-section">
-      <div class="cfg-title win">🎯 Odds e Notas por Letra</div>
-      <div id="odds-inputs-placeholder"></div>
-    </div>
-
-    <button class="btn-save" onclick="salvarConfiguracoes()">💾 Salvar e Recriar Grade</button>
-
-    <div class="backup-row">
-      <button class="btn-secondary" onclick="exportarDadosSistema()">💾 Exportar Backup</button>
-      <button class="btn-secondary" onclick="document.getElementById('file-restore').click()">📂 Importar Backup</button>
-    </div>
-    <input type="file" id="file-restore" style="display:none" accept=".json" onchange="importarDadosSistema(event)">
-    <button class="btn-danger" onclick="reiniciarBancaTotalSistema()">⚠️ Reset Total de Fábrica</button>
-
-    <div class="cfg-section" style="margin-top:10px;">
-      <div class="cfg-title" style="color:var(--muted);">📋 Script Google Apps Script</div>
-      <p style="font-size:11px;color:var(--muted);margin-bottom:8px;font-family:var(--sans);">Cole este código no Apps Script vinculado à sua planilha e reimplante.</p>
-      <textarea id="gs-code-box" readonly style="width:100%;height:160px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--muted);font-family:var(--mono);font-size:10px;padding:10px;resize:none;outline:none;line-height:1.5;"></textarea>
-      <button onclick="copiarScriptGS()" style="width:100%;margin-top:6px;padding:9px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--sans);">📋 Copiar Script</button>
+      <div class="cfg-title" style="color:var(--muted);">🗄️ Backup e Manutenção</div>
+      <div class="backup-row">
+        <button class="btn-secondary" onclick="exportarDadosSistema()">💾 Exportar Backup</button>
+        <button class="btn-secondary" onclick="document.getElementById('file-restore').click()">📂 Importar Backup</button>
+      </div>
+      <input type="file" id="file-restore" style="display:none" accept=".json" onchange="importarDadosSistema(event)">
+      <button class="btn-danger" style="margin-top:8px;" onclick="reiniciarBancaTotalSistema()">⚠️ Reset Total de Fábrica</button>
     </div>
   </div>
 
@@ -816,33 +852,7 @@ tbody tr:last-child td { border-bottom:none; }
 
 </div>
 
-<!-- BOTTOM NAV -->
-<nav class="bottom-nav">
-  <button class="nav-item active" id="nav-painel" onclick="openTab('painel')">
-    <span class="nav-icon">📊</span>
-    <span class="nav-label">Painel</span>
-  </button>
-  <button class="nav-item" id="nav-operacional" onclick="openTab('operacional')">
-    <span class="nav-icon">🎯</span>
-    <span class="nav-label">Operação</span>
-  </button>
-  <button class="nav-item" id="nav-grafico" onclick="openTab('grafico')">
-    <span class="nav-icon">📈</span>
-    <span class="nav-label">Gráfico</span>
-  </button>
-  <button class="nav-item" id="nav-lotes" onclick="openTab('lotes')">
-    <span class="nav-icon">📋</span>
-    <span class="nav-label">Lotes</span>
-  </button>
-  <button class="nav-item" id="nav-config" onclick="openTab('config')">
-    <span class="nav-icon">⚙️</span>
-    <span class="nav-label">Config</span>
-  </button>
-  <button class="nav-item" id="nav-historico" onclick="openTab('historico')">
-    <span class="nav-icon">📜</span>
-    <span class="nav-label">Histórico</span>
-  </button>
-</nav>
+
 
 <script>
 const hojeISO = new Date().toISOString().split('T')[0];
