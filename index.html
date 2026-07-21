@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#0D1117">
-<title>Método Marantan v32.6</title>
+<title>Método Marantan v32.7</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox=%270 0 48 48%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Crect x=%271.5%27 y=%271.5%27 width=%2745%27 height=%2745%27 rx=%2711%27 fill=%27%23161B22%27 stroke=%27%2330363D%27 stroke-width=%271.5%27/%3E%3Cpath d=%27M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3Cpath d=%27M30.5 9.5 L37.5 9 L36.8 16%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -165,31 +165,33 @@ header { background:var(--surface); border-bottom:1px solid var(--border); paddi
 /* Vista em linhas: grid de colunas fixas — cada dado no seu lugar, colunas alinhadas entre as linhas */
 .letra-card.linha {
   display:grid;
-  grid-template-columns: 30px 92px minmax(90px,1fr) minmax(120px,1.6fr) 74px 78px 40px;
+  grid-template-columns: 30px 84px minmax(70px,.9fr) minmax(80px,1fr) minmax(110px,1.5fr) 66px 74px 34px;
   align-items:center; gap:10px; padding:8px 10px;
 }
 .letra-card.linha .lr-badge  { justify-self:start; }
 .letra-card.linha .lr-pill   { justify-self:start; }
 .letra-card.linha .lr-amount { font-family:var(--mono); font-size:13px; font-weight:700; text-align:right; }
 .letra-card.linha .lr-meta   { min-width:0; }
+.letra-card.linha .lr-nota { font-family:var(--sans); font-size:10px; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
 .letra-card.linha .lr-meta > div { margin-top:0 !important; }
 .letra-card.linha .lr-counters { font-size:11px; font-family:var(--mono); white-space:nowrap; text-align:center; }
 .letra-card.linha .card-btns { margin:0; display:flex; gap:5px; }
 .btn-reabrir { width:100%; background:var(--surface2); border:1px solid var(--accent); color:var(--accent); padding:6px; border-radius:var(--radius-sm); font-size:11px; font-weight:700; cursor:pointer; font-family:var(--sans); }
 .btn-reabrir:hover { background:var(--accent-dim); }
+.t-nota { font-family:var(--sans); font-size:11px; color:var(--text); max-width:110px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .letra-card.linha .card-btns button { flex:1; padding:6px 0; font-size:12px; }
 .letra-card.linha .lr-lock { justify-self:center; }
 /* Cabeçalho de colunas da vista em linhas */
 .linhas-header {
   display:grid;
-  grid-template-columns: 30px 92px minmax(90px,1fr) minmax(120px,1.6fr) 74px 78px 40px;
+  grid-template-columns: 30px 84px minmax(70px,.9fr) minmax(80px,1fr) minmax(110px,1.5fr) 66px 74px 34px;
   gap:10px; padding:0 10px 5px; font-size:9px; font-family:var(--mono);
   color:var(--muted); font-weight:700; letter-spacing:.04em; text-transform:uppercase;
 }
 .linhas-header .h-amount { text-align:right; }
 .linhas-header .h-count, .linhas-header .h-lock { text-align:center; }
 @media (max-width:520px){
-  .letra-card.linha, .linhas-header { grid-template-columns: 26px 84px minmax(64px,.9fr) minmax(90px,1.4fr) 58px 70px 34px; gap:6px; padding-left:7px; padding-right:7px; }
+  .letra-card.linha, .linhas-header { grid-template-columns: 24px 72px minmax(54px,.8fr) minmax(64px,.9fr) minmax(80px,1.3fr) 52px 64px 30px; gap:5px; padding-left:7px; padding-right:7px; }
   .letra-card.linha .lr-amount { font-size:12px; }
   .letra-card.linha .lr-counters { font-size:10px; }
 }
@@ -479,7 +481,7 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v32.6</span></div>
+      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v32.7</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
@@ -650,6 +652,7 @@ tbody tr:last-child td { border-bottom:none; }
           <tr>
             <th>Lote</th>
             <th>Letra</th>
+            <th>Nota</th>
             <th>Odd</th>
             <th>Risco</th>
             <th>Aposta</th>
@@ -1684,6 +1687,7 @@ function renderLinhas(){
     html+=`<tr class="${rowCls}">
       <td class="t-mono">#${String(seq.id).padStart(3,'0')}</td>
       <td><span class="lote-badge">${l}</span></td>
+      <td class="t-nota" title="${(ms().anotacoesPorLetra&&ms().anotacoesPorLetra[l]||'').replace(/"/g,'&quot;')}">${ms().anotacoesPorLetra&&ms().anotacoesPorLetra[l]?ms().anotacoesPorLetra[l]:'<span style=\'color:var(--muted);\'>—</span>'}</td>
       <td class="t-mono">@${odd.toFixed(2)}</td>
       <td class="t-mono ${seq.perdasAcumuladas>0?'t-loss':''}">${fmt(seq.perdasAcumuladas)}</td>
       <td class="t-mono"><b>${seq.status==='FINISHED'?fmt(0):fmt(sniperArredondarAposta(seq.apostaAtual))}</b></td>
@@ -1792,6 +1796,7 @@ function renderCards(){
       html+=`<div class="${cardCls} linha">
         <div class="${badgeCls} lr-badge">${l}</div>
         <div class="lr-pill">${pillHtml}</div>
+        <div class="lr-nota" title="${(ms().anotacoesPorLetra&&ms().anotacoesPorLetra[l]||'').replace(/"/g,'&quot;')}">${ms().anotacoesPorLetra&&ms().anotacoesPorLetra[l]?ms().anotacoesPorLetra[l]:'<span style=\'color:var(--muted);\'>—</span>'}</div>
         <div class="lr-amount ${allFinished?'ok':''}">${amountTxt}</div>
         <div class="lr-meta">${metaBarHtml||'<span style="color:var(--muted);font-size:10px;">— sem meta —</span>'}</div>
         <div class="lr-counters">
@@ -1843,7 +1848,7 @@ function renderCards(){
     return;
   }
   if(ehLinhas){
-    html='<div class="linhas-header"><span>LET</span><span>STATUS</span><span class="h-amount">APOSTA</span><span>PROGRESSO DA META</span><span class="h-count">A / E</span><span class="h-count">LANÇAR</span><span class="h-lock">📌</span></div>'+html;
+    html='<div class="linhas-header"><span>LET</span><span>STATUS</span><span>NOTA</span><span class="h-amount">APOSTA</span><span>PROGRESSO DA META</span><span class="h-count">A / E</span><span class="h-count">LANÇAR</span><span class="h-lock">📌</span></div>'+html;
   }
   container.classList.toggle('list-view',ehLinhas);
   const btnV=document.getElementById('btn-vista-operacao');
