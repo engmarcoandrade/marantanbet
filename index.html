@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#0D1117">
-<title>Método Marantan v32.7</title>
+<title>Método Marantan v32.9</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox=%270 0 48 48%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Crect x=%271.5%27 y=%271.5%27 width=%2745%27 height=%2745%27 rx=%2711%27 fill=%27%23161B22%27 stroke=%27%2330363D%27 stroke-width=%271.5%27/%3E%3Cpath d=%27M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3Cpath d=%27M30.5 9.5 L37.5 9 L36.8 16%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -481,7 +481,7 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v32.7</span></div>
+      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v32.9</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
@@ -635,6 +635,17 @@ tbody tr:last-child td { border-bottom:none; }
     </div>
     <div class="cards-grid" id="container-letras-linhas"></div>
     <div id="rodape-soma-letras" style="margin-top:8px; font-size:11px; font-family:var(--mono); color:var(--muted); text-align:right;"></div>
+
+    <div style="margin-top:12px;">
+      <button id="btn-toggle-notas" class="hdr-btn" style="width:100%; text-align:left;" onclick="toggleNotasLivres()">📝 Anotações e orientações</button>
+      <div id="wrap-notas-livres" style="display:none; margin-top:8px;">
+        <textarea id="txt-notas-livres" placeholder="Registre aqui observações que ajudem a orientar ajustes: padrões percebidos, mercados que renderam mais, decisões tomadas, ideias para testar..." oninput="agendarSalvarNotasLivres()" style="width:100%; min-height:160px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text); font-family:var(--sans); font-size:13px; line-height:1.6; padding:12px; resize:vertical; outline:none;"></textarea>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
+          <span id="notas-status" style="font-size:10px; color:var(--muted); font-family:var(--mono);"></span>
+          <span id="notas-contador" style="font-size:10px; color:var(--muted); font-family:var(--mono);"></span>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- ABA: LOTES -->
@@ -774,7 +785,21 @@ tbody tr:last-child td { border-bottom:none; }
       </div>
     </div>
 
-    <!-- 6. BACKUP E RESET -->
+    <!-- 6. EXIBIÇÃO -->
+    <div class="cfg-section">
+      <div class="cfg-title" style="color:var(--muted);">👁️ Abas Visíveis</div>
+      <div class="lock-row">
+        <span class="lock-label">📈 Mostrar aba Gráfico</span>
+        <label class="switch"><input type="checkbox" id="cfg-mostrar-grafico" onchange="toggleAbaVisivel('grafico',this.checked)"><span class="slider"></span></label>
+      </div>
+      <div class="lock-row">
+        <span class="lock-label">📊 Mostrar aba Histórico</span>
+        <label class="switch"><input type="checkbox" id="cfg-mostrar-historico" onchange="toggleAbaVisivel('historico',this.checked)"><span class="slider"></span></label>
+      </div>
+      <p style="font-size:10px;color:var(--muted);line-height:1.5;margin-top:8px;">Ocultar uma aba só a esconde da navegação — nenhum dado é perdido, e você pode reativá-la aqui quando quiser. O <b>Histórico</b> guarda o painel de vantagem estatística.</p>
+    </div>
+
+    <!-- 7. BACKUP E RESET -->
     <div class="cfg-section">
       <div class="cfg-title" style="color:var(--muted);">🗄️ Backup e Manutenção</div>
       <div class="backup-row">
@@ -1334,6 +1359,64 @@ function registrarAposta(letra,odd,venceu){
   if(ms().registroApostas.length>20000) ms().registroApostas.splice(0,ms().registroApostas.length-20000);
 }
 
+let notasTimeout=null;
+function aplicarVisibilidadeAbas(){
+  const navG=document.getElementById('nav-grafico');
+  const navH=document.getElementById('nav-historico');
+  const showG=ms().mostrarGrafico!==false ? ms().mostrarGrafico : false;
+  const showH=ms().mostrarHistorico!==false;
+  if(navG) navG.style.display=(ms().mostrarGrafico===true)?'':'none';
+  if(navH) navH.style.display=showH?'':'none';
+  // sincronizar switches na Config
+  const cg=document.getElementById('cfg-mostrar-grafico'); if(cg) cg.checked=(ms().mostrarGrafico===true);
+  const ch=document.getElementById('cfg-mostrar-historico'); if(ch) ch.checked=showH;
+}
+function toggleAbaVisivel(aba,visivel){
+  if(aba==='grafico') ms().mostrarGrafico=!!visivel;
+  if(aba==='historico') ms().mostrarHistorico=!!visivel;
+  aplicarVisibilidadeAbas();
+  // se a aba ativa acabou de ser ocultada, volta para o Painel
+  if(!visivel){
+    const ativa=document.querySelector('.tab-content.active');
+    if(ativa && ativa.id===aba) openTab('painel');
+  }
+  salvarDadosEAtualizarTudo();
+}
+
+function toggleNotasLivres(){
+  const wrap=document.getElementById('wrap-notas-livres'); if(!wrap) return;
+  const abrir=wrap.style.display==='none';
+  wrap.style.display=abrir?'block':'none';
+  const btn=document.getElementById('btn-toggle-notas');
+  if(btn) btn.innerText=abrir?'📝 Anotações e orientações ▲':'📝 Anotações e orientações';
+  if(abrir){
+    const txt=document.getElementById('txt-notas-livres');
+    if(txt){ txt.value=ms().notasLivres||''; atualizarStatusNotas(); txt.focus(); }
+  }
+}
+function atualizarStatusNotas(){
+  const txt=document.getElementById('txt-notas-livres');
+  const cont=document.getElementById('notas-contador');
+  const st=document.getElementById('notas-status');
+  if(cont&&txt) cont.innerText=(txt.value.length)+' caracteres';
+  if(st){
+    const ts=ms().notasLivresTs||0;
+    st.innerText=ts?('salvo · '+new Date(ts).toLocaleString('pt-BR')):'';
+  }
+}
+function agendarSalvarNotasLivres(){
+  const txt=document.getElementById('txt-notas-livres'); if(!txt) return;
+  const cont=document.getElementById('notas-contador'); if(cont) cont.innerText=txt.value.length+' caracteres';
+  const st=document.getElementById('notas-status'); if(st) st.innerText='digitando...';
+  if(notasTimeout) clearTimeout(notasTimeout);
+  notasTimeout=setTimeout(()=>{
+    ms().notasLivres=txt.value;
+    ms().notasLivresTs=Date.now();
+    atualizarStatusNotas();
+    salvarDadosEAtualizarTudo();
+  },900);
+}
+
 function mudarMercadoAtivo(){
   const sel=document.getElementById('sel-mercado-ativo'); if(!sel) return;
   ms().mercadoAtivo=sel.value;
@@ -1868,7 +1951,7 @@ function toggleLockBtn(letra, el){
   salvarDadosEAtualizarTudo();
 }
 
-function preencherCamposConfig(){
+function preencherCamposConfig(){ if(typeof aplicarVisibilidadeAbas==="function") aplicarVisibilidadeAbas();
   document.getElementById('cfg-banco-capital').value=(state.bancoCapital||0).toFixed(2);
   document.getElementById('cfg-banca-capital').value=state.bancaAtual.toFixed(2);
   document.getElementById('cfg-meta').value=ms().metaPercent;
@@ -2349,7 +2432,7 @@ function atualizarPainelUI(forcarGrafico=false){
   const banner=document.getElementById('banner-stop');
   if(banner) banner.style.display=ms().stopTravado?'block':'none';
 
-  renderLinhas(); renderCards(); renderRodapeSomaLetras(); renderHistorico(); renderExposicao(); renderEstatisticas(); renderPainelVantagem(); atualizarBotaoModoUI(); atualizarLayoutContadoresPorModo();
+  aplicarVisibilidadeAbas(); renderLinhas(); renderCards(); renderRodapeSomaLetras(); renderHistorico(); renderExposicao(); renderEstatisticas(); renderPainelVantagem(); atualizarBotaoModoUI(); atualizarLayoutContadoresPorModo();
   if(document.getElementById('grafico')&&document.getElementById('grafico').classList.contains('active')) renderizarGrafico();
 }
 </script>
