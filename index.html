@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#0D1117">
-<title>Método Marantan v33.0</title>
+<title>Método Marantan v33.1</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox=%270 0 48 48%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Crect x=%271.5%27 y=%271.5%27 width=%2745%27 height=%2745%27 rx=%2711%27 fill=%27%23161B22%27 stroke=%27%2330363D%27 stroke-width=%271.5%27/%3E%3Cpath d=%27M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3Cpath d=%27M30.5 9.5 L37.5 9 L36.8 16%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -179,6 +179,7 @@ header { background:var(--surface); border-bottom:1px solid var(--border); paddi
 .btn-reabrir { width:100%; background:var(--surface2); border:1px solid var(--accent); color:var(--accent); padding:6px; border-radius:var(--radius-sm); font-size:11px; font-weight:700; cursor:pointer; font-family:var(--sans); }
 .btn-reabrir:hover { background:var(--accent-dim); }
 .t-nota { font-family:var(--sans); font-size:11px; color:var(--text); max-width:110px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.t-meta-cell { min-width:70px; vertical-align:middle; }
 .letra-card.linha .card-btns button { flex:1; padding:6px 0; font-size:12px; }
 .letra-card.linha .lr-lock { justify-self:center; }
 /* Cabeçalho de colunas da vista em linhas */
@@ -498,7 +499,7 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v33.0</span></div>
+      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v33.1</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
@@ -682,7 +683,7 @@ tbody tr:last-child td { border-bottom:none; }
             <th>Lote</th>
             <th>Letra</th>
             <th>Nota</th>
-            <th>Odd</th>
+            <th>Meta</th>
             <th>Risco</th>
             <th>Aposta</th>
             <th>Seq.</th>
@@ -1840,7 +1841,23 @@ function renderLinhas(){
       <td class="t-mono">#${String(seq.id).padStart(3,'0')}</td>
       <td><span class="lote-badge">${l}</span></td>
       <td class="t-nota" title="${(ms().anotacoesPorLetra&&ms().anotacoesPorLetra[l]||'').replace(/"/g,'&quot;')}">${ms().anotacoesPorLetra&&ms().anotacoesPorLetra[l]?ms().anotacoesPorLetra[l]:'<span style=\'color:var(--muted);\'>—</span>'}</td>
-      <td class="t-mono">@${odd.toFixed(2)}</td>
+      <td class="t-meta-cell">${(function(){
+        const mp=(ms().metaPorLetra&&parseFloat(ms().metaPorLetra[l]))||0;
+        if(mp<=0) return '<span style="color:var(--muted);font-size:10px;">—</span>';
+        const alvo=(state.bancaInicioEtapa+(parseFloat(state.bancoCapital)||0))*(mp/100);
+        const luc=(ms().lucroLetraEtapa&&ms().lucroLetraEtapa[l])||0;
+        const prog=alvo>0?Math.max(0,Math.min(100,(luc/alvo)*100)):0;
+        const cumprida=(ms().letrasMetaCumprida&&ms().letrasMetaCumprida[l])||prog>=100;
+        // Tons FORTES e sólidos (deuteranopia): verde forte / âmbar forte / vermelho forte. Texto sempre presente.
+        const cor=cumprida?'#2EA043':(luc<0?'#E5484D':'#E8A317');
+        const lbl=cumprida?'✔100%':(luc<0?Math.round(prog)+'%':Math.round(prog)+'%');
+        return `<div style="min-width:66px;">
+          <div style="display:flex;justify-content:flex-end;font-size:9px;font-family:var(--mono);font-weight:700;color:${cumprida?'#2EA043':(luc<0?'#E5484D':'var(--text)')};margin-bottom:2px;">${lbl}</div>
+          <div style="height:7px;background:var(--surface2);border:1px solid var(--border);border-radius:99px;overflow:hidden;">
+            <div style="height:100%;width:${prog}%;background:${cor};border-radius:99px;transition:width .3s;"></div>
+          </div>
+        </div>`;
+      })()}</td>
       <td class="t-mono ${seq.perdasAcumuladas>0?'t-loss':''}">${fmt(seq.perdasAcumuladas)}</td>
       <td class="t-mono"><b>${seq.status==='FINISHED'?fmt(0):fmt(sniperArredondarAposta(seq.apostaAtual))}</b></td>
       <td class="t-mono" style="text-align:center;">${seqTxt}</td>
