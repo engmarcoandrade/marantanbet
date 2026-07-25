@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#0D1117">
-<title>Método Marantan v33.6</title>
+<title>Método Marantan v33.7</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox=%270 0 48 48%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Crect x=%271.5%27 y=%271.5%27 width=%2745%27 height=%2745%27 rx=%2711%27 fill=%27%23161B22%27 stroke=%27%2330363D%27 stroke-width=%271.5%27/%3E%3Cpath d=%27M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3Cpath d=%27M30.5 9.5 L37.5 9 L36.8 16%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -503,7 +503,7 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v33.6</span></div>
+      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v33.7</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
@@ -1236,7 +1236,29 @@ async function inicializarApp(){
 }
 
 // beforeunload removido — save só acontece após cada ação, nunca ao fechar
-document.getElementById('btn-panic-sair').addEventListener('click',()=>{ salvarNaNuvem(true); setTimeout(()=>{ window.location.href='https://www.google.com'; },200); });
+// ── SAÍDA RÁPIDA (PÂNICO) ──
+function saidaRapida(){
+  try{ salvarNaNuvem(true); }catch(e){}
+  setTimeout(()=>{ window.location.href='https://www.google.com'; }, 150);
+}
+document.getElementById('btn-panic-sair').addEventListener('click', saidaRapida);
+
+// Atalho de teclado: Esc duas vezes seguidas (< 500ms) leva ao Google.
+// Só dispara se NÃO houver modal aberto (senão o 1º Esc apenas fecha o modal).
+let __escUltimo=0;
+document.addEventListener('keydown',(e)=>{
+  if(e.key!=='Escape' && e.key!=='Esc') return;
+  // Se algum modal está aberto, o Esc fecha o modal e NÃO conta para a saída.
+  const modalAberto=[...document.querySelectorAll('.modal-overlay')].some(m=>m.style.display==='flex');
+  if(modalAberto){
+    document.querySelectorAll('.modal-overlay').forEach(m=>{ if(m.style.display==='flex') m.style.display='none'; });
+    __escUltimo=0; // reseta o contador
+    return;
+  }
+  const agora=Date.now();
+  if(agora-__escUltimo < 500){ __escUltimo=0; saidaRapida(); }
+  else { __escUltimo=agora; }
+});
 
 function exportarDadosSistema(){ const d="data:text/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(state)); const a=document.createElement('a'); a.href=d; a.download="marantan_backup.json"; a.click(); }
 function importarDadosSistema(event){ const file=event.target.files[0]; if(!file) return; const reader=new FileReader(); reader.onload=function(e){ try{ state=JSON.parse(e.target.result); aplicarBlindagemDeVariaveis(); state.ultimoTimestampSinc=Date.now(); salvarDadosEAtualizarTudo(); alert("Backup restaurado!"); location.reload(); }catch(err){ alert("JSON inválido."); } }; reader.readAsText(file); }
