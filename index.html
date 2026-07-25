@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#0D1117">
-<title>Método Marantan v32.9</title>
+<title>Método Marantan v33.0</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox=%270 0 48 48%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Crect x=%271.5%27 y=%271.5%27 width=%2745%27 height=%2745%27 rx=%2711%27 fill=%27%23161B22%27 stroke=%27%2330363D%27 stroke-width=%271.5%27/%3E%3Cpath d=%27M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3Cpath d=%27M30.5 9.5 L37.5 9 L36.8 16%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -237,6 +237,10 @@ input:checked + .slider:before { transform:translateX(12px); }
 .btn-action { padding:12px; border-radius:var(--radius); font-size:13px; font-weight:700; cursor:pointer; text-align:center; font-family:var(--sans); border:1px solid; }
 .btn-rotate { background:var(--purple-dim); border-color:var(--purple-border); color:var(--purple); }
 .btn-conclude { background:var(--win-dim); border-color:var(--win-border); color:var(--win); }
+.action-row-3 { grid-template-columns:1fr 1fr 1fr; }
+.btn-reset-valores { background:var(--surface2); border-color:#F0A500; color:#F0A500; }
+.btn-reset-valores:active { opacity:.7; }
+@media (max-width:480px){ .action-row-3 .btn-action { font-size:11px; padding:11px 4px; } }
 .btn-rotate:active, .btn-conclude:active { opacity:.7; }
 .btn-modo { background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:8px 12px; border-radius:var(--radius-sm); font-size:12px; font-weight:600; cursor:pointer; font-family:var(--sans); display:flex; align-items:center; gap:6px; }
 .btn-modo.blindar { border-left:3px solid var(--win); }
@@ -403,6 +407,19 @@ tbody tr:last-child td { border-bottom:none; }
   </div>
 </div>
 
+<div id="modal-resetar-valores" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-body">
+      <div class="m-title" style="color:#F0A500;">🛡️ Resetar Valores</div>
+      <p id="modal-reset-msg" style="font-size:12px; color:var(--text); line-height:1.6; margin-top:8px;"></p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="fecharModal('modal-resetar-valores')">Cancelar</button>
+      <button class="btn-confirm" style="background:#F0A500;" onclick="confirmarResetarValores()">Assumir perda e resetar</button>
+    </div>
+  </div>
+</div>
+
 <div id="modal-conferencia" class="modal-overlay">
   <div class="modal-box">
     <div class="modal-body">
@@ -481,7 +498,7 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v32.9</span></div>
+      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v33.0</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
@@ -604,8 +621,9 @@ tbody tr:last-child td { border-bottom:none; }
   <!-- ABA: OPERACIONAL -->
   <div id="operacional" class="tab-content">
     <div id="banner-stop" style="display:none; background:var(--loss-dim); border:1px solid var(--loss-border); color:var(--loss); border-radius:var(--radius); padding:10px 14px; font-size:12px; font-weight:700; margin-bottom:8px; line-height:1.5;">⛔ STOP LOSS ATINGIDO — registros travados. Conclua a etapa (ou recrie a grade em Config) para reavaliar com calma. Continuar apostando agora para "recuperar" é a forma mais comum de transformar uma perda controlada em uma perda grande.</div>
-    <div class="action-row" style="margin-bottom:10px; margin-top:0;">
+    <div class="action-row action-row-3" style="margin-bottom:10px; margin-top:0;">
       <button class="btn-action btn-rotate" onclick="solicitarAberturaJanelaRodada()">🔄 Rotação</button>
+      <button class="btn-action btn-reset-valores" onclick="abrirModalResetarValores()">🛡️ Resetar Valores</button>
       <button class="btn-action btn-conclude" onclick="fecharEtapa()">💾 Concluir Etapa</button>
     </div>
 
@@ -1507,6 +1525,57 @@ function confirmarReabertura(){
 
   letraParaReabrir=null;
   fecharModal('modal-reabrir');
+  salvarDadosEAtualizarTudo();
+}
+
+function abrirModalResetarValores(){
+  // Calcula o prejuízo que será assumido: soma do risco acumulado de todos os lotes ativos.
+  let riscoTotal=0, lotesComRisco=0, lotesAtivos=0;
+  ms().sequencias.forEach(sq=>{
+    if(sq.status!=='FINISHED'){
+      lotesAtivos++;
+      const r=parseFloat(sq.perdasAcumuladas)||0;
+      if(r>0.0001){ riscoTotal+=r; lotesComRisco++; }
+    }
+  });
+  const msg=document.getElementById('modal-reset-msg');
+  if(riscoTotal<0.0001){
+    if(msg) msg.innerHTML='Nenhum lote ativo tem risco acumulado no momento — as apostas já estão no valor inicial. Não há nada para resetar.';
+    // ainda abre, mas com botão de confirmar inócuo
+  } else if(msg){
+    msg.innerHTML=`Isto vai <b>encerrar as sequências em andamento</b> e voltar todas as apostas ao valor inicial da etapa.<br><br>`+
+      `<div style="background:var(--surface2);border:1px solid #F0A500;border-radius:var(--radius-sm);padding:10px;margin:4px 0;">`+
+      `<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span style="color:var(--muted);">Lotes em recuperação</span><b>${lotesComRisco}</b></div>`+
+      `<div style="display:flex;justify-content:space-between;font-size:13px;"><span style="color:var(--muted);">Prejuízo que será assumido</span><b style="color:var(--loss);">${fmt(riscoTotal)}</b></div>`+
+      `</div>`+
+      `<b style="color:#F0A500;">⚠️ Este prejuízo é real e não será recuperado.</b> As perdas dos gales já aconteceram; resetar significa <b>parar de persegui-las</b> e recomeçar do zero — não desfazê-las.<br><br>`+
+      `<span style="font-size:11px;color:var(--muted);">Use isto quando a sequência passou do que você aguenta. É um freio de segurança, não um apagador de perdas.</span>`;
+  }
+  document.getElementById('modal-resetar-valores').style.display='flex';
+}
+
+function confirmarResetarValores(){
+  const oddBase=2;
+  let assumido=0, resetados=0;
+  ms().sequencias.forEach(sq=>{
+    if(sq.status!=='FINISHED'){
+      const r=parseFloat(sq.perdasAcumuladas)||0;
+      if(r>0.0001){ assumido+=r; }
+      const oddL=ms().oddsPorLetra[sq.letraRandomica]||oddBase;
+      sq.apostaAtual=getValorApostaBase(oddL);
+      sq.perdasAcumuladas=0;
+      sq.streakLoss=0;
+      resetados++;
+    }
+  });
+  // Registra o evento como perda assumida (rastreabilidade + coerência com stops)
+  if(assumido>0.0001){
+    ms().perdasAssumidasTotal=(ms().perdasAssumidasTotal||0)+assumido;
+    ms().assumidasCount=(ms().assumidasCount||0)+1;
+    if(!ms().resetsValores) ms().resetsValores=[];
+    ms().resetsValores.push({d:new Date().toISOString(), assumido:assumido, lotes:resetados});
+  }
+  fecharModal('modal-resetar-valores');
   salvarDadosEAtualizarTudo();
 }
 
