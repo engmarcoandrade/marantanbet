@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#0D1117">
-<title>Método Marantan v33.1</title>
+<title>Método Marantan v33.6</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox=%270 0 48 48%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Crect x=%271.5%27 y=%271.5%27 width=%2745%27 height=%2745%27 rx=%2711%27 fill=%27%23161B22%27 stroke=%27%2330363D%27 stroke-width=%271.5%27/%3E%3Cpath d=%27M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3Cpath d=%27M30.5 9.5 L37.5 9 L36.8 16%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -29,6 +29,10 @@
   --purple: #BC8CFF;
   --purple-dim: rgba(188,140,255,0.12);
   --purple-border: rgba(188,140,255,0.35);
+  /* Cores das barras de progresso (fortes; adaptam-se por tema) */
+  --bar-win: #2EA043;
+  --bar-loss: #E5484D;
+  --bar-amber: #E8A317;
   --mono: 'JetBrains Mono', monospace;
   --sans: 'Inter', sans-serif;
   --radius: 10px;
@@ -39,10 +43,27 @@ body.light-mode {
   --bg: #F6F8FA;
   --surface: #FFFFFF;
   --surface2: #EAEEF2;
-  --border: #D0D7DE;
-  --border2: #EAEEF2;
-  --text: #1F2328;
-  --muted: #3D444D;
+  --border: #C4CDD6;
+  --border2: #DDE3E9;
+  --text: #000000;
+  --muted: #30363D;
+  /* Cores recalibradas para o tema claro: todas com contraste AAA (≥7:1) sobre branco.
+     No tema escuro elas brilham sobre fundo preto; sobre branco precisam ser escuras. */
+  --accent: #0A4FB4;
+  --accent-dim: rgba(10,79,180,0.10);
+  --accent-border: rgba(10,79,180,0.45);
+  --win: #10661F;
+  --win-dim: rgba(16,102,31,0.10);
+  --win-border: rgba(16,102,31,0.45);
+  --loss: #A5170D;
+  --loss-dim: rgba(165,23,13,0.10);
+  --loss-border: rgba(165,23,13,0.45);
+  --purple: #5A2DA0;
+  --purple-dim: rgba(90,45,160,0.10);
+  --purple-border: rgba(90,45,160,0.45);
+  --bar-win: #10661F;
+  --bar-loss: #A5170D;
+  --bar-amber: #7A4F00;
 }
 * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 html, body { height:100%; }
@@ -132,11 +153,11 @@ header { background:var(--surface); border-bottom:1px solid var(--border); paddi
 .letra-linha * { opacity:1 !important; }
 .ll-badge { width:24px; height:24px; border-radius:5px; display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:11px; font-weight:700; background:var(--accent-dim); border:1px solid var(--accent-border); color:var(--accent); flex-shrink:0; }
 .ll-badge.loss { background:var(--loss-dim); border-color:var(--loss-border); color:var(--loss); }
-.ll-badge.ok { background:var(--win-dim); border-color:var(--win-border); color:var(--win); }
+.ll-badge.ok { background:var(--win-dim); border-color:var(--win); color:var(--text); font-weight:800; }
 .ll-badge.locked { background:var(--purple-dim); border-color:var(--purple-border); color:var(--purple); }
 .ll-info { flex:1; min-width:0; overflow:hidden; }
 .ll-valor { font-family:var(--mono); font-size:11px; font-weight:700; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.ll-valor.ok { color:var(--win); }
+.ll-valor.ok { color:var(--text); font-weight:800; }
 .ll-meta { font-size:9px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .ll-meta .risk { color:var(--loss); font-weight:600; }
 .ll-placar { font-size:10px; font-family:var(--mono); white-space:nowrap; flex-shrink:0; }
@@ -155,7 +176,7 @@ header { background:var(--surface); border-bottom:1px solid var(--border); paddi
 .letra-card.is-finished { border-color:var(--win); border-left:4px solid var(--win); background:var(--surface); }
 .letra-card.is-locked { border-color:var(--purple); border-left:4px solid var(--purple); }
 .letra-card.is-done { border-color:var(--win); border-left:4px solid var(--win); background:var(--surface2); }
-.letra-card.is-done .card-amount, .letra-card.is-done .lr-amount { color:var(--win); }
+.letra-card.is-done .card-amount, .letra-card.is-done .lr-amount { color:var(--text); font-weight:800; }
 /* "já lancei nesta rodada": apenas um traço superior discreto — fundo e texto intactos */
 .letra-card.lancado-rodada { border-top:2px solid var(--accent); }
 .letra-linha.lancado-rodada { border-top:2px solid var(--accent); }
@@ -199,18 +220,18 @@ header { background:var(--surface); border-bottom:1px solid var(--border); paddi
 .card-top { display:flex; justify-content:space-between; align-items:center; }
 .letra-badge { width:22px; height:22px; border-radius:5px; display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:12px; font-weight:700; background:var(--accent-dim); border:1px solid var(--accent-border); color:var(--accent); flex-shrink:0; }
 .letra-badge.loss { background:var(--loss-dim); border-color:var(--loss-border); color:var(--loss); }
-.letra-badge.ok { background:var(--win-dim); border-color:var(--win-border); color:var(--win); }
+.letra-badge.ok { background:var(--win-dim); border-color:var(--win); color:var(--text); font-weight:800; }
 .letra-badge.locked { background:var(--purple-dim); border-color:var(--purple-border); color:var(--purple); }
 .card-pill { font-size:9px; font-weight:700; padding:2px 6px; border-radius:20px; white-space:nowrap; letter-spacing:.02em; }
 .pill-neutral { background:var(--surface2); color:var(--text); border:1px solid var(--border); font-weight:700; }
 .pill-loss { background:var(--loss-dim); color:var(--loss); border:1px solid var(--loss-border); }
-.pill-ok { background:var(--win-dim); color:var(--win); border:1px solid var(--win-border); }
+.pill-ok { background:var(--win); color:#FFFFFF; border:1px solid var(--win); }
 .pill-locked { background:var(--purple-dim); color:var(--purple); border:1px solid var(--purple-border); }
 .pill-win-done { background:var(--win-dim); color:var(--win); border:1px solid var(--win-border); }
 .pill-loss-done { background:var(--loss-dim); color:var(--loss); border:1px solid var(--loss-border); }
 .card-amount { font-family:var(--mono); font-size:11px; font-weight:700; color:var(--text); line-height:1.2; }
-.card-amount.ok { color:var(--win); }
-.card-meta { font-size:10px; color:var(--text); opacity:.85; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.card-amount.ok { color:var(--text); font-weight:800; }
+.card-meta { font-size:10px; color:var(--text); opacity:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .card-meta .risk { color:var(--loss); font-weight:600; }
 .card-btns { display:grid; grid-template-columns:1fr 1fr; gap:4px; }
 .btn-win { background:var(--win-dim); border:1px solid var(--win-border); color:var(--win); padding:5px 0; border-radius:4px; font-size:11px; font-weight:700; cursor:pointer; text-align:center; font-family:var(--sans); }
@@ -239,7 +260,7 @@ input:checked + .slider:before { transform:translateX(12px); }
 .btn-rotate { background:var(--purple-dim); border-color:var(--purple-border); color:var(--purple); }
 .btn-conclude { background:var(--win-dim); border-color:var(--win-border); color:var(--win); }
 .action-row-3 { grid-template-columns:1fr 1fr 1fr; }
-.btn-reset-valores { background:var(--surface2); border-color:#F0A500; color:#F0A500; }
+.btn-reset-valores { background:var(--surface2); border-color:var(--bar-amber); color:var(--bar-amber); }
 .btn-reset-valores:active { opacity:.7; }
 @media (max-width:480px){ .action-row-3 .btn-action { font-size:11px; padding:11px 4px; } }
 .btn-rotate:active, .btn-conclude:active { opacity:.7; }
@@ -315,7 +336,7 @@ tbody tr:last-child td { border-bottom:none; }
 .sheets-bar { display:flex; align-items:center; gap:6px; padding:6px 16px; background:var(--surface2); border-bottom:1px solid var(--border); font-size:11px; position:fixed; top:calc(var(--hdr-h) + env(safe-area-inset-top)); left:0; right:0; z-index:198; }
 .sheets-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
 .dot-on { background:var(--win); }
-.dot-sync { background:#F0A500; }
+.dot-sync { background:var(--bar-amber); }
 .dot-err { background:var(--loss); }
 .sheets-text { color:var(--muted); font-weight:600; flex:1; }
 .sheets-sync-btn { background:transparent; border:1px solid var(--border); color:var(--muted); padding:3px 8px; border-radius:4px; font-size:10px; font-weight:700; cursor:pointer; font-family:var(--sans); }
@@ -411,45 +432,28 @@ tbody tr:last-child td { border-bottom:none; }
 <div id="modal-resetar-valores" class="modal-overlay">
   <div class="modal-box">
     <div class="modal-body">
-      <div class="m-title" style="color:#F0A500;">🛡️ Resetar Valores</div>
+      <div class="m-title" style="color:var(--bar-amber);">🛡️ Resetar Valores</div>
       <p id="modal-reset-msg" style="font-size:12px; color:var(--text); line-height:1.6; margin-top:8px;"></p>
     </div>
     <div class="modal-footer">
       <button class="btn-cancel" onclick="fecharModal('modal-resetar-valores')">Cancelar</button>
-      <button class="btn-confirm" style="background:#F0A500;" onclick="confirmarResetarValores()">Assumir perda e resetar</button>
+      <button class="btn-confirm" style="background:var(--bar-amber);" onclick="confirmarResetarValores()">Assumir perda e resetar</button>
     </div>
   </div>
 </div>
 
-<div id="modal-conferencia" class="modal-overlay">
+
+
+<div id="modal-meta-dia" class="modal-overlay">
   <div class="modal-box">
-    <div class="modal-body">
-      <div class="m-title">⚖️ Conferir Saldo</div>
-      <p style="font-size:12px; color:var(--text); line-height:1.6; margin:6px 0 12px;">
-        Odds pagas ligeiramente diferentes do previsto fazem o saldo calculado divergir do saldo real da casa.
-        Informe o valor <b>real</b> da plataforma e o app registra a diferença como resultado da etapa.
-      </p>
-
-      <div style="background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px; margin-bottom:12px;">
-        <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:6px;">
-          <span style="color:var(--muted);">Saldo calculado pelo app</span>
-          <b style="font-family:var(--mono);" id="conf-calculado">R$ 0,00</b>
-        </div>
-        <div style="display:flex; justify-content:space-between; font-size:12px;">
-          <span style="color:var(--muted);">Diferença</span>
-          <b style="font-family:var(--mono);" id="conf-diferenca">—</b>
-        </div>
-      </div>
-
-      <label class="cfg-label">Saldo real na plataforma (R$)</label>
-      <input type="number" id="conf-real" class="cfg-input" step="0.01" placeholder="0,00" oninput="calcularDiferencaConferencia()">
-      <p style="font-size:10px; color:var(--muted); line-height:1.5; margin-top:8px;">
-        Não altera o banco de reserva, as apostas dos lotes nem os riscos acumulados — apenas acerta o caixa.
-      </p>
+    <div class="modal-body" style="text-align:center;">
+      <div style="font-size:40px; margin-bottom:8px;">🏆</div>
+      <div class="m-title" style="color:var(--win);">Meta do Dia Batida!</div>
+      <p id="modal-meta-dia-msg" style="font-size:13px; color:var(--text); margin-top:8px; line-height:1.6;"></p>
     </div>
-    <div class="modal-footer">
-      <button class="btn-cancel" onclick="fecharModal('modal-conferencia')">Cancelar</button>
-      <button class="btn-confirm" onclick="confirmarConferencia()">Atualizar saldo</button>
+    <div class="modal-footer" style="flex-direction:column; gap:8px;">
+      <button class="btn-confirm" style="background:var(--win); width:100%;" onclick="retirarLucroDiaParaBanco()">🏦 Retirar lucro para o Banco</button>
+      <button class="btn-cancel" style="width:100%;" onclick="fecharModal('modal-meta-dia')">Agora não</button>
     </div>
   </div>
 </div>
@@ -499,7 +503,7 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v33.1</span></div>
+      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v33.6</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
@@ -574,9 +578,7 @@ tbody tr:last-child td { border-bottom:none; }
     <div style="display:none;" id="kpi-banca"></div>
     <div style="display:none;" id="kpi-banco-sub"></div>
 
-    <button onclick="abrirModalConferencia()" style="width:100%; margin-bottom:10px; background:var(--surface); border:1px solid var(--border); color:var(--text); padding:9px; border-radius:var(--radius-sm); font-size:12px; font-weight:700; cursor:pointer; font-family:var(--sans);">
-      ⚖️ Conferir saldo com a casa
-    </button>
+
 
     <div class="progress-card">
       <div class="progress-header">
@@ -631,7 +633,7 @@ tbody tr:last-child td { border-bottom:none; }
     <div class="info-bar" style="margin-bottom:8px; flex-wrap:wrap; gap:6px;">
       <div class="info-item accent">Etapa <b id="lbl-etapa-num">#1</b></div>
       <div class="info-item">Início: <b id="lbl-valor-inicial-op">R$0,00</b></div>
-      <div class="info-item">Atual: <b id="lbl-valor-atual-op">R$0,00</b></div>
+      <div class="info-item" style="cursor:pointer;" onclick="editarSaldoReal()" title="Toque para ajustar ao saldo real da casa">Atual: <b id="lbl-valor-atual-op">R$0,00</b> <span style="font-size:9px;opacity:.7;">✏️</span></div>
       <div class="info-item win">Meta: <b id="lbl-meta-op">R$0,00</b></div>
       <div class="info-item accent">Falta: <b id="lbl-falta-op">R$0,00</b></div>
       <div class="info-item" id="wrapper-contador-resetar" style="display:none;">Vitórias: <b id="lbl-vitorias-resetar-contador">0</b></div>
@@ -649,7 +651,16 @@ tbody tr:last-child td { border-bottom:none; }
       </div>
     </div>
 
-    <div style="display:flex; justify-content:flex-end; margin-bottom:6px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:6px;">
+      <select id="sel-mercado-ativo" onchange="mudarMercadoAtivo()" style="flex:1; background:var(--surface); border:1px solid var(--border); color:var(--text); padding:7px 8px; border-radius:var(--radius-sm); font-size:11px; font-weight:700; font-family:var(--sans); cursor:pointer;">
+        <option value="RESULTADO">🎯 Resultado (1X2)</option>
+        <option value="AMBOS_MARCAM">⚽ Ambos Marcam</option>
+        <option value="AMBOS_NAO">🚫 Ambos Não Marcam</option>
+        <option value="OVER">⬆️ Over Gols</option>
+        <option value="UNDER">⬇️ Under Gols</option>
+        <option value="DUPLA">➕ Dupla Chance</option>
+        <option value="OUTRO">📌 Outro</option>
+      </select>
       <button id="btn-vista-operacao" class="hdr-btn" onclick="alternarVistaOperacao()">☰ Ver em linhas</button>
     </div>
     <div class="cards-grid" id="container-letras-linhas"></div>
@@ -671,6 +682,14 @@ tbody tr:last-child td { border-bottom:none; }
   <div id="lotes" class="tab-content">
     <div class="action-row" style="margin-bottom:10px;">
       <button class="btn-action btn-rotate" onclick="solicitarAberturaJanelaRodada()">🔄 Rotação</button>
+    </div>
+
+    <div class="info-bar" style="margin-bottom:8px; flex-wrap:wrap; gap:6px;">
+      <div class="info-item accent">Etapa <b id="lbl-etapa-num-lt">#1</b></div>
+      <div class="info-item">Início: <b id="lbl-valor-inicial-lt">R$0,00</b></div>
+      <div class="info-item" style="cursor:pointer;" onclick="editarSaldoReal()" title="Toque para ajustar ao saldo real da casa">Atual: <b id="lbl-valor-atual-lt">R$0,00</b> <span style="font-size:9px;opacity:.7;">✏️</span></div>
+      <div class="info-item win">Meta: <b id="lbl-meta-lt">R$0,00</b></div>
+      <div class="info-item accent">Falta: <b id="lbl-falta-lt">R$0,00</b></div>
     </div>
     <div style="display:flex; gap:6px; margin-bottom:8px; flex-wrap:wrap;">
       <button id="btn-sort-id" class="filter-btn active" onclick="alterarOrdemLotes('id')">📋 Por Número</button>
@@ -891,12 +910,29 @@ tbody tr:last-child td { border-bottom:none; }
       <div id="estatisticas-rodape" style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:6px; margin-top:8px; padding-top:8px; border-top:1px solid var(--border2); font-size:11px; color:var(--muted);"></div>
       <p style="font-size:10px;color:var(--muted);line-height:1.5;margin-top:8px;">O "teórico" usa a probabilidade implícita da odd (1/odd) — que é <b>otimista</b>, pois inclui a margem da casa; a probabilidade real de vitória é menor. Se o observado acompanhar o teórico, os resultados se comportam como aleatórios e independentes: não há padrão explorável, e sequências longas continuarão aparecendo.</p>
     </div>
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-      <span style="font-size:12px; font-weight:700; color:var(--muted);">Etapas concluídas</span>
-      <button id="btn-sort-hist" onclick="alternarOrdenacaoHistorico()" style="background:var(--surface); border:1px solid var(--border); color:var(--text); padding:5px 10px; border-radius:var(--radius-sm); font-size:11px; font-weight:700; cursor:pointer; font-family:var(--sans);">📅 Cronológica</button>
+    <div style="display:flex; gap:6px; margin-bottom:10px;">
+      <button id="btn-hist-etapa" class="filter-btn active" onclick="mudarVisaoHistorico('etapa')" style="flex:1;">📶 Por Etapa</button>
+      <button id="btn-hist-dia" class="filter-btn" onclick="mudarVisaoHistorico('dia')" style="flex:1;">📅 Por Dia</button>
     </div>
-    <div class="hist-list" id="hist-list-container">
-      <div style="padding:24px;text-align:center;color:var(--muted);font-size:13px;">Nenhuma etapa concluída ainda.</div>
+
+    <div id="hist-visao-etapa">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <span style="font-size:12px; font-weight:700; color:var(--muted);">Etapas concluídas</span>
+        <button id="btn-sort-hist" onclick="alternarOrdenacaoHistorico()" style="background:var(--surface); border:1px solid var(--border); color:var(--text); padding:5px 10px; border-radius:var(--radius-sm); font-size:11px; font-weight:700; cursor:pointer; font-family:var(--sans);">📅 Cronológica</button>
+      </div>
+      <div class="hist-list" id="hist-list-container">
+        <div style="padding:24px;text-align:center;color:var(--muted);font-size:13px;">Nenhuma etapa concluída ainda.</div>
+      </div>
+    </div>
+
+    <div id="hist-visao-dia" style="display:none;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <span style="font-size:12px; font-weight:700; color:var(--muted);">Fechamento diário (saldo ao fim de cada dia)</span>
+      </div>
+      <div class="hist-list" id="hist-dia-container">
+        <div style="padding:24px;text-align:center;color:var(--muted);font-size:13px;">Nenhum fechamento diário ainda. O primeiro será registrado quando o dia virar.</div>
+      </div>
+      <p style="font-size:10px;color:var(--muted);line-height:1.5;margin-top:8px;">O fechamento diário é automático: ao abrir o app num novo dia, o saldo do(s) dia(s) anterior(es) é registrado. Nenhum dia se perde, mesmo que o app fique dias fechado.</p>
     </div>
   </div>
 
@@ -967,12 +1003,7 @@ function preencherScriptBox(){
   if(box && !box.value) box.value = GS_SCRIPT_CODE;
 }
 
-function emojiRealVirtual(){ return '⚽'; }
 function aplicarNomesModos(){ /* modos removidos v32.0 */ }
-function salvarNomesModos(){ /* modos removidos v32.0 */ }
-
-function alternarModo(){ /* removido v32.0 */ }
-
 function atualizarStatusSheets(status){
   const dot=document.getElementById('sheets-dot'); const txt=document.getElementById('sheets-text');
   if(!dot||!txt) return;
@@ -1115,7 +1146,7 @@ async function testarConexaoSheets(){
     div.style.color='var(--win)';
     div.innerText='✅ Conectado! Banca '+fmt(r.data.bancaAtual||0)+', '+totLotes+' lotes. Última gravação no servidor: '+tsSrv+'.';
   } else if(r.ready){
-    div.style.color='#F0A500';
+    div.style.color='var(--bar-amber)';
     div.innerText='🟡 Implantação viva, mas ainda sem dados salvos. Faça uma operação e use "Salvar no Sheets agora".';
   } else {
     div.style.color='var(--loss)';
@@ -1305,8 +1336,6 @@ function ajustarCamposDeOddsMenu(usarState=false){
 }
 
 function salvarDadosEAtualizarTudo(){ state.ultimoTimestampSinc=Date.now(); state.sheetsUrl=state.sheetsUrl||SHEETS_URL_MEMORIA; if(state.sheetsUrl) SHEETS_URL_MEMORIA=state.sheetsUrl; atualizarPainelUI(false); agendarSalvarNuvem(); } // sem localStorage
-function carregarDadosCacheLocal(){ /* sem localStorage — Sheets é a fonte de verdade */ state=JSON.parse(JSON.stringify(DEFAULT_STATE)); aplicarBlindagemDeVariaveis(); }
-
 function reiniciarBancaTotalSistema(){ if(confirm("⚠️ Resetar o sistema inteiro?")){ state=JSON.parse(JSON.stringify(DEFAULT_STATE)); sinalizadoMeta=false; sinalizadoStop=false; gerarEstruturaLotesIniciais(); } }
 function ajustarBancaAtivaExternamente(){ const v=parseFloat(document.getElementById('cfg-banca-capital').value); if(isNaN(v)||v<=0) return; const parcial=state.bancaAtual-state.bancaInicioEtapa; state.bancaInicial=v; state.bancaInicioEtapa=v; state.bancaAtual=v+parcial; salvarDadosEAtualizarTudo(); }
 function excluirRegistroEtapaHistorico(index){ if(confirm("🗑 Excluir esta etapa do histórico?")){
@@ -1486,7 +1515,7 @@ function reabrirLetra(l){
     Lucro travado nesta etapa: <b style="color:var(--win);">${fmt(lucro)}</b> (meta era ${metaPct}%)<br>
     Lotes que voltarão a operar: <b>${lotes}</b><br>
     Aposta de reabertura: <b style="color:var(--accent);">${fmt(getValorApostaBase(ms().oddsPorLetra[l]||2))}</b> <span style="font-size:11px;color:var(--muted);">(volta à base, risco zerado)</span><br><br>
-    <b style="color:#F0A500;">⚠️ O lucro desta letra deixa de estar protegido.</b> A partir daqui ele volta a ficar exposto ao risco, e o resultado acumulado pode ser reduzido ou revertido pelas próximas apostas.<br><br>
+    <b style="color:var(--bar-amber);">⚠️ O lucro desta letra deixa de estar protegido.</b> A partir daqui ele volta a ficar exposto ao risco, e o resultado acumulado pode ser reduzido ou revertido pelas próximas apostas.<br><br>
     <span style="font-size:11px;color:var(--muted);">Lembre-se: uma letra que bateu a meta não é uma letra "quente" — a próxima aposta nela tem exatamente a mesma expectativa de antes.</span>`;
   document.getElementById('modal-reabrir').style.display='flex';
 }
@@ -1545,11 +1574,11 @@ function abrirModalResetarValores(){
     // ainda abre, mas com botão de confirmar inócuo
   } else if(msg){
     msg.innerHTML=`Isto vai <b>encerrar as sequências em andamento</b> e voltar todas as apostas ao valor inicial da etapa.<br><br>`+
-      `<div style="background:var(--surface2);border:1px solid #F0A500;border-radius:var(--radius-sm);padding:10px;margin:4px 0;">`+
+      `<div style="background:var(--surface2);border:1px solid var(--bar-amber);border-radius:var(--radius-sm);padding:10px;margin:4px 0;">`+
       `<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span style="color:var(--muted);">Lotes em recuperação</span><b>${lotesComRisco}</b></div>`+
       `<div style="display:flex;justify-content:space-between;font-size:13px;"><span style="color:var(--muted);">Prejuízo que será assumido</span><b style="color:var(--loss);">${fmt(riscoTotal)}</b></div>`+
       `</div>`+
-      `<b style="color:#F0A500;">⚠️ Este prejuízo é real e não será recuperado.</b> As perdas dos gales já aconteceram; resetar significa <b>parar de persegui-las</b> e recomeçar do zero — não desfazê-las.<br><br>`+
+      `<b style="color:var(--bar-amber);">⚠️ Este prejuízo é real e não será recuperado.</b> As perdas dos gales já aconteceram; resetar significa <b>parar de persegui-las</b> e recomeçar do zero — não desfazê-las.<br><br>`+
       `<span style="font-size:11px;color:var(--muted);">Use isto quando a sequência passou do que você aguenta. É um freio de segurança, não um apagador de perdas.</span>`;
   }
   document.getElementById('modal-resetar-valores').style.display='flex';
@@ -1580,42 +1609,130 @@ function confirmarResetarValores(){
   salvarDadosEAtualizarTudo();
 }
 
-function abrirModalConferencia(){
-  document.getElementById('conf-calculado').innerText=fmt(state.bancaAtual);
-  const inp=document.getElementById('conf-real');
-  inp.value=state.bancaAtual.toFixed(2);
-  calcularDiferencaConferencia();
-  document.getElementById('modal-conferencia').style.display='flex';
-}
-
-function calcularDiferencaConferencia(){
-  const real=parseFloat(document.getElementById('conf-real').value);
-  const el=document.getElementById('conf-diferenca');
-  if(isNaN(real)){ el.innerText='—'; el.style.color='var(--muted)'; return; }
-  const dif=real-state.bancaAtual;
-  const sinal=dif>0?'+':'';
-  el.innerText=sinal+fmt(dif);
-  el.style.color=Math.abs(dif)<0.005?'var(--muted)':(dif>0?'var(--win)':'var(--loss)');
-}
-
-function confirmarConferencia(){
-  const real=parseFloat(document.getElementById('conf-real').value);
-  if(isNaN(real)||real<0){ alert('Informe um valor válido.'); return; }
-  const dif=real-state.bancaAtual;
-  if(Math.abs(dif)<0.005){ fecharModal('modal-conferencia'); return; }
-
-  // Ajuste de CAIXA: acerta o saldo real da plataforma.
-  // Não mexe em bancaInicioEtapa (a base da etapa permanece fixa, como definido),
-  // então a diferença aparece corretamente como lucro/prejuízo da etapa.
-  // Não mexe no banco de reserva, nas apostas dos lotes nem nos riscos acumulados.
+function editarSaldoReal(){
+  const atual=state.bancaAtual;
+  const entrada=prompt('Saldo REAL da plataforma agora (R$)\n\nUse quando as odds fizeram o valor divergir do calculado. As apostas continuam sendo calculadas normalmente — isto só acerta o caixa.\n\nCalculado pelo app: '+fmt(atual), atual.toFixed(2));
+  if(entrada===null) return; // cancelou
+  const real=parseFloat((entrada+'').replace(',','.'));
+  if(isNaN(real)||real<0){ alert('Valor inválido.'); return; }
+  const dif=real-atual;
+  if(Math.abs(dif)<0.005) return; // sem mudança
+  // Ajuste de CAIXA: acerta só o saldo. Não mexe em bancaInicioEtapa (base da etapa fixa),
+  // nem no banco, nem nas apostas/riscos dos lotes. A diferença vira resultado da etapa.
   state.bancaAtual=real;
-
-  // Registra o ajuste para rastreabilidade
   if(!ms().ajustesConferencia) ms().ajustesConferencia=[];
   ms().ajustesConferencia.push({d:new Date().toISOString(), dif:dif, saldo:real});
-  if(ms().ajustesConferencia.length>500) ms().ajustesConferencia.splice(0,ms().ajustesConferencia.length-500);
+  salvarDadosEAtualizarTudo();
+}
 
-  fecharModal('modal-conferencia');
+// Verifica a meta DIÁRIA: se o lucro de hoje (plataforma) atingiu metaDiaria%, avisa e orienta a retirada.
+// ── FECHAMENTO DIÁRIO AUTOMÁTICO ──
+// Registra o saldo ao fim de cada dia. Como o app só roda quando aberto, o fechamento
+// acontece na primeira abertura de um novo dia: grava o último saldo conhecido para o(s)
+// dia(s) que passaram. À prova de app fechado — preenche lacunas.
+function processarFechamentoDiario(){
+  if(!ms().registroDiario) ms().registroDiario=[];
+  const hoje=hojeISO;
+  let ultimo=ms().ultimoDiaRegistrado||"";
+  // Primeira vez de todas: apenas marca hoje como dia corrente, sem registrar (não há "fim de dia" ainda)
+  if(!ultimo){ ms().ultimoDiaRegistrado=hoje; return; }
+  if(ultimo===hoje) return; // mesmo dia, nada a fechar
+  // Fecha todos os dias entre o último registrado e hoje (exclusive), com o saldo atual conhecido
+  const saldoFim=state.bancaAtual+(parseFloat(state.bancoCapital)||0);
+  let d=new Date(ultimo+'T00:00:00');
+  const alvo=new Date(hoje+'T00:00:00');
+  let guard=0;
+  while(d<alvo && guard<400){
+    const iso=d.toISOString().split('T')[0];
+    // evita duplicar
+    if(!ms().registroDiario.some(r=>r.dia===iso)){
+      ms().registroDiario.push({dia:iso, saldo:saldoFim});
+    }
+    d.setDate(d.getDate()+1); guard++;
+  }
+  ms().ultimoDiaRegistrado=hoje;
+  if(ms().registroDiario.length>1000) ms().registroDiario.splice(0,ms().registroDiario.length-1000);
+}
+
+function mudarVisaoHistorico(v){
+  const be=document.getElementById('btn-hist-etapa'), bd=document.getElementById('btn-hist-dia');
+  const ve=document.getElementById('hist-visao-etapa'), vd=document.getElementById('hist-visao-dia');
+  const dia=(v==='dia');
+  if(be) be.classList.toggle('active',!dia);
+  if(bd) bd.classList.toggle('active',dia);
+  if(ve) ve.style.display=dia?'none':'block';
+  if(vd) vd.style.display=dia?'block':'none';
+  if(dia) renderHistoricoDiario();
+}
+
+function renderHistoricoDiario(){
+  const c=document.getElementById('hist-dia-container'); if(!c) return;
+  const reg=(ms().registroDiario||[]).slice().sort((a,b)=>b.dia.localeCompare(a.dia));
+  if(reg.length===0){
+    c.innerHTML='<div style="padding:24px;text-align:center;color:var(--muted);font-size:13px;">Nenhum fechamento diário ainda. O primeiro será registrado quando o dia virar.</div>';
+    return;
+  }
+  let html='';
+  reg.forEach((r,i)=>{
+    const prox=reg[i+1]; // dia anterior (lista está desc)
+    let varTxt='', varCor='var(--muted)';
+    if(prox){
+      const dif=r.saldo-prox.saldo;
+      if(Math.abs(dif)>=0.005){ varCor=dif>0?'var(--win)':'var(--loss)'; varTxt=(dif>0?'▲ ':'▼ ')+fmt(Math.abs(dif)); }
+      else varTxt='— estável';
+    }
+    const dataFmt=new Date(r.dia+'T00:00:00').toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'2-digit',year:'2-digit'});
+    html+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:var(--radius-sm);margin-bottom:6px;">
+      <div>
+        <div style="font-size:12px;font-weight:700;color:var(--text);font-family:var(--sans);">${dataFmt}</div>
+        <div style="font-size:10px;color:${varCor};font-family:var(--mono);font-weight:700;margin-top:2px;">${varTxt||'primeiro registro'}</div>
+      </div>
+      <div style="font-family:var(--mono);font-size:15px;font-weight:800;color:var(--text);">${fmt(r.saldo)}</div>
+    </div>`;
+  });
+  c.innerHTML=html;
+}
+
+function verificarMetaDiaria(){
+  const pctMeta=parseFloat(ms().metaDiaria)||0;
+  if(pctMeta<=0) return;
+  // Marca o início do dia na primeira checagem do dia
+  if(ms().dataDiaCorrente!==hojeISO){
+    ms().dataDiaCorrente=hojeISO;
+    ms().saldoInicioDia=state.bancaAtual;
+    ms().metaDiaSinalizada=false;
+  }
+  if(ms().metaDiaSinalizada) return; // avisa uma vez por dia
+  const base=(ms().saldoInicioDia!==undefined)?ms().saldoInicioDia:state.bancaAtual;
+  const alvo=base*(pctMeta/100);
+  const lucroDia=state.bancaAtual-base;
+  if(lucroDia>=alvo && alvo>0){
+    ms().metaDiaSinalizada=true;
+    const msg=document.getElementById('modal-meta-dia-msg');
+    if(msg) msg.innerHTML=`Você bateu <b>${pctMeta}%</b> no dia de hoje! 🎯<br><br>`+
+      `<div style="background:var(--surface2);border:1px solid var(--win-border);border-radius:var(--radius-sm);padding:10px;margin:4px 0;">`+
+      `<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span style="color:var(--muted);">Lucro do dia</span><b style="color:var(--win);">${fmt(lucroDia)}</b></div>`+
+      `<div style="display:flex;justify-content:space-between;font-size:12px;"><span style="color:var(--muted);">Sugestão de retirada</span><b>${fmt(lucroDia)}</b></div>`+
+      `</div>`+
+      `Considere <b>retirar este lucro da plataforma e guardar no Banco</b>. Proteger o ganho do dia é o que separa a operação disciplinada da que devolve tudo tentando ganhar mais.<br><br>`+
+      `<span style="font-size:11px;color:var(--muted);">Ao retirar, o valor sai da plataforma em operação e vai para a reserva. Você pode parar por hoje com o resultado garantido.</span>`;
+    document.getElementById('modal-meta-dia').style.display='flex';
+    ms().__lucroDiaPendente=lucroDia;
+  }
+}
+
+function retirarLucroDiaParaBanco(){
+  const lucro=ms().__lucroDiaPendente||0;
+  if(lucro>0.005){
+    // Move da plataforma para o banco: plataforma diminui, banco aumenta, capital total intacto.
+    state.bancaAtual-=lucro;
+    state.bancoCapital=(parseFloat(state.bancoCapital)||0)+lucro;
+    // Novo "início do dia" passa a ser o saldo já sem o lucro retirado, evitando reaviso.
+    ms().saldoInicioDia=state.bancaAtual;
+    if(!ms().retiradasBanco) ms().retiradasBanco=[];
+    ms().retiradasBanco.push({d:new Date().toISOString(), valor:lucro});
+  }
+  fecharModal('modal-meta-dia');
   salvarDadosEAtualizarTudo();
 }
 
@@ -1802,7 +1919,7 @@ function corSeq(streak, maxG){
   if(!streak||streak===0) return 'var(--muted)';
   const pct=streak/maxG;
   if(pct>=0.7) return 'var(--loss)';
-  if(pct>=0.4) return '#F0A500';
+  if(pct>=0.4) return 'var(--bar-amber)';
   return 'var(--win)';
 }
 
@@ -1849,10 +1966,10 @@ function renderLinhas(){
         const prog=alvo>0?Math.max(0,Math.min(100,(luc/alvo)*100)):0;
         const cumprida=(ms().letrasMetaCumprida&&ms().letrasMetaCumprida[l])||prog>=100;
         // Tons FORTES e sólidos (deuteranopia): verde forte / âmbar forte / vermelho forte. Texto sempre presente.
-        const cor=cumprida?'#2EA043':(luc<0?'#E5484D':'#E8A317');
+        const cor=cumprida?'var(--bar-win)':(luc<0?'var(--bar-loss)':'var(--bar-amber)');
         const lbl=cumprida?'✔100%':(luc<0?Math.round(prog)+'%':Math.round(prog)+'%');
         return `<div style="min-width:66px;">
-          <div style="display:flex;justify-content:flex-end;font-size:9px;font-family:var(--mono);font-weight:700;color:${cumprida?'#2EA043':(luc<0?'#E5484D':'var(--text)')};margin-bottom:2px;">${lbl}</div>
+          <div style="display:flex;justify-content:flex-end;font-size:9px;font-family:var(--mono);font-weight:700;color:${cumprida?'var(--bar-win)':(luc<0?'var(--bar-loss)':'var(--text)')};margin-bottom:2px;">${lbl}</div>
           <div style="height:7px;background:var(--surface2);border:1px solid var(--border);border-radius:99px;overflow:hidden;">
             <div style="height:100%;width:${prog}%;background:${cor};border-radius:99px;transition:width .3s;"></div>
           </div>
@@ -1932,7 +2049,7 @@ function renderCards(){
     else pillHtml=`<span class="card-pill pill-neutral">${lotesAtivos}L ATIVOS</span>`;
 
     const amountCls=allFinished?'card-amount ok':'card-amount';
-    const amountTxt=allFinished?'Finalizado':fmt(totalAposta);
+    const amountTxt=allFinished?'🔒 Finalizado':fmt(totalAposta);
     const metaNota=nota?`<span style="color:var(--muted);">${nota}</span> `:''; const metaTxt=metaNota+(temPerda?`<span class="risk">↓${fmt(totalPerda)}</span>`:`<span>${lotesAtivos}L</span>`);
     const lockCls=isFixed?'ll-lock locked':'ll-lock';
     const checked=isFixed?'checked':'';
@@ -1946,11 +2063,11 @@ function renderCards(){
       const lucroL=(ms().lucroLetraEtapa&&ms().lucroLetraEtapa[l])||0;
       const progL=alvoL>0?Math.max(0,Math.min(100,(lucroL/alvoL)*100)):0;
       const cumprida=(ms().letrasMetaCumprida&&ms().letrasMetaCumprida[l])||progL>=100;
-      const corBarra=cumprida?'var(--win)':(lucroL<0?'var(--loss)':'#F0A500');
+      const corBarra=cumprida?'var(--win)':(lucroL<0?'var(--loss)':'var(--bar-amber)');
       const lblDireita=cumprida?'🎯 100%':(lucroL<0?fmt(lucroL):Math.round(progL)+'%');
       const corLbl=cumprida?'var(--win)':(lucroL<0?'var(--loss)':'var(--text)');
       metaBarHtml=`<div style="margin-top:2px;">
-        <div style="display:flex;justify-content:space-between;font-size:9px;font-family:var(--mono);color:var(--muted);margin-bottom:2px;">
+        <div style="display:flex;justify-content:space-between;font-size:9px;font-family:var(--mono);color:var(--text);margin-bottom:2px;">
           <span>Meta ${metaPctL}% (${fmt(alvoL)})</span>
           <span style="color:${corLbl};font-weight:700;">${lblDireita}</span>
         </div>
@@ -2028,12 +2145,6 @@ function renderCards(){
 function alternarVistaOperacao(){
   ms().vistaOperacao=(ms().vistaOperacao||'cards')==='cards'?'linhas':'cards';
   renderCards();
-  salvarDadosEAtualizarTudo();
-}
-
-function toggleLockBtn(letra, el){
-  if(!ms().letrasBloqueadasRodada) ms().letrasBloqueadasRodada={};
-  ms().letrasBloqueadasRodada[letra]=!ms().letrasBloqueadasRodada[letra];
   salvarDadosEAtualizarTudo();
 }
 
@@ -2116,7 +2227,7 @@ function renderExposicao(){
     }
     riscoTotal+=sim.risco; proximaTotal+=sim.proxima;
     const agTxt=sim.rodadas>=21?'20+':String(sim.rodadas);
-    const agCor=sim.rodadas<=3?'var(--loss)':(sim.rodadas<=6?'#F0A500':'var(--win)');
+    const agCor=sim.rodadas<=3?'var(--loss)':(sim.rodadas<=6?'var(--bar-amber)':'var(--win)');
     html+=`<div class="preview-row" style="gap:6px;">
       <span style="flex:1;min-width:0;"><b style="font-family:var(--mono);">[${l}]</b> @${odd.toFixed(2)} · ${sim.lotes}L${sim.risco>0?` · <span style="color:var(--loss);">↓${fmt(sim.risco)}</span>`:''}${sim.maiorStreak>0?` · seq ${sim.maiorStreak}`:''}</span>
       <span style="font-family:var(--mono);font-size:11px;white-space:nowrap;">próx ${fmt(sim.proxima)}</span>
@@ -2180,7 +2291,7 @@ function renderPainelVantagem(){
   const beG=breakevenDeOdd(oddMedia);
   const vG=vereditoEstatistico(winsG,totalG,beG);
 
-  const cores={INSUF:'var(--muted)', INCONCLUSIVO:'#F0A500', VANTAGEM:'var(--win)', DESVANTAGEM:'var(--loss)'};
+  const cores={INSUF:'var(--muted)', INCONCLUSIVO:'var(--bar-amber)', VANTAGEM:'var(--win)', DESVANTAGEM:'var(--loss)'};
   const icones={INSUF:'⏳', INCONCLUSIVO:'❓', VANTAGEM:'✔️', DESVANTAGEM:'✖️'};
 
   let html=`
@@ -2271,7 +2382,7 @@ function renderEstatisticas(){
     const letras=obterTodasLetrasConfiguradas();
     chips.innerHTML=letras.map(l=>{
       const s=(ms().streakPorLetra||{})[l]||0;
-      const cor=s>=8?'var(--loss)':(s>=4?'#F0A500':'var(--muted)');
+      const cor=s>=8?'var(--loss)':(s>=4?'var(--bar-amber)':'var(--muted)');
       return `<span style="background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:3px 10px;font-size:11px;font-family:var(--mono);color:${cor};font-weight:700;">${l}: ${s} sem vitória</span>`;
     }).join('');
   }
@@ -2497,6 +2608,13 @@ function atualizarPainelUI(forcarGrafico=false){
   const faltaOp=Math.max(0,metaVal-(state.bancaAtual+banco));
   const faltaEl=document.getElementById('lbl-falta-op');
   if(faltaEl){ faltaEl.innerText=fmt(faltaOp); faltaEl.style.color=faltaOp<=0?'var(--win)':'var(--accent)'; }
+  // Espelho na aba Lotes
+  el('lbl-etapa-num-lt','#'+ms().etapaAtual);
+  el('lbl-valor-inicial-lt',fmt(baseEtapa));
+  el('lbl-valor-atual-lt',fmt(state.bancaAtual+(parseFloat(state.bancoCapital)||0)));
+  el('lbl-meta-lt',fmt(metaVal));
+  const faltaElLt=document.getElementById('lbl-falta-lt');
+  if(faltaElLt){ faltaElLt.innerText=fmt(faltaOp); faltaElLt.style.color=faltaOp<=0?'var(--win)':'var(--accent)'; }
 
   // Label do modo no chip de etapa
   const chip=document.getElementById('hdr-etapa'); if(chip) chip.parentElement.title='OPERAÇÃO';
@@ -2513,6 +2631,8 @@ function atualizarPainelUI(forcarGrafico=false){
   const bar=document.getElementById('progresso-bar'); if(bar) bar.style.width=Math.min(100,pct)+'%';
 
   if(pct>=100&&!sinalizadoMeta){ sinalizadoMeta=true; document.getElementById('modal-meta').style.display='flex'; }
+  processarFechamentoDiario();
+  verificarMetaDiaria();
   if(capitalGlobal<=stopVal&&!sinalizadoStop){ sinalizadoStop=true; ms().stopTravado=true; document.getElementById('modal-stop').style.display='flex'; }
 
   const banner=document.getElementById('banner-stop');
