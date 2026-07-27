@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#0D1117">
-<title>Método Marantan v34.1</title>
+<title>Método Marantan v34.4</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox=%270 0 48 48%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Crect x=%271.5%27 y=%271.5%27 width=%2745%27 height=%2745%27 rx=%2711%27 fill=%27%23161B22%27 stroke=%27%2330363D%27 stroke-width=%271.5%27/%3E%3Cpath d=%27M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3Cpath d=%27M30.5 9.5 L37.5 9 L36.8 16%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -201,6 +201,7 @@ header { background:var(--surface); border-bottom:1px solid var(--border); paddi
 .btn-reabrir:hover { background:var(--accent-dim); }
 .t-nota { font-family:var(--sans); font-size:11px; color:var(--text); max-width:110px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .t-meta-cell { min-width:70px; vertical-align:middle; }
+.t-mercado-sel { background:var(--surface2); border:1px solid var(--border); color:var(--text); font-family:var(--sans); font-size:10px; font-weight:600; padding:3px 4px; border-radius:4px; cursor:pointer; max-width:130px; }
 .u10-wrap { display:flex; gap:2px; align-items:center; }
 .u10-box { display:flex; align-items:center; gap:4px; }
 /* Larg. p/ 15 caixas de 20px + gaps ≈ 330px */
@@ -275,8 +276,13 @@ input:checked + .slider:before { transform:translateX(12px); }
 .btn-rotate { background:var(--purple-dim); border-color:var(--purple-border); color:var(--purple); }
 .btn-conclude { background:var(--win-dim); border-color:var(--win-border); color:var(--win); }
 .action-row-3 { grid-template-columns:1fr 1fr 1fr; }
-.btn-reset-valores { background:var(--surface2); border-color:var(--bar-amber); color:var(--bar-amber); }
-.btn-reset-valores:active { opacity:.7; }
+.prog-lote-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:12px 14px; margin-bottom:8px; }
+.prog-lote-linha { display:flex; justify-content:space-between; align-items:center; margin-bottom:5px; }
+.prog-lote-lbl { font-size:11px; font-weight:700; color:var(--text); }
+.prog-lote-val { font-family:var(--mono); font-size:13px; font-weight:800; color:var(--text); }
+.prog-lote-track { height:10px; background:var(--surface2); border:1px solid var(--border); border-radius:99px; overflow:hidden; }
+.prog-lote-fill { height:100%; width:0%; border-radius:99px; transition:width .4s ease; }
+
 @media (max-width:480px){ .action-row-3 .btn-action { font-size:11px; padding:11px 4px; } }
 .btn-rotate:active, .btn-conclude:active { opacity:.7; }
 .btn-modo { background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:8px 12px; border-radius:var(--radius-sm); font-size:12px; font-weight:600; cursor:pointer; font-family:var(--sans); display:flex; align-items:center; gap:6px; }
@@ -301,6 +307,7 @@ tbody tr:last-child td { border-bottom:none; }
 .tbl-btn-win { background:var(--win-dim); border:1px solid var(--win-border); color:var(--win); padding:3px 8px; border-radius:4px; font-size:10px; font-weight:700; cursor:pointer; }
 .tbl-btn-loss { background:var(--loss-dim); border:1px solid var(--loss-border); color:var(--loss); padding:3px 8px; border-radius:4px; font-size:10px; font-weight:700; cursor:pointer; }
 .tbl-btn-eq { background:var(--surface2); border:1px solid var(--border); color:var(--muted); padding:3px 7px; border-radius:4px; font-size:10px; font-weight:700; cursor:pointer; }
+.tbl-btn-reset { background:var(--surface2); border:1px solid var(--bar-amber); color:var(--bar-amber); padding:3px 7px; border-radius:4px; font-size:10px; font-weight:700; cursor:pointer; }
 
 /* ── CONFIG ── */
 .cfg-section { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px; margin-bottom:10px; }
@@ -444,18 +451,7 @@ tbody tr:last-child td { border-bottom:none; }
   </div>
 </div>
 
-<div id="modal-resetar-valores" class="modal-overlay">
-  <div class="modal-box">
-    <div class="modal-body">
-      <div class="m-title" style="color:var(--bar-amber);">🛡️ Resetar Valores</div>
-      <p id="modal-reset-msg" style="font-size:12px; color:var(--text); line-height:1.6; margin-top:8px;"></p>
-    </div>
-    <div class="modal-footer">
-      <button class="btn-cancel" onclick="fecharModal('modal-resetar-valores')">Cancelar</button>
-      <button class="btn-confirm" style="background:var(--bar-amber);" onclick="confirmarResetarValores()">Assumir perda e resetar</button>
-    </div>
-  </div>
-</div>
+
 
 
 
@@ -518,7 +514,7 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v34.1</span></div>
+      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v34.4</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
@@ -541,11 +537,7 @@ tbody tr:last-child td { border-bottom:none; }
     <span class="nav-icon">📊</span>
     <span class="nav-label">Painel</span>
   </button>
-  <button class="nav-item" id="nav-operacional" onclick="openTab('operacional')">
-    <span class="nav-icon">🎯</span>
-    <span class="nav-label">Operação</span>
-  </button>
-  <button class="nav-item" id="nav-grafico" onclick="openTab('grafico')">
+<button class="nav-item" id="nav-grafico" onclick="openTab('grafico')">
     <span class="nav-icon">📈</span>
     <span class="nav-label">Gráfico</span>
   </button>
@@ -620,15 +612,6 @@ tbody tr:last-child td { border-bottom:none; }
         </div>
       </div>
     </div>
-    <div class="progress-card" id="card-exposicao">
-      <div class="progress-header">
-        <span>⚠️ Exposição Real por Letra</span>
-        <b id="exp-total-risco">R$ 0,00</b>
-      </div>
-      <div id="exposicao-body"></div>
-      <div id="exposicao-rodape" style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:6px; margin-top:8px; padding-top:8px; border-top:1px solid var(--border2); font-size:11px; color:var(--muted);"></div>
-      <p style="font-size:10px;color:var(--muted);line-height:1.5;margin-top:8px;">"Aguenta" = quantas derrotas seguidas dessa letra a banca da plataforma suporta com a progressão atual. Lembre-se: sequências de 10+ derrotas <b>vão acontecer</b> ao longo do tempo — cada jogo é independente e "estar atrasado" não aumenta a chance do próximo.</p>
-    </div>
 
   <button id="btn-salvar-sheets" onclick="salvarManualSheets()" style="width:100%; padding:12px; background:var(--accent-dim); border:1px solid var(--accent-border); border-radius:var(--radius); color:var(--accent); font-size:14px; font-weight:700; cursor:pointer; font-family:var(--sans); margin-top:4px; display:flex; align-items:center; justify-content:center; gap:8px;">
     ☁️ Salvar no Sheets agora
@@ -636,79 +619,48 @@ tbody tr:last-child td { border-bottom:none; }
 
   </div>
 
-  <!-- ABA: OPERACIONAL -->
-  <div id="operacional" class="tab-content">
-    <div id="banner-stop" style="display:none; background:var(--loss-dim); border:1px solid var(--loss-border); color:var(--loss); border-radius:var(--radius); padding:10px 14px; font-size:12px; font-weight:700; margin-bottom:8px; line-height:1.5;">⛔ STOP LOSS ATINGIDO — registros travados. Conclua a etapa (ou recrie a grade em Config) para reavaliar com calma. Continuar apostando agora para "recuperar" é a forma mais comum de transformar uma perda controlada em uma perda grande.</div>
-    <div class="action-row action-row-3" style="margin-bottom:10px; margin-top:0;">
-      <button class="btn-action btn-rotate" onclick="solicitarAberturaJanelaRodada()">🔄 Rotação</button>
-      <button class="btn-action btn-reset-valores" onclick="abrirModalResetarValores()">🛡️ Resetar Valores</button>
-      <button class="btn-action btn-conclude" onclick="fecharEtapa()">💾 Concluir Etapa</button>
-    </div>
-
-    <div class="info-bar" style="margin-bottom:8px; flex-wrap:wrap; gap:6px;">
-      <div class="info-item accent">Etapa <b id="lbl-etapa-num">#1</b></div>
-      <div class="info-item">Início: <b id="lbl-valor-inicial-op">R$0,00</b></div>
-      <div class="info-item" style="cursor:pointer;" onclick="editarSaldoReal()" title="Toque para ajustar ao saldo real da casa">Atual: <b id="lbl-valor-atual-op">R$0,00</b> <span style="font-size:9px;opacity:.7;">✏️</span></div>
-      <div class="info-item win">Meta: <b id="lbl-meta-op">R$0,00</b></div>
-      <div class="info-item accent">Falta: <b id="lbl-falta-op">R$0,00</b></div>
-      <div class="info-item" id="wrapper-contador-resetar" style="display:none;">Vitórias: <b id="lbl-vitorias-resetar-contador">0</b></div>
-      <div style="display:none;" id="lbl-lotes-win"></div>
-      <div style="display:none;" id="lbl-lotes-loss"></div>
-      <div style="display:none;" id="lbl-lucro-etapa"></div>
-    </div>
-
-    <div class="modo-bar" style="margin-bottom:8px;">
-      <button id="btn-toggle-modo-pos-win" class="btn-modo blindar" onclick="alternarModoPosWin()">🔒 Pós-Win: Blindar</button>
-      <div class="filter-row">
-        <button id="btn-filter-all" class="filter-btn active" onclick="alterarFiltroExibicao('all')">Todas</button>
-        <button id="btn-filter-pending" class="filter-btn" onclick="alterarFiltroExibicao('pending')">Pendentes</button>
-        <button id="btn-filter-loss" class="filter-btn" onclick="alterarFiltroExibicao('loss')">Críticas</button>
-      </div>
-    </div>
-
-    <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:6px;">
-      <select id="sel-mercado-ativo" onchange="mudarMercadoAtivo()" style="flex:1; background:var(--surface); border:1px solid var(--border); color:var(--text); padding:7px 8px; border-radius:var(--radius-sm); font-size:11px; font-weight:700; font-family:var(--sans); cursor:pointer;">
-        <option value="RESULTADO">🎯 Resultado (1X2)</option>
-        <option value="AMBOS_MARCAM">⚽ Ambos Marcam</option>
-        <option value="AMBOS_NAO">🚫 Ambos Não Marcam</option>
-        <option value="OVER">⬆️ Over Gols</option>
-        <option value="UNDER">⬇️ Under Gols</option>
-        <option value="DUPLA">➕ Dupla Chance</option>
-        <option value="OUTRO">📌 Outro</option>
-      </select>
-      <button id="btn-vista-operacao" class="hdr-btn" onclick="alternarVistaOperacao()">☰ Ver em linhas</button>
-    </div>
-    <div class="cards-grid" id="container-letras-linhas"></div>
-    <div id="rodape-soma-letras" style="margin-top:8px; font-size:11px; font-family:var(--mono); color:var(--muted); text-align:right;"></div>
-
-    <div style="margin-top:12px;">
-      <button id="btn-toggle-notas" class="hdr-btn" style="width:100%; text-align:left;" onclick="toggleNotasLivres()">📝 Anotações e orientações</button>
-      <div id="wrap-notas-livres" style="display:none; margin-top:8px;">
-        <textarea id="txt-notas-livres" placeholder="Registre aqui observações que ajudem a orientar ajustes: padrões percebidos, mercados que renderam mais, decisões tomadas, ideias para testar..." oninput="agendarSalvarNotasLivres()" style="width:100%; min-height:160px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text); font-family:var(--sans); font-size:13px; line-height:1.6; padding:12px; resize:vertical; outline:none;"></textarea>
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
-          <span id="notas-status" style="font-size:10px; color:var(--muted); font-family:var(--mono);"></span>
-          <span id="notas-contador" style="font-size:10px; color:var(--muted); font-family:var(--mono);"></span>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- ABA: LOTES -->
   <div id="lotes" class="tab-content">
-    <div class="action-row" style="margin-bottom:10px;">
+    <div class="action-row action-row-3" style="margin-bottom:8px;">
       <button class="btn-action btn-rotate" onclick="solicitarAberturaJanelaRodada()">🔄 Rotação</button>
+      <button class="btn-action btn-conclude" onclick="fecharEtapa()">💾 Concluir Etapa</button>
+      <button id="btn-toggle-modo-pos-win" class="btn-action btn-modo blindar" style="justify-content:center;" onclick="alternarModoPosWin()">🔒 Pós-Win: Blindar</button>
     </div>
 
-    <div class="info-bar" style="margin-bottom:8px; flex-wrap:wrap; gap:6px;">
-      <div class="info-item accent">Etapa <b id="lbl-etapa-num-lt">#1</b></div>
-      <div class="info-item">Início: <b id="lbl-valor-inicial-lt">R$0,00</b></div>
-      <div class="info-item" style="cursor:pointer;" onclick="editarSaldoReal()" title="Toque para ajustar ao saldo real da casa">Atual: <b id="lbl-valor-atual-lt">R$0,00</b> <span style="font-size:9px;opacity:.7;">✏️</span></div>
-      <div class="info-item win">Meta: <b id="lbl-meta-lt">R$0,00</b></div>
-      <div class="info-item accent">Falta: <b id="lbl-falta-lt">R$0,00</b></div>
+    <div style="display:flex; justify-content:flex-end; margin-bottom:6px;">
+      <button id="btn-recolher-info" class="hdr-btn" onclick="toggleInfoLotes()" style="font-size:11px;">▲ Recolher painel</button>
+    </div>
+
+    <div id="wrap-info-lotes">
+      <div class="prog-lote-card">
+        <div class="prog-lote-linha">
+          <span class="prog-lote-lbl">📈 Avanço da Etapa</span>
+          <span class="prog-lote-val" id="prog-etapa-val">0%</span>
+        </div>
+        <div class="prog-lote-track"><div class="prog-lote-fill" id="prog-etapa-bar" style="background:var(--accent);"></div></div>
+        <div class="prog-lote-linha" style="margin-top:8px;">
+          <span class="prog-lote-lbl">📅 Avanço do Dia</span>
+          <span class="prog-lote-val" id="prog-dia-val">0%</span>
+        </div>
+        <div class="prog-lote-track"><div class="prog-lote-fill" id="prog-dia-bar" style="background:var(--bar-win);"></div></div>
+      </div>
+
+      <div class="info-bar" style="margin-bottom:8px; flex-wrap:wrap; gap:6px;">
+        <div class="info-item accent">Etapa <b id="lbl-etapa-num-lt">#1</b></div>
+        <div class="info-item">Início: <b id="lbl-valor-inicial-lt">R$0,00</b></div>
+        <div class="info-item" style="cursor:pointer;" onclick="editarSaldoReal()" title="Toque para ajustar ao saldo real da casa">Atual: <b id="lbl-valor-atual-lt">R$0,00</b> <span style="font-size:9px;opacity:.7;">✏️</span></div>
+        <div class="info-item win">Meta: <b id="lbl-meta-lt">R$0,00</b></div>
+        <div class="info-item accent">Falta: <b id="lbl-falta-lt">R$0,00</b></div>
+      </div>
+</div>
+    <div class="filter-row" style="margin-bottom:6px;">
+      <button id="btn-filter-all" class="filter-btn filter-exib active" onclick="alterarFiltroExibicao('all')">Todas</button>
+      <button id="btn-filter-pending" class="filter-btn filter-exib" onclick="alterarFiltroExibicao('pending')">Pendentes</button>
+      <button id="btn-filter-loss" class="filter-btn filter-exib" onclick="alterarFiltroExibicao('loss')">Críticas</button>
     </div>
     <div style="display:flex; gap:6px; margin-bottom:8px; flex-wrap:wrap;">
-      <button id="btn-sort-id" class="filter-btn active" onclick="alterarOrdemLotes('id')">📋 Por Número</button>
-      <button id="btn-sort-risco" class="filter-btn" onclick="alterarOrdemLotes('risco')">🔴 Por Risco</button>
+      <button id="btn-sort-id" class="filter-btn filter-ord active" onclick="alterarOrdemLotes('id')">📋 Por Número</button>
+      <button id="btn-sort-risco" class="filter-btn filter-ord" onclick="alterarOrdemLotes('risco')">🔴 Por Risco</button>
     </div>
     <div class="table-wrap">
       <table>
@@ -716,6 +668,7 @@ tbody tr:last-child td { border-bottom:none; }
           <tr>
             <th>Lote</th>
             <th>Letra</th>
+            <th>Mercado</th>
             <th>Nota</th>
             <th>Meta</th>
             <th>Risco</th>
@@ -729,6 +682,18 @@ tbody tr:last-child td { border-bottom:none; }
         </thead>
         <tbody id="tabela-linhas-lotes"></tbody>
       </table>
+    </div>
+    <div id="rodape-soma-letras" style="margin-top:8px; font-size:11px; font-family:var(--mono); color:var(--muted); text-align:right;"></div>
+
+    <div style="margin-top:12px;">
+      <button id="btn-toggle-notas" class="hdr-btn" style="width:100%; text-align:left;" onclick="toggleNotasLivres()">📝 Anotações e orientações</button>
+      <div id="wrap-notas-livres" style="display:none; margin-top:8px;">
+        <textarea id="txt-notas-livres" placeholder="Registre aqui observações que ajudem a orientar ajustes: padrões percebidos, mercados que renderam mais, decisões tomadas, ideias para testar..." oninput="agendarSalvarNotasLivres()" style="width:100%; min-height:160px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text); font-family:var(--sans); font-size:13px; line-height:1.6; padding:12px; resize:vertical; outline:none;"></textarea>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
+          <span id="notas-status" style="font-size:10px; color:var(--muted); font-family:var(--mono);"></span>
+          <span id="notas-contador" style="font-size:10px; color:var(--muted); font-family:var(--mono);"></span>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1110,7 +1075,7 @@ function aplicarBlindagemDeVariaveis(){
 
   // Defaults de todos os campos operacionais, agora direto em state
   const m=state;
-  if(Array.isArray(m.sequencias)) m.sequencias.forEach(sq=>{ if(!sq.ultimos) sq.ultimos=[]; });
+  if(Array.isArray(m.sequencias)) m.sequencias.forEach(sq=>{ if(!sq.ultimos) sq.ultimos=[]; if(!sq.mercado) sq.mercado='MANDANTE'; });
   if(!m.marantanLancamentosRodada) m.marantanLancamentosRodada={};
   if(!m.oddsPorLetra) m.oddsPorLetra={"A":1.80,"B":1.80,"C":1.80,"D":1.80,"E":1.80,"F":1.80};
   if(!m.anotacoesPorLetra) m.anotacoesPorLetra={"A":"","B":"","C":"","D":"","E":"","F":""};
@@ -1313,7 +1278,7 @@ function gerarEstruturaLotesIniciais(){
   letras.forEach(l=>{ for(let k=0;k<cotas[l];k++) pool.push(l); });
   while(pool.length<total) pool.push(letras[0]);
   if(pool.length>total) pool=pool.slice(0,total);
-  const seqs=Array.from({length:total},(_,i)=>{ const l=pool[i]; const o=ms().oddsPorLetra[l]||2; return { id:i+1, apostaAtual:sniperArredondarAposta(getValorApostaBase(o)), streakLoss:0, letraRandomica:l, winsEtapa:0, lossesEtapa:0, perdasAcumuladas:0, status:'PENDING', ultimos:[] }; }); ms().sequencias=seqs;
+  const seqs=Array.from({length:total},(_,i)=>{ const l=pool[i]; const o=ms().oddsPorLetra[l]||2; return { id:i+1, apostaAtual:sniperArredondarAposta(getValorApostaBase(o)), streakLoss:0, letraRandomica:l, winsEtapa:0, lossesEtapa:0, perdasAcumuladas:0, status:'PENDING', ultimos:[], mercado:'MANDANTE' }; }); ms().sequencias=seqs;
   ms().lucroLetraEtapa={}; ms().letrasMetaCumprida={}; ms().lucroLetraArquivado={};
   ms().marantanLancamentosRodada={};
   ms().letrasBloqueadasRodada={};
@@ -1438,11 +1403,12 @@ function registrarEventoLetra(l,resultado){
 }
 
 // ── MOTOR DE RESULTADO POR LOTE (com teto de gales e stop por lote) ──
-const MERCADO_LABELS={RESULTADO:"🎯 Resultado",AMBOS_MARCAM:"⚽ Ambos Marcam",AMBOS_NAO:"🚫 Ambos Não Marcam",OVER:"⬆️ Over",UNDER:"⬇️ Under",DUPLA:"➕ Dupla Chance",OUTRO:"📌 Outro"};
+const MERCADO_LABELS={MANDANTE:"🏠 Vitória Mandante",VISITANTE:"✈️ Vitória Visitante",AMBOS_MARCAM:"⚽ Ambos Marcam",AMBOS_NAO:"🚫 Ambos Não Marcam",MAIS25:"⬆️ Mais 2,5",EMPATE_HT:"🟰 Empate 1º Tempo",PRIMEIRO:"1️⃣ Primeiro a Marcar",ULTIMO:"🔚 Último a Marcar"};
+const MERCADO_ORDEM=["MANDANTE","VISITANTE","AMBOS_MARCAM","AMBOS_NAO","MAIS25","EMPATE_HT","PRIMEIRO","ULTIMO"];
 
-function registrarAposta(letra,odd,venceu){
+function registrarAposta(letra,odd,venceu,mercado){
   if(!ms().registroApostas) ms().registroApostas=[];
-  ms().registroApostas.push({l:letra, o:odd, w:venceu?1:0, m:(ms().mercadoAtivo||"RESULTADO"), d:new Date().toISOString()});
+  ms().registroApostas.push({l:letra, o:odd, w:venceu?1:0, m:(mercado||"MANDANTE"), d:new Date().toISOString()});
   if(ms().registroApostas.length>20000) ms().registroApostas.splice(0,ms().registroApostas.length-20000);
 }
 
@@ -1468,6 +1434,17 @@ function toggleAbaVisivel(aba,visivel){
     if(ativa && ativa.id===aba) openTab('painel');
   }
   salvarDadosEAtualizarTudo();
+}
+
+function toggleInfoLotes(){
+  const wrap=document.getElementById('wrap-info-lotes');
+  const btn=document.getElementById('btn-recolher-info');
+  if(!wrap||!btn) return;
+  const recolhido=wrap.style.display==='none';
+  wrap.style.display=recolhido?'block':'none';
+  btn.innerText=recolhido?'▲ Recolher painel':'▼ Expandir painel';
+  ms().painelLotesRecolhido=!recolhido;
+  // persiste a preferência (sem salvar toda hora — só o flag em memória, salvo no próximo ciclo)
 }
 
 function toggleNotasLivres(){
@@ -1504,15 +1481,9 @@ function agendarSalvarNotasLivres(){
   },900);
 }
 
-function mudarMercadoAtivo(){
-  const sel=document.getElementById('sel-mercado-ativo'); if(!sel) return;
-  ms().mercadoAtivo=sel.value;
-  salvarDadosEAtualizarTudo();
-}
-
 function processarWinSeq(seq,odd){
   seq.winsEtapa++;
-  registrarAposta(seq.letraRandomica,odd,true);
+  registrarAposta(seq.letraRandomica,odd,true,seq.mercado);
   if(!seq.ultimos) seq.ultimos=[]; seq.ultimos.push(1); if(seq.ultimos.length>30) seq.ultimos.shift();
   const val=sniperArredondarAposta(seq.apostaAtual);
   state.bancaAtual+=(val*(odd-1));
@@ -1595,57 +1566,6 @@ function confirmarReabertura(){
 
   letraParaReabrir=null;
   fecharModal('modal-reabrir');
-  salvarDadosEAtualizarTudo();
-}
-
-function abrirModalResetarValores(){
-  // Calcula o prejuízo que será assumido: soma do risco acumulado de todos os lotes ativos.
-  let riscoTotal=0, lotesComRisco=0, lotesAtivos=0;
-  ms().sequencias.forEach(sq=>{
-    if(sq.status!=='FINISHED'){
-      lotesAtivos++;
-      const r=parseFloat(sq.perdasAcumuladas)||0;
-      if(r>0.0001){ riscoTotal+=r; lotesComRisco++; }
-    }
-  });
-  const msg=document.getElementById('modal-reset-msg');
-  if(riscoTotal<0.0001){
-    if(msg) msg.innerHTML='Nenhum lote ativo tem risco acumulado no momento — as apostas já estão no valor inicial. Não há nada para resetar.';
-    // ainda abre, mas com botão de confirmar inócuo
-  } else if(msg){
-    msg.innerHTML=`Isto vai <b>encerrar as sequências em andamento</b> e voltar todas as apostas ao valor inicial da etapa.<br><br>`+
-      `<div style="background:var(--surface2);border:1px solid var(--bar-amber);border-radius:var(--radius-sm);padding:10px;margin:4px 0;">`+
-      `<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span style="color:var(--muted);">Lotes em recuperação</span><b>${lotesComRisco}</b></div>`+
-      `<div style="display:flex;justify-content:space-between;font-size:13px;"><span style="color:var(--muted);">Prejuízo que será assumido</span><b style="color:var(--loss);">${fmt(riscoTotal)}</b></div>`+
-      `</div>`+
-      `<b style="color:var(--bar-amber);">⚠️ Este prejuízo é real e não será recuperado.</b> As perdas dos gales já aconteceram; resetar significa <b>parar de persegui-las</b> e recomeçar do zero — não desfazê-las.<br><br>`+
-      `<span style="font-size:11px;color:var(--muted);">Use isto quando a sequência passou do que você aguenta. É um freio de segurança, não um apagador de perdas.</span>`;
-  }
-  document.getElementById('modal-resetar-valores').style.display='flex';
-}
-
-function confirmarResetarValores(){
-  const oddBase=2;
-  let assumido=0, resetados=0;
-  ms().sequencias.forEach(sq=>{
-    if(sq.status!=='FINISHED'){
-      const r=parseFloat(sq.perdasAcumuladas)||0;
-      if(r>0.0001){ assumido+=r; }
-      const oddL=ms().oddsPorLetra[sq.letraRandomica]||oddBase;
-      sq.apostaAtual=sniperArredondarAposta(getValorApostaBase(oddL));
-      sq.perdasAcumuladas=0;
-      sq.streakLoss=0;
-      resetados++;
-    }
-  });
-  // Registra o evento como perda assumida (rastreabilidade + coerência com stops)
-  if(assumido>0.0001){
-    ms().perdasAssumidasTotal=(ms().perdasAssumidasTotal||0)+assumido;
-    ms().assumidasCount=(ms().assumidasCount||0)+1;
-    if(!ms().resetsValores) ms().resetsValores=[];
-    ms().resetsValores.push({d:new Date().toISOString(), assumido:assumido, lotes:resetados});
-  }
-  fecharModal('modal-resetar-valores');
   salvarDadosEAtualizarTudo();
 }
 
@@ -1802,7 +1722,7 @@ function verificarMetaLetra(l){
 
 function processarPerdaSeq(seq,odd){
   seq.lossesEtapa++;
-  registrarAposta(seq.letraRandomica,odd,false);
+  registrarAposta(seq.letraRandomica,odd,false,seq.mercado);
   if(!seq.ultimos) seq.ultimos=[]; seq.ultimos.push(0); if(seq.ultimos.length>30) seq.ultimos.shift();
   const val=sniperArredondarAposta(seq.apostaAtual);
   state.bancaAtual-=val;
@@ -1917,12 +1837,45 @@ function rolarUltimos(btn,dir){
   if(box) box.scrollBy({left:dir*120, behavior:'smooth'});
 }
 
+function mudarMercadoLote(index,valor){
+  const seq=ms().sequencias[index]; if(!seq) return;
+  seq.mercado=valor;
+  salvarDadosEAtualizarTudo();
+}
+
 function editarNotaLetra(l){
   const atual=(ms().anotacoesPorLetra&&ms().anotacoesPorLetra[l])||'';
   const nova=prompt('Nota da letra '+l+' (mercado / observação):', atual);
   if(nova===null) return; // cancelou
   if(!ms().anotacoesPorLetra) ms().anotacoesPorLetra={};
   ms().anotacoesPorLetra[l]=nova.trim();
+  salvarDadosEAtualizarTudo();
+}
+
+function resetarLoteIndividual(index){
+  const seq=ms().sequencias[index]; if(!seq) return;
+  const risco=parseFloat(seq.perdasAcumuladas)||0;
+  const l=seq.letraRandomica;
+  const msg=`Resetar o lote #${seq.id} (letra ${l})?\n\n`+
+    (risco>0.005
+      ? `⚠️ Este lote tem ${fmt(risco)} de risco acumulado. Ao resetar, você ASSUME essa perda — ela não é recuperada, apenas para de ser perseguida.\n\nA aposta volta ao valor inicial, as perdas zeram e a sequência de gales recomeça.`
+      : `A aposta volta ao valor inicial e a sequência recomeça. (Este lote não tem risco acumulado no momento.)`);
+  if(!confirm(msg)) return;
+
+  const oddL=ms().oddsPorLetra[l]||2;
+  const assumido=risco;
+  // Reset TOTAL do lote: aposta base, perdas zeradas, gales reiniciados, status volta a ativo.
+  seq.status='PENDING';
+  seq.apostaAtual=sniperArredondarAposta(getValorApostaBase(oddL));
+  seq.perdasAcumuladas=0;
+  seq.streakLoss=0;
+
+  if(assumido>0.005){
+    ms().perdasAssumidasTotal=(ms().perdasAssumidasTotal||0)+assumido;
+    ms().assumidasCount=(ms().assumidasCount||0)+1;
+    if(!ms().resetsValores) ms().resetsValores=[];
+    ms().resetsValores.push({d:new Date().toISOString(), assumido:assumido, lotes:1, loteId:seq.id});
+  }
   salvarDadosEAtualizarTudo();
 }
 
@@ -1949,16 +1902,16 @@ function dispararAnimacaoToastLotes(callback){
 
 function alterarFiltroExibicao(tipo){
   filtroAtualExibicao=tipo;
-  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.filter-exib').forEach(b=>b.classList.remove('active'));
   const btn=document.getElementById('btn-filter-'+tipo); if(btn) btn.classList.add('active');
   renderLinhas();
-  renderCards(); // o filtro também vale para os cards de letras da Operação
+  renderCards();
 }
 
 function alterarOrdemLotes(ordem){
   ordemLotes=ordem;
-  document.getElementById('btn-sort-id').className='filter-btn'+(ordem==='id'?' active':'');
-  document.getElementById('btn-sort-risco').className='filter-btn'+(ordem==='risco'?' active':'');
+  document.getElementById('btn-sort-id').className='filter-btn filter-ord'+(ordem==='id'?' active':'');
+  document.getElementById('btn-sort-risco').className='filter-btn filter-ord'+(ordem==='risco'?' active':'');
   renderLinhas();
 }
 
@@ -2037,6 +1990,12 @@ function renderLinhas(){
     html+=`<tr class="${rowCls}">
       <td class="t-mono">#${String(seq.id).padStart(3,'0')}</td>
       <td><span class="lote-badge">${l}</span></td>
+      <td>${(function(){
+        const mkt=seq.mercado||'MANDANTE';
+        let opts='';
+        MERCADO_ORDEM.forEach(k=>{ opts+=`<option value="${k}" ${k===mkt?'selected':''}>${MERCADO_LABELS[k]}</option>`; });
+        return `<select class="t-mercado-sel" onchange="mudarMercadoLote(${i},this.value)">${opts}</select>`;
+      })()}</td>
       <td class="t-nota" style="cursor:pointer;" title="Clique para editar a nota da letra ${l}" onclick="editarNotaLetra('${l}')">${ms().anotacoesPorLetra&&ms().anotacoesPorLetra[l]?ms().anotacoesPorLetra[l]:'<span style=\'color:var(--accent);\'>✏️ nota</span>'}</td>
       <td class="t-meta-cell">${(function(){
         const mp=(ms().metaPorLetra&&parseFloat(ms().metaPorLetra[l]))||0;
@@ -2065,6 +2024,7 @@ function renderLinhas(){
         <button class="tbl-btn-win" onclick="registrarApostaIndividual(${i},'WIN',false)">Vit</button>
         <button class="tbl-btn-loss" onclick="registrarApostaIndividual(${i},'LOSS',false)">Der</button>
         <button class="tbl-btn-eq" onclick="distributingRiscoLoteCritico(${i})">⚖️</button>
+        <button class="tbl-btn-reset" onclick="resetarLoteIndividual(${i})" title="Resetar este lote (aposta e perdas ao inicial)">🛡️</button>
       </div></td>
     </tr>`;
   });
@@ -2084,7 +2044,6 @@ function renderRodapeSomaLetras(){
 
 function renderCards(){
   const container=document.getElementById('container-letras-linhas'); if(!container) return;
-  const selMerc=document.getElementById('sel-mercado-ativo'); if(selMerc) selMerc.value=ms().mercadoAtivo||'RESULTADO';
   const az="ABCDEFGHIJKLMNOPQRSTUVWXYZ"; let html=''; let letrasVisiveis=0;
   for(let i=0;i<Math.min(ms().aleatoriedade,26);i++){
     const l=az[i];
@@ -2221,12 +2180,6 @@ function renderCards(){
   const btnV=document.getElementById('btn-vista-operacao');
   if(btnV) btnV.innerText=(ms().vistaOperacao||'cards')==='linhas'?'🔲 Ver em cards':'☰ Ver em linhas';
   container.innerHTML=html;
-}
-
-function alternarVistaOperacao(){
-  ms().vistaOperacao=(ms().vistaOperacao||'cards')==='cards'?'linhas':'cards';
-  renderCards();
-  salvarDadosEAtualizarTudo();
 }
 
 function preencherCamposConfig(){ if(typeof aplicarVisibilidadeAbas==="function") aplicarVisibilidadeAbas();
@@ -2418,14 +2371,36 @@ function renderPainelVantagem(){
   // ── Por MERCADO (a quebra que responde "onde tenho vantagem?") ──
   const temMercado=reg.some(r=>r.m);
   if(temMercado){
+    // Agrega por mercado: contagem, vitórias, soma de odds — e sequências de derrota (ordem cronológica).
     const porMerc={};
-    reg.forEach(r=>{ const k=r.m||'RESULTADO'; if(!porMerc[k]) porMerc[k]={n:0,w:0,so:0}; porMerc[k].n++; porMerc[k].w+=r.w; porMerc[k].so+=(r.o||2); });
+    const seqCtrl={}; // controla a sequência de derrotas corrente por mercado
+    reg.forEach(r=>{
+      const k=r.m||'MANDANTE';
+      if(!porMerc[k]){ porMerc[k]={n:0,w:0,so:0, maxSeqL:0, seqsFechadas:[]}; seqCtrl[k]=0; }
+      porMerc[k].n++; porMerc[k].w+=r.w; porMerc[k].so+=(r.o||2);
+      if(r.w===1){
+        // vitória fecha a sequência de derrotas (se havia uma)
+        if(seqCtrl[k]>0){ porMerc[k].seqsFechadas.push(seqCtrl[k]); seqCtrl[k]=0; }
+      } else {
+        seqCtrl[k]++;
+        if(seqCtrl[k]>porMerc[k].maxSeqL) porMerc[k].maxSeqL=seqCtrl[k];
+      }
+    });
+    // fecha sequências ainda abertas no fim do registro
+    Object.keys(seqCtrl).forEach(k=>{ if(seqCtrl[k]>0) porMerc[k].seqsFechadas.push(seqCtrl[k]); });
+
     html+=`<div style="font-size:10px;color:var(--muted);font-family:var(--mono);font-weight:700;letter-spacing:.06em;margin:14px 0 6px;">DESEMPENHO POR TIPO DE MERCADO</div>`;
     Object.keys(porMerc).sort((a,b)=>porMerc[b].n-porMerc[a].n).forEach(k=>{
       const d=porMerc[k], be=breakevenDeOdd(d.so/d.n), v=vereditoEstatistico(d.w,d.n,be);
       const pctBar=Math.max(0,Math.min(100,v.ic.p*100));
       const bePos=Math.max(0,Math.min(100,be*100));
       const lbl=(typeof MERCADO_LABELS!=='undefined'&&MERCADO_LABELS[k])?MERCADO_LABELS[k]:k;
+      const mediaSeq=d.seqsFechadas.length>0?(d.seqsFechadas.reduce((a,c)=>a+c,0)/d.seqsFechadas.length):0;
+      // Metas cumpridas (sucesso OPERACIONAL): lotes do mercado que bateram meta ÷ total do mercado na etapa atual
+      const lotesMkt=ms().sequencias.filter(s=>(s.mercado||'MANDANTE')===k);
+      const lotesMktOk=lotesMkt.filter(s=>s.status==='FINISHED'||(ms().letrasMetaCumprida&&ms().letrasMetaCumprida[s.letraRandomica])).length;
+      const pctMetas=lotesMkt.length>0?(lotesMktOk/lotesMkt.length)*100:0;
+      const corMetas=pctMetas>=50?'var(--win)':(pctMetas>0?'var(--bar-amber)':'var(--muted)');
       html+=`
       <div style="background:var(--surface);border:1px solid var(--border);border-left:4px solid ${cores[v.cod]};border-radius:8px;padding:10px;margin-bottom:6px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
@@ -2439,7 +2414,15 @@ function renderPainelVantagem(){
           <div style="position:absolute;left:0;top:0;height:100%;width:${pctBar}%;background:${cores[v.cod]};"></div>
           <div style="position:absolute;left:${bePos}%;top:-2px;width:2px;height:12px;background:var(--text);"></div>
         </div>
-        <div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:5px;">IC95%: ${(v.ic.baixo*100).toFixed(1)}–${(v.ic.alto*100).toFixed(1)}% · equilíbrio ${(be*100).toFixed(1)}% · odd méd. ${(d.so/d.n).toFixed(2)}</div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:10px;color:var(--text);font-family:var(--mono);margin-top:7px;">
+          <span>🔻 Pior sequência: <b style="color:var(--loss);">${d.maxSeqL}</b> derrotas</span>
+          <span>📊 Média: <b>${mediaSeq.toFixed(1)}</b> derrotas/sequência</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 8px;margin-top:6px;">
+          <span style="font-size:10px;color:var(--text);font-family:var(--sans);font-weight:600;">🎯 Metas cumpridas (etapa atual)</span>
+          <span style="font-family:var(--mono);font-size:12px;font-weight:800;color:${corMetas};">${pctMetas.toFixed(0)}% <span style="color:var(--muted);font-size:9px;font-weight:600;">(${lotesMktOk}/${lotesMkt.length})</span></span>
+        </div>
+        <div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:4px;">IC95%: ${(v.ic.baixo*100).toFixed(1)}–${(v.ic.alto*100).toFixed(1)}% · equilíbrio ${(be*100).toFixed(1)}% · odd méd. ${(d.so/d.n).toFixed(2)}</div>
       </div>`;
     });
   }
@@ -2697,6 +2680,29 @@ function atualizarPainelUI(forcarGrafico=false){
   const faltaElLt=document.getElementById('lbl-falta-lt');
   if(faltaElLt){ faltaElLt.innerText=fmt(faltaOp); faltaElLt.style.color=faltaOp<=0?'var(--win)':'var(--accent)'; }
 
+  // ── Barras de progresso da aba Lotes ──
+  // Etapa: mesmo cálculo do progresso da etapa (lucro / lucro necessário)
+  const pctEtapaLote=lucroNecessario>0?Math.max(0,(lucroEtapa/lucroNecessario)*100):0;
+  const beL=document.getElementById('prog-etapa-bar'); if(beL) beL.style.width=Math.min(100,pctEtapaLote)+'%';
+  const beV=document.getElementById('prog-etapa-val'); if(beV) beV.innerText=pctEtapaLote.toFixed(1)+'%';
+  // Dia: lucro do dia / meta diária (usa saldoInicioDia marcado pelo verificarMetaDiaria)
+  const pctMetaDia=parseFloat(ms().metaDiaria)||0;
+  const baseDia=(ms().saldoInicioDia!==undefined)?ms().saldoInicioDia:state.bancaAtual;
+  const alvoDia=baseDia*(pctMetaDia/100);
+  const lucroDiaLote=state.bancaAtual-baseDia;
+  const pctDia=alvoDia>0?Math.max(0,(lucroDiaLote/alvoDia)*100):0;
+  const bdL=document.getElementById('prog-dia-bar');
+  if(bdL){ bdL.style.width=Math.min(100,pctDia)+'%'; bdL.style.background=lucroDiaLote<0?'var(--bar-loss)':'var(--bar-win)'; }
+  const bdV=document.getElementById('prog-dia-val');
+  if(bdV) bdV.innerText=(pctMetaDia>0?pctDia.toFixed(1)+'%':'—');
+
+  // Restaura estado recolhido/expandido do painel
+  const wrapInfo=document.getElementById('wrap-info-lotes');
+  const btnRec=document.getElementById('btn-recolher-info');
+  if(wrapInfo&&btnRec){
+    if(ms().painelLotesRecolhido){ wrapInfo.style.display='none'; btnRec.innerText='▼ Expandir painel'; }
+  }
+
   // Label do modo no chip de etapa
   const chip=document.getElementById('hdr-etapa'); if(chip) chip.parentElement.title='OPERAÇÃO';
 
@@ -2719,7 +2725,7 @@ function atualizarPainelUI(forcarGrafico=false){
   const banner=document.getElementById('banner-stop');
   if(banner) banner.style.display=ms().stopTravado?'block':'none';
 
-  aplicarVisibilidadeAbas(); renderLinhas(); renderCards(); renderRodapeSomaLetras(); renderHistorico(); renderExposicao(); renderEstatisticas(); renderPainelVantagem(); atualizarBotaoModoUI(); atualizarLayoutContadoresPorModo();
+  aplicarVisibilidadeAbas(); renderLinhas(); renderCards(); renderRodapeSomaLetras(); renderHistorico(); renderEstatisticas(); renderPainelVantagem(); atualizarBotaoModoUI(); atualizarLayoutContadoresPorModo();
   if(document.getElementById('grafico')&&document.getElementById('grafico').classList.contains('active')) renderizarGrafico();
 }
 </script>
