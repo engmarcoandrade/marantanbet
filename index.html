@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#0D1117">
-<title>Método Marantan v33.8</title>
+<title>Método Marantan v34.0</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox=%270 0 48 48%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Crect x=%271.5%27 y=%271.5%27 width=%2745%27 height=%2745%27 rx=%2711%27 fill=%27%23161B22%27 stroke=%27%2330363D%27 stroke-width=%271.5%27/%3E%3Cpath d=%27M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3Cpath d=%27M30.5 9.5 L37.5 9 L36.8 16%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -202,6 +202,11 @@ header { background:var(--surface); border-bottom:1px solid var(--border); paddi
 .t-nota { font-family:var(--sans); font-size:11px; color:var(--text); max-width:110px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .t-meta-cell { min-width:70px; vertical-align:middle; }
 .u10-wrap { display:flex; gap:2px; align-items:center; }
+.u10-box { display:flex; align-items:center; gap:3px; }
+.u10-scroll { display:flex; gap:2px; align-items:center; overflow-x:auto; max-width:150px; scroll-behavior:smooth; padding:1px; scrollbar-width:none; }
+.u10-scroll::-webkit-scrollbar { display:none; }
+.u10-arrow { flex:none; width:18px; height:22px; border:1px solid var(--border); background:var(--surface2); color:var(--text); border-radius:4px; cursor:pointer; font-size:10px; line-height:1; padding:0; font-weight:700; }
+.u10-arrow:hover { background:var(--accent-dim); border-color:var(--accent); }
 .u10 { width:15px; height:15px; border-radius:3px; display:inline-flex; align-items:center; justify-content:center; font-size:10px; font-weight:900; line-height:1; box-sizing:border-box; }
 /* Vitória: quadrado PREENCHIDO, cantos arredondados, ✓ branco */
 .u10-win { background:var(--bar-win); color:#FFFFFF; border:1.5px solid var(--bar-win); }
@@ -512,7 +517,7 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v33.8</span></div>
+      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v34.0</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
@@ -716,7 +721,7 @@ tbody tr:last-child td { border-bottom:none; }
             <th>Aposta</th>
             <th>Seq.</th>
             <th>V/D</th>
-            <th>Últimos 10</th>
+            <th>Últimos 30</th>
             <th>Status</th>
             <th>Ações</th>
           </tr>
@@ -1307,7 +1312,7 @@ function gerarEstruturaLotesIniciais(){
   letras.forEach(l=>{ for(let k=0;k<cotas[l];k++) pool.push(l); });
   while(pool.length<total) pool.push(letras[0]);
   if(pool.length>total) pool=pool.slice(0,total);
-  const seqs=Array.from({length:total},(_,i)=>{ const l=pool[i]; const o=ms().oddsPorLetra[l]||2; return { id:i+1, apostaAtual:getValorApostaBase(o), streakLoss:0, letraRandomica:l, winsEtapa:0, lossesEtapa:0, perdasAcumuladas:0, status:'PENDING', ultimos:[] }; }); ms().sequencias=seqs;
+  const seqs=Array.from({length:total},(_,i)=>{ const l=pool[i]; const o=ms().oddsPorLetra[l]||2; return { id:i+1, apostaAtual:sniperArredondarAposta(getValorApostaBase(o)), streakLoss:0, letraRandomica:l, winsEtapa:0, lossesEtapa:0, perdasAcumuladas:0, status:'PENDING', ultimos:[] }; }); ms().sequencias=seqs;
   ms().lucroLetraEtapa={}; ms().letrasMetaCumprida={}; ms().lucroLetraArquivado={};
   ms().marantanLancamentosRodada={};
   ms().letrasBloqueadasRodada={};
@@ -1411,7 +1416,7 @@ function salvarConfiguracoes(){
   gerarEstruturaLotesIniciais(); alert("Configurações salvas e grade recriada!");
 }
 
-function sniperArredondarAposta(val){ return Math.max(0.0001, val); }
+function sniperArredondarAposta(val){ return Math.max(0.01, Math.round(val*100)/100); }
 function roundedFixo(val){ return val; }
 
 // ── ESTATÍSTICA DE SEQUÊNCIAS (por letra, deduplicada por rodada) ──
@@ -1507,7 +1512,7 @@ function mudarMercadoAtivo(){
 function processarWinSeq(seq,odd){
   seq.winsEtapa++;
   registrarAposta(seq.letraRandomica,odd,true);
-  if(!seq.ultimos) seq.ultimos=[]; seq.ultimos.push(1); if(seq.ultimos.length>10) seq.ultimos.shift();
+  if(!seq.ultimos) seq.ultimos=[]; seq.ultimos.push(1); if(seq.ultimos.length>30) seq.ultimos.shift();
   const val=sniperArredondarAposta(seq.apostaAtual);
   state.bancaAtual+=(val*(odd-1));
   const lw=seq.letraRandomica;
@@ -1521,7 +1526,7 @@ function processarWinSeq(seq,odd){
     seq.apostaAtual=seq.apostaAtual*(1+((ms().incrFixoPercent||10)/100));
   } else {
     seq.perdasAcumuladas=0; seq.streakLoss=0;
-    seq.apostaAtual=getValorApostaBase(odd);
+    seq.apostaAtual=sniperArredondarAposta(getValorApostaBase(odd));
   }
   // Verifica a meta da letra ANTES de decidir o status — assim a vitória que cruza a meta já blinda o lote
   verificarMetaLetra(lw);
@@ -1567,7 +1572,7 @@ function confirmarReabertura(){
   ms().sequencias.forEach(s=>{
     if(s.letraRandomica===l){
       s.status='PENDING';
-      s.apostaAtual=getValorApostaBase(oddL);
+      s.apostaAtual=sniperArredondarAposta(getValorApostaBase(oddL));
       s.perdasAcumuladas=0;
       s.streakLoss=0;
     }
@@ -1626,7 +1631,7 @@ function confirmarResetarValores(){
       const r=parseFloat(sq.perdasAcumuladas)||0;
       if(r>0.0001){ assumido+=r; }
       const oddL=ms().oddsPorLetra[sq.letraRandomica]||oddBase;
-      sq.apostaAtual=getValorApostaBase(oddL);
+      sq.apostaAtual=sniperArredondarAposta(getValorApostaBase(oddL));
       sq.perdasAcumuladas=0;
       sq.streakLoss=0;
       resetados++;
@@ -1797,7 +1802,7 @@ function verificarMetaLetra(l){
 function processarPerdaSeq(seq,odd){
   seq.lossesEtapa++;
   registrarAposta(seq.letraRandomica,odd,false);
-  if(!seq.ultimos) seq.ultimos=[]; seq.ultimos.push(0); if(seq.ultimos.length>10) seq.ultimos.shift();
+  if(!seq.ultimos) seq.ultimos=[]; seq.ultimos.push(0); if(seq.ultimos.length>30) seq.ultimos.shift();
   const val=sniperArredondarAposta(seq.apostaAtual);
   state.bancaAtual-=val;
   if(!ms().lucroLetraEtapa) ms().lucroLetraEtapa={};
@@ -1817,11 +1822,11 @@ function processarPerdaSeq(seq,odd){
     ms().perdasAssumidasTotal=(ms().perdasAssumidasTotal||0)+valorAssumido;
     ms().assumidasCount=(ms().assumidasCount||0)+1;
     seq.perdasAcumuladas=0; seq.streakLoss=0;
-    seq.apostaAtual=getValorApostaBase(odd);
+    seq.apostaAtual=sniperArredondarAposta(getValorApostaBase(odd));
     lotesAvisadosRisco.delete(`op_${seq.id}`); // libera aviso para próxima sequência
     return {assumida:true, motivo:estourouGales?'teto de gales':'stop por lote', valor:valorAssumido};
   }
-  seq.apostaAtual=proximaAposta;
+  seq.apostaAtual=sniperArredondarAposta(proximaAposta);
 
   // ── Aviso em 70% do teto de gales ──
   const maxG=ms().maxGales||4;
@@ -1885,17 +1890,25 @@ function executarAcaoEmMassaCard(letraAlvo,resultado){
 
 function renderUltimos10(arr){
   arr=arr||[];
-  const ult=arr.slice(-10);
-  const faltam=10-ult.length;
-  let html='<div class="u10-wrap">';
-  // quadrados vazios primeiro (mais antigos ausentes)
-  for(let i=0;i<faltam;i++) html+='<span class="u10 u10-empty"></span>';
-  ult.forEach(r=>{
-    if(r===1) html+='<span class="u10 u10-win" title="Vitória">✓</span>';
-    else html+='<span class="u10 u10-loss" title="Derrota">✕</span>';
+  const ult=arr.slice(-30); // mais recentes à direita
+  let quadros='';
+  ult.forEach((r,idx)=>{
+    const n=idx+1; // posição (1 = mais antigo do bloco visível)
+    if(r===1) quadros+=`<span class="u10 u10-win" title="Vitória (${n}ª)">✓</span>`;
+    else quadros+=`<span class="u10 u10-loss" title="Derrota (${n}ª)">✕</span>`;
   });
-  html+='</div>';
-  return html;
+  if(ult.length===0) quadros='<span style="color:var(--muted);font-size:10px;padding:0 4px;">sem resultados</span>';
+  // Estrutura: [◀] [faixa rolável] [▶]. As setas rolam a faixa; a faixa também aceita arrasto/rodinha.
+  return `<div class="u10-box">
+    <button class="u10-arrow" onclick="rolarUltimos(this,-1)" title="Anteriores">◀</button>
+    <div class="u10-scroll">${quadros}</div>
+    <button class="u10-arrow" onclick="rolarUltimos(this,1)" title="Mais recentes">▶</button>
+  </div>`;
+}
+
+function rolarUltimos(btn,dir){
+  const box=btn.parentElement.querySelector('.u10-scroll');
+  if(box) box.scrollBy({left:dir*90, behavior:'smooth'});
 }
 
 function editarNotaLetra(l){
@@ -1915,8 +1928,8 @@ function distributingRiscoLoteCritico(indexAlvo){
   if(lc.perdasAcumuladas<=0){ alert("Este lote não tem risco acumulado para distribuir."); return; }
   if(outros.length===0){ alert("Não há outro lote ativo para receber o risco.\n\nOs demais lotes estão blindados (finalizados) — e lotes blindados não recebem risco, para não expor o lucro já protegido. Reabra um lote se quiser usá-lo como destino."); return; }
   if(confirm("⚖️ Diluir o risco acumulado entre os outros lotes ativos?")){
-    const frac=lc.perdasAcumuladas/outros.length; const oddLc=ms().oddsPorLetra[lc.letraRandomica]||2; lc.perdasAcumuladas=0; lc.apostaAtual=getValorApostaBase(oddLc);
-    ms().sequencias.forEach(seq=>{ if(seq.status!=='FINISHED'&&seq.id!==lc.id){ seq.perdasAcumuladas=roundedFixo(seq.perdasAcumuladas+frac); if(ms().modoProgressao!=="PERCENTUAL"){ const odd=ms().oddsPorLetra[seq.letraRandomica]||2; seq.apostaAtual=(seq.perdasAcumuladas+getLucroDesejadoBase())/(odd-1); } } });
+    const frac=lc.perdasAcumuladas/outros.length; const oddLc=ms().oddsPorLetra[lc.letraRandomica]||2; lc.perdasAcumuladas=0; lc.apostaAtual=sniperArredondarAposta(getValorApostaBase(oddLc));
+    ms().sequencias.forEach(seq=>{ if(seq.status!=='FINISHED'&&seq.id!==lc.id){ seq.perdasAcumuladas=roundedFixo(seq.perdasAcumuladas+frac); if(ms().modoProgressao!=="PERCENTUAL"){ const odd=ms().oddsPorLetra[seq.letraRandomica]||2; seq.apostaAtual=sniperArredondarAposta((seq.perdasAcumuladas+getLucroDesejadoBase())/(odd-1)); } } });
     dispararAnimacaoToastLotes(()=>{ salvarDadosEAtualizarTudo(); });
   }
 }
