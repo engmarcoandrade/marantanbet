@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#0D1117">
-<title>Método Marantan v34.4</title>
+<title>Método Marantan v34.6</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox=%270 0 48 48%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Crect x=%271.5%27 y=%271.5%27 width=%2745%27 height=%2745%27 rx=%2711%27 fill=%27%23161B22%27 stroke=%27%2330363D%27 stroke-width=%271.5%27/%3E%3Cpath d=%27M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3Cpath d=%27M30.5 9.5 L37.5 9 L36.8 16%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -199,7 +199,6 @@ header { background:var(--surface); border-bottom:1px solid var(--border); paddi
 .letra-card.linha .card-btns { margin:0; display:flex; gap:5px; }
 .btn-reabrir { width:100%; background:var(--surface2); border:1px solid var(--accent); color:var(--accent); padding:6px; border-radius:var(--radius-sm); font-size:11px; font-weight:700; cursor:pointer; font-family:var(--sans); }
 .btn-reabrir:hover { background:var(--accent-dim); }
-.t-nota { font-family:var(--sans); font-size:11px; color:var(--text); max-width:110px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .t-meta-cell { min-width:70px; vertical-align:middle; }
 .t-mercado-sel { background:var(--surface2); border:1px solid var(--border); color:var(--text); font-family:var(--sans); font-size:10px; font-weight:600; padding:3px 4px; border-radius:4px; cursor:pointer; max-width:130px; }
 .u10-wrap { display:flex; gap:2px; align-items:center; }
@@ -514,7 +513,7 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v34.4</span></div>
+      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v34.6</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
@@ -669,7 +668,6 @@ tbody tr:last-child td { border-bottom:none; }
             <th>Lote</th>
             <th>Letra</th>
             <th>Mercado</th>
-            <th>Nota</th>
             <th>Meta</th>
             <th>Risco</th>
             <th>Aposta</th>
@@ -783,6 +781,15 @@ tbody tr:last-child td { border-bottom:none; }
     <div class="cfg-section">
       <div class="cfg-title purple">🔤 Odds e Metas por Letra</div>
       <div id="odds-inputs-placeholder"></div>
+    </div>
+
+    <div class="cfg-section">
+      <div class="cfg-title accent">🎯 Tipos de Mercado</div>
+      <p style="font-size:10px;color:var(--muted);line-height:1.5;margin-bottom:8px;">Estes são os mercados que aparecem no seletor de cada lote e nas estatísticas. Edite os nomes, adicione ou remova conforme sua operação. O <b>código</b> é a sigla curta (ex.: V1); o <b>nome</b> é a descrição.</p>
+      <div id="mercados-editor"></div>
+      <button onclick="adicionarMercado()" style="width:100%;margin-top:8px;padding:9px;background:var(--surface2);border:1px dashed var(--accent);border-radius:var(--radius-sm);color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--sans);">➕ Adicionar mercado</button>
+      <button onclick="salvarMercados()" style="width:100%;margin-top:6px;padding:9px;background:var(--accent);border:none;border-radius:var(--radius-sm);color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--sans);">💾 Salvar mercados</button>
+      <p id="mercados-status" style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:6px;text-align:center;"></p>
     </div>
 
     <button class="btn-save" onclick="salvarConfiguracoes()">💾 Salvar e Recriar Grade</button>
@@ -1075,7 +1082,8 @@ function aplicarBlindagemDeVariaveis(){
 
   // Defaults de todos os campos operacionais, agora direto em state
   const m=state;
-  if(Array.isArray(m.sequencias)) m.sequencias.forEach(sq=>{ if(!sq.ultimos) sq.ultimos=[]; if(!sq.mercado) sq.mercado='MANDANTE'; });
+  if(!Array.isArray(m.mercadosCustom)||m.mercadosCustom.length===0) m.mercadosCustom=JSON.parse(JSON.stringify(MERCADOS_PADRAO));
+    if(Array.isArray(m.sequencias)) m.sequencias.forEach(sq=>{ if(!sq.ultimos) sq.ultimos=[]; if(!sq.mercado) sq.mercado=m.mercadosCustom[0].cod; });
   if(!m.marantanLancamentosRodada) m.marantanLancamentosRodada={};
   if(!m.oddsPorLetra) m.oddsPorLetra={"A":1.80,"B":1.80,"C":1.80,"D":1.80,"E":1.80,"F":1.80};
   if(!m.anotacoesPorLetra) m.anotacoesPorLetra={"A":"","B":"","C":"","D":"","E":"","F":""};
@@ -1278,7 +1286,7 @@ function gerarEstruturaLotesIniciais(){
   letras.forEach(l=>{ for(let k=0;k<cotas[l];k++) pool.push(l); });
   while(pool.length<total) pool.push(letras[0]);
   if(pool.length>total) pool=pool.slice(0,total);
-  const seqs=Array.from({length:total},(_,i)=>{ const l=pool[i]; const o=ms().oddsPorLetra[l]||2; return { id:i+1, apostaAtual:sniperArredondarAposta(getValorApostaBase(o)), streakLoss:0, letraRandomica:l, winsEtapa:0, lossesEtapa:0, perdasAcumuladas:0, status:'PENDING', ultimos:[], mercado:'MANDANTE' }; }); ms().sequencias=seqs;
+  const seqs=Array.from({length:total},(_,i)=>{ const l=pool[i]; const o=ms().oddsPorLetra[l]||2; return { id:i+1, apostaAtual:sniperArredondarAposta(getValorApostaBase(o)), streakLoss:0, letraRandomica:l, winsEtapa:0, lossesEtapa:0, perdasAcumuladas:0, status:'PENDING', ultimos:[], mercado:(getMercados()[0]?getMercados()[0].cod:'V1') }; }); ms().sequencias=seqs;
   ms().lucroLetraEtapa={}; ms().letrasMetaCumprida={}; ms().lucroLetraArquivado={};
   ms().marantanLancamentosRodada={};
   ms().letrasBloqueadasRodada={};
@@ -1403,12 +1411,29 @@ function registrarEventoLetra(l,resultado){
 }
 
 // ── MOTOR DE RESULTADO POR LOTE (com teto de gales e stop por lote) ──
-const MERCADO_LABELS={MANDANTE:"🏠 Vitória Mandante",VISITANTE:"✈️ Vitória Visitante",AMBOS_MARCAM:"⚽ Ambos Marcam",AMBOS_NAO:"🚫 Ambos Não Marcam",MAIS25:"⬆️ Mais 2,5",EMPATE_HT:"🟰 Empate 1º Tempo",PRIMEIRO:"1️⃣ Primeiro a Marcar",ULTIMO:"🔚 Último a Marcar"};
-const MERCADO_ORDEM=["MANDANTE","VISITANTE","AMBOS_MARCAM","AMBOS_NAO","MAIS25","EMPATE_HT","PRIMEIRO","ULTIMO"];
+const MERCADOS_PADRAO=[
+  {cod:"V1",nome:"Vitória Mandante"},
+  {cod:"EMP",nome:"Empate"},
+  {cod:"V2",nome:"Vitória Visitante"},
+  {cod:"1T1",nome:"1º Tempo - Mandante"},
+  {cod:"1TX",nome:"1º Tempo - Empate"},
+  {cod:"1T2",nome:"1º Tempo - Visitante"},
+  {cod:"MA25",nome:"Mais de 2,5 gols"},
+  {cod:"ME15",nome:"Menos de 1,5 gols"},
+  {cod:"AMS",nome:"Ambos Marcam - Sim"},
+  {cod:"AMN",nome:"Ambos Marcam - Não"},
+  {cod:"PM1",nome:"Primeiro a Marcar - Mandante"},
+  {cod:"PM2",nome:"Primeiro a Marcar - Visitante"},
+  {cod:"UM1",nome:"Último a Marcar - Mandante"},
+  {cod:"UM2",nome:"Último a Marcar - Visitante"}
+];
+// Retorna a lista de mercados vigente (do estado, ou o padrão)
+function getMercados(){ const m=ms().mercadosCustom; return (Array.isArray(m)&&m.length>0)?m : MERCADOS_PADRAO; }
+function labelMercado(cod){ const m=getMercados().find(x=>x.cod===cod); return m?(m.cod+" · "+m.nome):cod; }
 
 function registrarAposta(letra,odd,venceu,mercado){
   if(!ms().registroApostas) ms().registroApostas=[];
-  ms().registroApostas.push({l:letra, o:odd, w:venceu?1:0, m:(mercado||"MANDANTE"), d:new Date().toISOString()});
+  ms().registroApostas.push({l:letra, o:odd, w:venceu?1:0, m:(mercado||(getMercados()[0]?getMercados()[0].cod:"V1")), d:new Date().toISOString()});
   if(ms().registroApostas.length>20000) ms().registroApostas.splice(0,ms().registroApostas.length-20000);
 }
 
@@ -1837,18 +1862,61 @@ function rolarUltimos(btn,dir){
   if(box) box.scrollBy({left:dir*120, behavior:'smooth'});
 }
 
+function renderEditorMercados(){
+  const box=document.getElementById('mercados-editor'); if(!box) return;
+  const lista=getMercados();
+  let html='';
+  lista.forEach((m,i)=>{
+    html+=`<div style="display:flex;gap:6px;align-items:center;margin-bottom:5px;">
+      <input type="text" value="${(m.cod||'').replace(/"/g,'&quot;')}" oninput="editarMercadoCampo(${i},'cod',this.value)" placeholder="V1" style="width:64px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:11px;font-weight:700;padding:6px;border-radius:4px;text-transform:uppercase;">
+      <input type="text" value="${(m.nome||'').replace(/"/g,'&quot;')}" oninput="editarMercadoCampo(${i},'nome',this.value)" placeholder="Descrição" style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:var(--sans);font-size:11px;padding:6px;border-radius:4px;">
+      <button onclick="removerMercado(${i})" title="Remover" style="flex:none;width:28px;height:28px;background:var(--surface2);border:1px solid var(--loss);color:var(--loss);border-radius:4px;cursor:pointer;font-weight:700;">✕</button>
+    </div>`;
+  });
+  box.innerHTML=html;
+}
+
+// Estado temporário de edição (só grava no estado real ao clicar em Salvar)
+let _mercadosEdit=null;
+function _garantirEdit(){ if(!_mercadosEdit) _mercadosEdit=JSON.parse(JSON.stringify(getMercados())); return _mercadosEdit; }
+function editarMercadoCampo(i,campo,valor){
+  const l=_garantirEdit();
+  if(!l[i]) return;
+  l[i][campo]=campo==='cod'?valor.toUpperCase().trim().replace(/\s+/g,''):valor;
+}
+function adicionarMercado(){
+  const l=_garantirEdit();
+  l.push({cod:'', nome:''});
+  ms().mercadosCustom=l; // reflete para render
+  renderEditorMercados();
+}
+function removerMercado(i){
+  const l=_garantirEdit();
+  if(l.length<=1){ alert('É preciso manter ao menos um mercado.'); return; }
+  if(!confirm('Remover este mercado? Apostas já registradas com ele continuam nas estatísticas, mas ele some do seletor.')) return;
+  l.splice(i,1);
+  ms().mercadosCustom=l;
+  renderEditorMercados();
+}
+function salvarMercados(){
+  const l=_garantirEdit();
+  // validação: códigos não-vazios e únicos
+  const cods=l.map(m=>(m.cod||'').trim()).filter(Boolean);
+  if(cods.length!==l.length){ alert('Todo mercado precisa de um código (sigla).'); return; }
+  const dup=cods.find((c,idx)=>cods.indexOf(c)!==idx);
+  if(dup){ alert('Código duplicado: '+dup+'. Cada código deve ser único.'); return; }
+  l.forEach(m=>{ if(!m.nome||!m.nome.trim()) m.nome=m.cod; });
+  ms().mercadosCustom=JSON.parse(JSON.stringify(l));
+  _mercadosEdit=null;
+  const st=document.getElementById('mercados-status');
+  if(st){ st.innerText='✓ Mercados salvos ('+l.length+')'; setTimeout(()=>{ if(st) st.innerText=''; },2500); }
+  salvarDadosEAtualizarTudo();
+  renderEditorMercados();
+}
+
 function mudarMercadoLote(index,valor){
   const seq=ms().sequencias[index]; if(!seq) return;
   seq.mercado=valor;
-  salvarDadosEAtualizarTudo();
-}
-
-function editarNotaLetra(l){
-  const atual=(ms().anotacoesPorLetra&&ms().anotacoesPorLetra[l])||'';
-  const nova=prompt('Nota da letra '+l+' (mercado / observação):', atual);
-  if(nova===null) return; // cancelou
-  if(!ms().anotacoesPorLetra) ms().anotacoesPorLetra={};
-  ms().anotacoesPorLetra[l]=nova.trim();
   salvarDadosEAtualizarTudo();
 }
 
@@ -1991,12 +2059,11 @@ function renderLinhas(){
       <td class="t-mono">#${String(seq.id).padStart(3,'0')}</td>
       <td><span class="lote-badge">${l}</span></td>
       <td>${(function(){
-        const mkt=seq.mercado||'MANDANTE';
+        const mkt=seq.mercado||(getMercados()[0]?getMercados()[0].cod:'V1');
         let opts='';
-        MERCADO_ORDEM.forEach(k=>{ opts+=`<option value="${k}" ${k===mkt?'selected':''}>${MERCADO_LABELS[k]}</option>`; });
+        getMercados().forEach(mo=>{ opts+=`<option value="${mo.cod}" ${mo.cod===mkt?'selected':''}>${mo.cod} · ${mo.nome}</option>`; });
         return `<select class="t-mercado-sel" onchange="mudarMercadoLote(${i},this.value)">${opts}</select>`;
       })()}</td>
-      <td class="t-nota" style="cursor:pointer;" title="Clique para editar a nota da letra ${l}" onclick="editarNotaLetra('${l}')">${ms().anotacoesPorLetra&&ms().anotacoesPorLetra[l]?ms().anotacoesPorLetra[l]:'<span style=\'color:var(--accent);\'>✏️ nota</span>'}</td>
       <td class="t-meta-cell">${(function(){
         const mp=(ms().metaPorLetra&&parseFloat(ms().metaPorLetra[l]))||0;
         if(mp<=0) return '<span style="color:var(--muted);font-size:10px;">—</span>';
@@ -2182,7 +2249,7 @@ function renderCards(){
   container.innerHTML=html;
 }
 
-function preencherCamposConfig(){ if(typeof aplicarVisibilidadeAbas==="function") aplicarVisibilidadeAbas();
+function preencherCamposConfig(){ if(typeof aplicarVisibilidadeAbas==="function") aplicarVisibilidadeAbas(); if(typeof renderEditorMercados==="function") renderEditorMercados();
   document.getElementById('cfg-banco-capital').value=(state.bancoCapital||0).toFixed(2);
   document.getElementById('cfg-banca-capital').value=state.bancaAtual.toFixed(2);
   document.getElementById('cfg-meta').value=ms().metaPercent;
@@ -2394,7 +2461,7 @@ function renderPainelVantagem(){
       const d=porMerc[k], be=breakevenDeOdd(d.so/d.n), v=vereditoEstatistico(d.w,d.n,be);
       const pctBar=Math.max(0,Math.min(100,v.ic.p*100));
       const bePos=Math.max(0,Math.min(100,be*100));
-      const lbl=(typeof MERCADO_LABELS!=='undefined'&&MERCADO_LABELS[k])?MERCADO_LABELS[k]:k;
+      const lbl=labelMercado(k);
       const mediaSeq=d.seqsFechadas.length>0?(d.seqsFechadas.reduce((a,c)=>a+c,0)/d.seqsFechadas.length):0;
       // Metas cumpridas (sucesso OPERACIONAL): lotes do mercado que bateram meta ÷ total do mercado na etapa atual
       const lotesMkt=ms().sequencias.filter(s=>(s.mercado||'MANDANTE')===k);
