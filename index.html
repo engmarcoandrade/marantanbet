@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#0D1117">
-<title>Método Marantan v35.3</title>
+<title>Método Marantan v35.6</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox=%270 0 48 48%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Crect x=%271.5%27 y=%271.5%27 width=%2745%27 height=%2745%27 rx=%2711%27 fill=%27%23161B22%27 stroke=%27%2330363D%27 stroke-width=%271.5%27/%3E%3Cpath d=%27M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3Cpath d=%27M30.5 9.5 L37.5 9 L36.8 16%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -531,7 +531,7 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v35.3</span></div>
+      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v35.6</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
@@ -764,6 +764,15 @@ tbody tr:last-child td { border-bottom:none; }
           <input type="number" id="cfg-incr-fixo" class="cfg-input" step="0.1" value="10" min="0.1">
         </div>
       </div>
+      <div class="form-group" id="wrap-gatilho-incr" style="display:none;">
+        <label class="cfg-label">Quando aplicar o incremento?</label>
+        <select id="cfg-gatilho-incr" class="cfg-select" onchange="atualizarAvisoGatilhoIncr()">
+          <option value="SEMPRE">A · Sempre (vitória e derrota)</option>
+          <option value="GANHO">B · Só quando GANHAR</option>
+          <option value="PERDA">C · Só quando PERDER ⚠️</option>
+        </select>
+        <p id="aviso-gatilho-incr" style="font-size:10px;line-height:1.5;margin-top:6px;"></p>
+      </div>
       <p id="nota-modo-progressao" style="font-size:10px;color:var(--muted);line-height:1.5;margin:-4px 0 10px;display:none;">No modo <b>Percentual Fixo</b>, a aposta é multiplicada pelo incremento após <b>cada resultado (vitória ou derrota)</b> e <b>não volta à base após vitórias</b> nem na virada de rodada. O valor só retorna à base quando o teto de gales ou o stop por lote dispara. <b style="color:var(--loss);">Atenção:</b> o crescimento é composto — a 10%, a aposta dobra a cada ~7 resultados.</p>
       <div class="form-group">
         <label class="cfg-label">Modo de Distribuição</label>
@@ -960,7 +969,7 @@ const DEFAULT_MODO = {
   modoPosWin:"BLINDAR", modoDistribuicao:"PROPORCIONAL", marantanLancamentosRodada:{},
   sequencias:[], historico:[], vitoriasRodadaVoltarInicial:0,
   maxGales:4, stopLotePercent:5.0,
-  modoProgressao:"RECUPERACAO", incrFixoPercent:10.0, vistaOperacao:"cards",
+  modoProgressao:"RECUPERACAO", incrFixoPercent:10.0, gatilhoIncremento:"SEMPRE", vistaOperacao:"cards",
   metaPorLetra:{"A":1.0,"B":1.0,"C":1.0,"D":1.0,"E":1.0,"F":1.0}, metaGlobalPercent:1.0, lucroLetraEtapa:{}, letrasMetaCumprida:{},
   estatSequencias:[], streakPorLetra:{}, registroApostas:[], perdasAssumidasTotal:0, assumidasCount:0, stopTravado:false
 };
@@ -1117,6 +1126,9 @@ function aplicarBlindagemDeVariaveis(){
   if(m.stopLotePercent===undefined) m.stopLotePercent=5.0;
   if(!m.modoProgressao) m.modoProgressao="RECUPERACAO";
   if(m.incrFixoPercent===undefined) m.incrFixoPercent=10.0;
+  if(!m.gatilhoIncremento) m.gatilhoIncremento="SEMPRE";
+  // Conserta base do dia legada: se foi marcada em outro dia, zera para remarcar hoje (bug do "917%").
+  if(m.dataDiaCorrente!==hojeISO){ delete m.saldoInicioDia; m.metaDiaSinalizada=false; }
   if(!m.vistaOperacao) m.vistaOperacao="cards";
   if(!m.chartMode) m.chartMode="DATA";
   if(!m.metaPorLetra) m.metaPorLetra={"A":1.0,"B":1.0,"C":1.0,"D":1.0,"E":1.0,"F":1.0};
@@ -1365,6 +1377,7 @@ function salvarConfiguracoes(){
   ms().modoDistribuicao=document.getElementById('cfg-modo-distribuicao').value;
   ms().modoProgressao=document.getElementById('cfg-modo-progressao').value;
   ms().incrFixoPercent=parseFloat(document.getElementById('cfg-incr-fixo').value)||10.0;
+  const gi=document.getElementById('cfg-gatilho-incr'); if(gi) ms().gatilhoIncremento=gi.value;
   ms().metaDiaria=parseFloat(document.getElementById('cfg-meta-diaria').value)||1.0;
   ms().diasAcomp=parseInt(document.getElementById('cfg-dias-acomp').value)||30;
   const mg=document.getElementById('cfg-meta-global'); if(mg){ const v=parseFloat(mg.value); ms().metaGlobalPercent=isNaN(v)?1.0:v; }
@@ -1494,6 +1507,17 @@ function agendarSalvarNotasLivres(){
   },900);
 }
 
+// Fator de incremento no Percentual Fixo, conforme o gatilho escolhido.
+// resultado: 'WIN' ou 'LOSS'. Retorna o multiplicador da próxima aposta.
+function fatorIncremento(resultado){
+  const inc=1+((ms().incrFixoPercent||10)/100);
+  const g=ms().gatilhoIncremento||'SEMPRE';
+  if(g==='SEMPRE') return inc;                          // A: cresce sempre
+  if(g==='GANHO')  return resultado==='WIN'  ? inc : 1; // B: cresce só ao ganhar; senão mantém
+  if(g==='PERDA')  return resultado==='LOSS' ? inc : 1; // C: cresce só ao perder; senão mantém
+  return inc;
+}
+
 function processarWinSeq(seq,odd){
   seq.winsEtapa++;
   registrarAposta(seq.letraRandomica,odd,true,seq.mercado);
@@ -1509,7 +1533,7 @@ function processarWinSeq(seq,odd){
     // O ganho abate o risco acumulado do lote (exposição líquida), mantendo o stop por lote coerente.
     seq.perdasAcumuladas=Math.max(0, roundedFixo(seq.perdasAcumuladas-(val*(odd-1))));
     seq.streakLoss=0;
-    seq.apostaAtual=seq.apostaAtual*(1+((ms().incrFixoPercent||10)/100));
+    seq.apostaAtual=sniperArredondarAposta(seq.apostaAtual*fatorIncremento('WIN'));
   } else {
     seq.perdasAcumuladas=0; seq.streakLoss=0;
     seq.apostaAtual=sniperArredondarAposta(getValorApostaBase(odd));
@@ -1669,19 +1693,39 @@ function renderHistoricoDiario(){
   c.innerHTML=html;
 }
 
+function saldoTotalAtual(){ return state.bancaAtual+(parseFloat(state.bancoCapital)||0); }
+
+function marcarInicioDoDia(){
+  // Marca o saldo TOTAL (plataforma + banco) no começo de cada novo dia — SEMPRE.
+  // Base para a barra "Avanço do Dia": o lucro do dia acumula todas as etapas concluídas no dia.
+  const totalAgora=saldoTotalAtual();
+  if(ms().dataDiaCorrente!==hojeISO){
+    ms().dataDiaCorrente=hojeISO;
+    ms().saldoInicioDia=totalAgora;
+    ms().metaDiaSinalizada=false;
+  }
+  if(ms().saldoInicioDia===undefined) ms().saldoInicioDia=totalAgora;
+  // Sanidade contra base de DIA ANTERIOR (a causa do bug do "917%"): se o lucro do dia calculado
+  // sobre a base guardada supera, em módulo, um múltiplo alto da meta diária, a base quase certamente
+  // é de outro dia (lucro de vários dias somado). Nesse caso, remarca a base para o saldo de agora.
+  const base=parseFloat(ms().saldoInicioDia)||0;
+  const metaPct=parseFloat(ms().metaDiaria)||0;
+  if(base<=0){
+    ms().saldoInicioDia=totalAgora;
+  } else if(metaPct>0){
+    const lucroDiaPct=((totalAgora-base)/base)*100; // variação % do dia
+    // teto realista: 3x a meta do dia. Passou disso (pra cima ou pra baixo) = base de outro dia.
+    if(Math.abs(lucroDiaPct) > metaPct*3){ ms().saldoInicioDia=totalAgora; }
+  }
+}
+
 function verificarMetaDiaria(){
   const pctMeta=parseFloat(ms().metaDiaria)||0;
   if(pctMeta<=0) return;
-  // Marca o início do dia na primeira checagem do dia
-  if(ms().dataDiaCorrente!==hojeISO){
-    ms().dataDiaCorrente=hojeISO;
-    ms().saldoInicioDia=state.bancaAtual;
-    ms().metaDiaSinalizada=false;
-  }
   if(ms().metaDiaSinalizada) return; // avisa uma vez por dia
-  const base=(ms().saldoInicioDia!==undefined)?ms().saldoInicioDia:state.bancaAtual;
+  const base=(ms().saldoInicioDia!==undefined)?ms().saldoInicioDia:saldoTotalAtual();
   const alvo=base*(pctMeta/100);
-  const lucroDia=state.bancaAtual-base;
+  const lucroDia=saldoTotalAtual()-base;
   if(lucroDia>=alvo && alvo>0){
     ms().metaDiaSinalizada=true;
     const msg=document.getElementById('modal-meta-dia-msg');
@@ -1703,8 +1747,8 @@ function retirarLucroDiaParaBanco(){
     // Move da plataforma para o banco: plataforma diminui, banco aumenta, capital total intacto.
     state.bancaAtual-=lucro;
     state.bancoCapital=(parseFloat(state.bancoCapital)||0)+lucro;
-    // Novo "início do dia" passa a ser o saldo já sem o lucro retirado, evitando reaviso.
-    ms().saldoInicioDia=state.bancaAtual;
+    // O total não muda ao mover plataforma→banco; mantém a base coerente para não reavisar.
+    ms().saldoInicioDia=saldoTotalAtual();
     if(!ms().retiradasBanco) ms().retiradasBanco=[];
     ms().retiradasBanco.push({d:new Date().toISOString(), valor:lucro});
   }
@@ -1770,7 +1814,7 @@ function processarPerdaSeq(seq,odd){
   const capitalGlobal=state.bancaAtual+(parseFloat(state.bancoCapital)||0);
   const limiteLote=capitalGlobal*((ms().stopLotePercent||5)/100);
   const proximaAposta=ms().modoProgressao==="PERCENTUAL"
-    ? seq.apostaAtual*(1+((ms().incrFixoPercent||10)/100))
+    ? sniperArredondarAposta(seq.apostaAtual*fatorIncremento('LOSS'))
     : (seq.perdasAcumuladas+getLucroDesejadoBase())/(odd-1);
   const estourouGales=seq.streakLoss>=(ms().maxGales||4);
   const estourouLote=seq.perdasAcumuladas>=limiteLote||proximaAposta>=limiteLote;
@@ -2344,6 +2388,7 @@ function preencherCamposConfig(){ if(typeof aplicarVisibilidadeAbas==="function"
   const mg=document.getElementById('cfg-meta-global'); if(mg) mg.value=metaGlobalPct();
   document.getElementById('cfg-data-inicio').value=ms().dataInicioCiclo||hojeISO;
   document.getElementById('cfg-modo-distribuicao').value=ms().modoDistribuicao||"PROPORCIONAL";
+  const gi2=document.getElementById('cfg-gatilho-incr'); if(gi2) gi2.value=ms().gatilhoIncremento||"SEMPRE";
   document.getElementById('cfg-modo-progressao').value=ms().modoProgressao||"RECUPERACAO";
   document.getElementById('cfg-incr-fixo').value=ms().incrFixoPercent||10.0;
   atualizarVisibilidadeIncremento();
@@ -2353,11 +2398,29 @@ function preencherCamposConfig(){ if(typeof aplicarVisibilidadeAbas==="function"
   calcularSomaCapitalGeralUI();
 }
 
+function atualizarAvisoGatilhoIncr(){
+  const sel=document.getElementById('cfg-gatilho-incr'); const av=document.getElementById('aviso-gatilho-incr');
+  if(!sel||!av) return;
+  const v=sel.value;
+  if(v==='GANHO'){
+    av.style.color='var(--win)';
+    av.innerHTML='✓ <b>Mais defensivo.</b> A aposta só cresce quando você ganha (pressiona o lucro). Ao perder, o valor é mantido — o capital não é acelerado nas derrotas.';
+  } else if(v==='PERDA'){
+    av.style.color='var(--loss)';
+    av.innerHTML='⚠️ <b>Alto risco (padrão Martingale).</b> A aposta cresce a cada derrota. Numa sequência de perdas — que <b>vão acontecer</b> — o prejuízo acelera rápido. O teto de gales e o stop por lote são sua rede de segurança; confira se estão bem ajustados.';
+  } else {
+    av.style.color='var(--muted)';
+    av.innerHTML='A aposta cresce após cada resultado (vitória ou derrota). Crescimento composto — a 10%, dobra a cada ~7 apostas.';
+  }
+}
+
 function atualizarVisibilidadeIncremento(){
   const sel=document.getElementById('cfg-modo-progressao'); if(!sel) return;
   const perc=sel.value==="PERCENTUAL";
   const wrap=document.getElementById('wrap-incr-fixo'); if(wrap) wrap.style.display=perc?'block':'none';
+  const wrapG=document.getElementById('wrap-gatilho-incr'); if(wrapG) wrapG.style.display=perc?'block':'none';
   const nota=document.getElementById('nota-modo-progressao'); if(nota) nota.style.display=perc?'block':'none';
+  if(perc && typeof atualizarAvisoGatilhoIncr==='function') atualizarAvisoGatilhoIncr();
 }
 function alternarModoPosWin(){ ms().modoPosWin=ms().modoPosWin==="BLINDAR"?"RESETAR":"BLINDAR"; salvarDadosEAtualizarTudo(); }
 function atualizarBotaoModoUI(){ aplicarNomesModos(); const btn=document.getElementById('btn-toggle-modo-pos-win'); if(!btn) return; btn.className="btn-modo "+(ms().modoPosWin==="BLINDAR"?"blindar":"resetar"); btn.innerText=ms().modoPosWin==="BLINDAR"?"🔒 Pós-Win: Blindar":"🔄 Pós-Win: Resetar"; }
@@ -2837,9 +2900,9 @@ function atualizarPainelUI(forcarGrafico=false){
   const beV=document.getElementById('prog-etapa-val'); if(beV) beV.innerText=pctEtapaLote.toFixed(1)+'%';
   // Dia: lucro do dia / meta diária (usa saldoInicioDia marcado pelo verificarMetaDiaria)
   const pctMetaDia=parseFloat(ms().metaDiaria)||0;
-  const baseDia=(ms().saldoInicioDia!==undefined)?ms().saldoInicioDia:state.bancaAtual;
+  const baseDia=(ms().saldoInicioDia!==undefined)?ms().saldoInicioDia:saldoTotalAtual();
   const alvoDia=baseDia*(pctMetaDia/100);
-  const lucroDiaLote=state.bancaAtual-baseDia;
+  const lucroDiaLote=saldoTotalAtual()-baseDia;
   const pctDia=alvoDia>0?Math.max(0,(lucroDiaLote/alvoDia)*100):0;
   const bdL=document.getElementById('prog-dia-bar');
   if(bdL){ bdL.style.width=Math.min(100,pctDia)+'%'; bdL.style.background=lucroDiaLote<0?'var(--bar-loss)':'var(--bar-win)'; }
@@ -2868,6 +2931,7 @@ function atualizarPainelUI(forcarGrafico=false){
   const bar=document.getElementById('progresso-bar'); if(bar) bar.style.width=Math.min(100,pct)+'%';
 
   if(pct>=100&&!sinalizadoMeta){ sinalizadoMeta=true; document.getElementById('modal-meta').style.display='flex'; }
+  marcarInicioDoDia();
   processarFechamentoDiario();
   verificarMetaDiaria();
   if(capitalGlobal<=stopVal&&!sinalizadoStop){ sinalizadoStop=true; ms().stopTravado=true; document.getElementById('modal-stop').style.display='flex'; }
