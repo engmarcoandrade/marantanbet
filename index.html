@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#0D1117">
-<title>Método Marantan v35.6</title>
+<title>Método Marantan v36.0</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox=%270 0 48 48%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Crect x=%271.5%27 y=%271.5%27 width=%2745%27 height=%2745%27 rx=%2711%27 fill=%27%23161B22%27 stroke=%27%2330363D%27 stroke-width=%271.5%27/%3E%3Cpath d=%27M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3Cpath d=%27M30.5 9.5 L37.5 9 L36.8 16%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -200,7 +200,7 @@ header { background:var(--surface); border-bottom:1px solid var(--border); paddi
 .btn-reabrir { width:100%; background:var(--surface2); border:1px solid var(--accent); color:var(--accent); padding:6px; border-radius:var(--radius-sm); font-size:11px; font-weight:700; cursor:pointer; font-family:var(--sans); }
 .btn-reabrir:hover { background:var(--accent-dim); }
 .t-meta-cell { min-width:70px; vertical-align:middle; }
-.t-mercado-sel { background:var(--surface2); border:1px solid var(--border); color:var(--text); font-family:var(--sans); font-size:10px; font-weight:600; padding:3px 4px; border-radius:4px; cursor:pointer; max-width:130px; }
+.t-mercado-sel { background:var(--surface2); border:1px solid var(--border); color:var(--text); font-family:var(--sans); font-size:9px; font-weight:600; padding:2px 3px; border-radius:4px; cursor:pointer; max-width:120px; }
 .u10-wrap { display:flex; gap:2px; align-items:center; }
 .u10-box { display:flex; align-items:center; gap:4px; }
 /* Larg. p/ 15 caixas de 20px + gaps ≈ 330px */
@@ -262,8 +262,8 @@ input:checked + .slider { background:var(--purple); }
 input:checked + .slider:before { transform:translateX(12px); }
 
 /* ── PAINEL INFO BAR ── */
-.info-bar { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:10px 14px; margin-bottom:10px; display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:space-between; }
-.info-item { font-size:12px; color:var(--muted); }
+.info-bar { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:6px 10px; margin-bottom:6px; display:flex; flex-wrap:wrap; gap:6px; align-items:center; justify-content:space-between; }
+.info-item { font-size:11px; color:var(--muted); }
 .info-item b { color:var(--text); font-family:var(--mono); }
 .info-item.accent b { color:var(--accent); }
 .info-item.win b { color:var(--win); }
@@ -271,11 +271,11 @@ input:checked + .slider:before { transform:translateX(12px); }
 
 /* ── BOTÕES DE AÇÃO ── */
 .action-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:12px; margin-bottom:24px; }
-.btn-action { padding:12px; border-radius:var(--radius); font-size:13px; font-weight:700; cursor:pointer; text-align:center; font-family:var(--sans); border:1px solid; }
+.btn-action { padding:8px; border-radius:var(--radius); font-size:12px; font-weight:700; cursor:pointer; text-align:center; font-family:var(--sans); border:1px solid; }
 .btn-rotate { background:var(--purple-dim); border-color:var(--purple-border); color:var(--purple); }
 .btn-conclude { background:var(--win-dim); border-color:var(--win-border); color:var(--win); }
 .action-row-3 { grid-template-columns:1fr 1fr 1fr; }
-.prog-lote-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:12px 14px; margin-bottom:8px; }
+.prog-lote-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:8px 12px; margin-bottom:6px; }
 .prog-lote-linha { display:flex; justify-content:space-between; align-items:center; margin-bottom:5px; }
 .prog-lote-lbl { font-size:11px; font-weight:700; color:var(--text); }
 .prog-lote-val { font-family:var(--mono); font-size:13px; font-weight:800; color:var(--text); }
@@ -291,8 +291,8 @@ input:checked + .slider:before { transform:translateX(12px); }
 /* ── TABELA LOTES ── */
 .table-wrap { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; overflow-x:auto; max-height:60vh; overflow-y:auto; }
 table { width:100%; border-collapse:collapse; min-width:540px; }
-thead th { background:var(--surface2); color:var(--muted); font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; padding:10px 12px; border-bottom:1px solid var(--border); position:sticky; top:0; z-index:10; text-align:left; }
-tbody td { padding:8px 12px; border-bottom:1px solid var(--border2); font-size:12px; color:var(--text); }
+thead th { background:var(--surface2); color:var(--muted); font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; padding:6px 8px; border-bottom:1px solid var(--border); position:sticky; top:0; z-index:10; text-align:left; }
+tbody td { padding:5px 8px; border-bottom:1px solid var(--border2); font-size:11px; color:var(--text); }
 tbody tr:last-child td { border-bottom:none; }
 .row-finished { border-left:4px solid var(--win); background:var(--surface2); }
 .row-finished * { opacity:1 !important; }
@@ -302,12 +302,12 @@ tbody tr:last-child td { border-bottom:none; }
 .t-loss { color:var(--loss); font-weight:700; }
 .status-ok { background:var(--win-dim); color:var(--win); border:1px solid var(--win-border); font-size:10px; font-weight:700; padding:2px 7px; border-radius:20px; }
 .status-pend { background:var(--surface2); color:var(--muted); border:1px solid var(--border); font-size:10px; font-weight:700; padding:2px 7px; border-radius:20px; }
-.lote-badge { background:var(--accent-dim); color:var(--accent); border:1px solid var(--accent-border); font-size:11px; font-weight:700; padding:2px 7px; border-radius:4px; font-family:var(--mono); }
-.tbl-btn-win { background:var(--win-dim); border:1px solid var(--win-border); color:var(--win); padding:3px 8px; border-radius:4px; font-size:10px; font-weight:700; cursor:pointer; }
-.tbl-btn-loss { background:var(--loss-dim); border:1px solid var(--loss-border); color:var(--loss); padding:3px 8px; border-radius:4px; font-size:10px; font-weight:700; cursor:pointer; }
-.tbl-btn-eq { background:var(--surface2); border:1px solid var(--border); color:var(--muted); padding:3px 7px; border-radius:4px; font-size:10px; font-weight:700; cursor:pointer; }
-.tbl-btn-reset { background:var(--surface2); border:1px solid var(--bar-amber); color:var(--bar-amber); padding:3px 7px; border-radius:4px; font-size:10px; font-weight:700; cursor:pointer; }
-.tbl-btn-del { background:var(--surface2); border:1px solid var(--loss); color:var(--loss); padding:3px 7px; border-radius:4px; font-size:10px; font-weight:700; cursor:pointer; }
+.lote-badge { background:var(--accent-dim); color:var(--accent); border:1px solid var(--accent-border); font-size:10px; font-weight:700; padding:1px 5px; border-radius:4px; font-family:var(--mono); }
+.tbl-btn-win { background:var(--win-dim); border:1px solid var(--win-border); color:var(--win); padding:2px 6px; border-radius:4px; font-size:9px; font-weight:700; cursor:pointer; }
+.tbl-btn-loss { background:var(--loss-dim); border:1px solid var(--loss-border); color:var(--loss); padding:2px 6px; border-radius:4px; font-size:9px; font-weight:700; cursor:pointer; }
+.tbl-btn-eq { background:var(--surface2); border:1px solid var(--border); color:var(--muted); padding:2px 5px; border-radius:4px; font-size:9px; font-weight:700; cursor:pointer; }
+.tbl-btn-reset { background:var(--surface2); border:1px solid var(--bar-amber); color:var(--bar-amber); padding:2px 5px; border-radius:4px; font-size:9px; font-weight:700; cursor:pointer; }
+.tbl-btn-del { background:var(--surface2); border:1px solid var(--loss); color:var(--loss); padding:2px 5px; border-radius:4px; font-size:9px; font-weight:700; cursor:pointer; }
 
 /* ── CONFIG ── */
 .cfg-section { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px; margin-bottom:10px; }
@@ -325,7 +325,7 @@ tbody tr:last-child td { border-bottom:none; }
 .cfg-input:disabled { opacity:.5; cursor:not-allowed; }
 .cfg-select { background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text); font-size:13px; font-weight:600; padding:8px 10px; outline:none; width:100%; cursor:pointer; font-family:var(--sans); }
 .cfg-select:focus { border-color:var(--accent); }
-.btn-save { width:100%; padding:12px; background:var(--accent); color:#fff; border:none; border-radius:var(--radius); font-size:14px; font-weight:700; cursor:pointer; font-family:var(--sans); margin-top:4px; }
+.btn-save { width:100%; padding:9px; background:var(--accent); color:#fff; border:none; border-radius:var(--radius); font-size:13px; font-weight:700; cursor:pointer; font-family:var(--sans); margin-top:4px; }
 .btn-save:active { opacity:.8; }
 .btn-secondary { width:100%; padding:10px; background:var(--surface2); color:var(--text); border:1px solid var(--border); border-radius:var(--radius); font-size:13px; font-weight:600; cursor:pointer; font-family:var(--sans); }
 .btn-danger { width:100%; padding:10px; background:transparent; color:var(--loss); border:1px dashed var(--loss-border); border-radius:var(--radius); font-size:13px; font-weight:700; cursor:pointer; font-family:var(--sans); margin-top:6px; }
@@ -531,7 +531,7 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v35.6</span></div>
+      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v36.0</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
@@ -577,7 +577,7 @@ tbody tr:last-child td { border-bottom:none; }
 
   <!-- ABA: PAINEL -->
   <div id="painel" class="tab-content active">
-    <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-bottom:10px;">
+    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-bottom:10px;">
       <div class="kpi-card" style="border-color:var(--accent-border);">
         <div class="kpi-label" style="color:var(--accent);">Capital Global</div>
         <div class="kpi-val accent" style="font-size:14px;" id="kpi-global">R$ 0,00</div>
@@ -587,11 +587,6 @@ tbody tr:last-child td { border-bottom:none; }
         <div class="kpi-label">Meta Etapa</div>
         <div class="kpi-val" style="font-size:14px;" id="kpi-meta">R$ 0,00</div>
         <div class="kpi-sub" id="kpi-meta-sub"></div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Lucro Global</div>
-        <div class="kpi-val" style="font-size:14px;" id="kpi-lucro">R$ 0,00</div>
-        <div class="kpi-sub">desde o início</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">Stop Loss</div>
@@ -606,17 +601,17 @@ tbody tr:last-child td { border-bottom:none; }
 
     <div class="progress-card">
       <div class="progress-header">
-        <span>Progresso da Etapa</span>
+        <span>Progresso do Dia</span>
         <b id="progresso-porcentagem-real">0%</b>
       </div>
       <div class="progress-track"><div class="progress-fill" id="progresso-bar"></div></div>
       <div style="margin-top:10px; display:flex; flex-direction:column; gap:5px;">
         <div style="display:flex; justify-content:space-between; font-size:12px; border-bottom:1px solid var(--border2); padding-bottom:5px;">
-          <span style="color:var(--muted);">Início da etapa</span>
+          <span style="color:var(--muted);">Início do dia</span>
           <span style="font-family:var(--mono); font-weight:700;" id="progresso-inicial">R$ 0,00</span>
         </div>
         <div style="display:flex; justify-content:space-between; font-size:12px; border-bottom:1px solid var(--border2); padding-bottom:5px;">
-          <span style="color:var(--win);">Meta da etapa</span>
+          <span style="color:var(--win);">Meta do dia</span>
           <span style="font-family:var(--mono); font-weight:700; color:var(--win);" id="progresso-meta-fixa-dinamica">R$ 0,00</span>
         </div>
         <div style="display:flex; justify-content:space-between; font-size:12px; border-bottom:1px solid var(--border2); padding-bottom:5px;">
@@ -652,11 +647,6 @@ tbody tr:last-child td { border-bottom:none; }
     <div id="wrap-info-lotes">
       <div class="prog-lote-card">
         <div class="prog-lote-linha">
-          <span class="prog-lote-lbl">📈 Avanço da Etapa</span>
-          <span class="prog-lote-val" id="prog-etapa-val">0%</span>
-        </div>
-        <div class="prog-lote-track"><div class="prog-lote-fill" id="prog-etapa-bar" style="background:var(--accent);"></div></div>
-        <div class="prog-lote-linha" style="margin-top:8px;">
           <span class="prog-lote-lbl">📅 Avanço do Dia</span>
           <span class="prog-lote-val" id="prog-dia-val">0%</span>
         </div>
@@ -2424,7 +2414,7 @@ function atualizarVisibilidadeIncremento(){
 }
 function alternarModoPosWin(){ ms().modoPosWin=ms().modoPosWin==="BLINDAR"?"RESETAR":"BLINDAR"; salvarDadosEAtualizarTudo(); }
 function atualizarBotaoModoUI(){ aplicarNomesModos(); const btn=document.getElementById('btn-toggle-modo-pos-win'); if(!btn) return; btn.className="btn-modo "+(ms().modoPosWin==="BLINDAR"?"blindar":"resetar"); btn.innerText=ms().modoPosWin==="BLINDAR"?"🔒 Pós-Win: Blindar":"🔄 Pós-Win: Resetar"; }
-function atualizarLayoutContadoresPorModo(){ const r=document.getElementById('wrapper-contador-resetar'); if(!r) return; if(ms().modoPosWin==="BLINDAR"){ r.style.display='none'; }else{ r.style.display='block'; document.getElementById('lbl-vitorias-resetar-contador').innerText=ms().vitoriasRodadaVoltarInicial; } }
+function atualizarLayoutContadoresPorModo(){ const r=document.getElementById('wrapper-contador-resetar'); if(!r) return; if(ms().modoPosWin==="BLINDAR"){ r.style.display='none'; }else{ r.style.display='block'; const lv=document.getElementById('lbl-vitorias-resetar-contador'); if(lv) lv.innerText=ms().vitoriasRodadaVoltarInicial; } }
 
 function calcularPrevistoNaData(dataStr){
   if(!dataStr) return null;
@@ -2865,8 +2855,6 @@ function atualizarPainelUI(forcarGrafico=false){
   el('kpi-global', fmt(capitalGlobal));
   el('kpi-global-sub', 'Plataforma: '+fmt(state.bancaAtual)+' · Banco: '+fmt(banco));
 
-  const lucroEl=document.getElementById('kpi-lucro');
-  if(lucroEl){ lucroEl.innerText=fmt(lucroTotal); lucroEl.className='kpi-val '+(lucroTotal>=0?'pos':'neg'); }
 
   el('kpi-banca',fmt(state.bancaAtual));
   el('kpi-banco-sub','Banco: '+fmt(banco));
@@ -2896,8 +2884,6 @@ function atualizarPainelUI(forcarGrafico=false){
   // ── Barras de progresso da aba Lotes ──
   // Etapa: mesmo cálculo do progresso da etapa (lucro / lucro necessário)
   const pctEtapaLote=lucroNecessario>0?Math.max(0,(lucroEtapa/lucroNecessario)*100):0;
-  const beL=document.getElementById('prog-etapa-bar'); if(beL) beL.style.width=Math.min(100,pctEtapaLote)+'%';
-  const beV=document.getElementById('prog-etapa-val'); if(beV) beV.innerText=pctEtapaLote.toFixed(1)+'%';
   // Dia: lucro do dia / meta diária (usa saldoInicioDia marcado pelo verificarMetaDiaria)
   const pctMetaDia=parseFloat(ms().metaDiaria)||0;
   const baseDia=(ms().saldoInicioDia!==undefined)?ms().saldoInicioDia:saldoTotalAtual();
@@ -2919,18 +2905,24 @@ function atualizarPainelUI(forcarGrafico=false){
   // Label do modo no chip de etapa
   const chip=document.getElementById('hdr-etapa'); if(chip) chip.parentElement.title='OPERAÇÃO';
 
-  el('progresso-inicial',fmt(baseEtapa));
-  el('progresso-meta-fixa-dinamica',fmt(metaVal));
-  el('progresso-lucro-necessario',fmt(lucroNecessario));
+  // Card do Painel: PROGRESSO DO DIA (base do dia, meta diária, lucro acumulado do dia)
+  const baseDiaCard=(ms().saldoInicioDia!==undefined)?ms().saldoInicioDia:saldoTotalAtual();
+  const metaDiaPctCard=parseFloat(ms().metaDiaria)||0;
+  const alvoDiaCard=baseDiaCard*(metaDiaPctCard/100);
+  const lucroDiaCard=saldoTotalAtual()-baseDiaCard;
+  el('progresso-inicial',fmt(baseDiaCard));
+  el('progresso-meta-fixa-dinamica',metaDiaPctCard>0?fmt(baseDiaCard+alvoDiaCard):'—');
+  el('progresso-lucro-necessario',metaDiaPctCard>0?fmt(alvoDiaCard):'—');
   const lucroAlcEl=document.getElementById('progresso-lucro-alcancado');
-  if(lucroAlcEl){ lucroAlcEl.innerText=fmt(lucroEtapa); lucroAlcEl.style.color=lucroEtapa>=0?'var(--accent)':'var(--loss)'; }
-  const delta=lucroNecessario;
-  let pct=delta>0?(lucroEtapa/delta)*100:0;
+  if(lucroAlcEl){ lucroAlcEl.innerText=fmt(lucroDiaCard); lucroAlcEl.style.color=lucroDiaCard>=0?'var(--accent)':'var(--loss)'; }
+  let pct=alvoDiaCard>0?(lucroDiaCard/alvoDiaCard)*100:0;
   if(pct<0) pct=0;
-  el('progresso-porcentagem-real',pct.toFixed(1)+'%');
-  const bar=document.getElementById('progresso-bar'); if(bar) bar.style.width=Math.min(100,pct)+'%';
+  el('progresso-porcentagem-real',metaDiaPctCard>0?pct.toFixed(1)+'%':'—');
+  const bar=document.getElementById('progresso-bar'); if(bar){ bar.style.width=Math.min(100,pct)+'%'; bar.style.background=lucroDiaCard<0?'var(--bar-loss)':''; }
 
-  if(pct>=100&&!sinalizadoMeta){ sinalizadoMeta=true; document.getElementById('modal-meta').style.display='flex'; }
+  // O modal de meta da ETAPA usa o progresso da etapa (não o do dia mostrado no card).
+  const pctEtapaModal=lucroNecessario>0?(lucroEtapa/lucroNecessario)*100:0;
+  if(pctEtapaModal>=100&&!sinalizadoMeta){ sinalizadoMeta=true; document.getElementById('modal-meta').style.display='flex'; }
   marcarInicioDoDia();
   processarFechamentoDiario();
   verificarMetaDiaria();
