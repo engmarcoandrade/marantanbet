@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#0D1117">
-<title>Método Marantan v34.6</title>
+<title>Método Marantan v35.3</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox=%270 0 48 48%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Crect x=%271.5%27 y=%271.5%27 width=%2745%27 height=%2745%27 rx=%2711%27 fill=%27%23161B22%27 stroke=%27%2330363D%27 stroke-width=%271.5%27/%3E%3Cpath d=%27M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3Cpath d=%27M30.5 9.5 L37.5 9 L36.8 16%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -307,6 +307,7 @@ tbody tr:last-child td { border-bottom:none; }
 .tbl-btn-loss { background:var(--loss-dim); border:1px solid var(--loss-border); color:var(--loss); padding:3px 8px; border-radius:4px; font-size:10px; font-weight:700; cursor:pointer; }
 .tbl-btn-eq { background:var(--surface2); border:1px solid var(--border); color:var(--muted); padding:3px 7px; border-radius:4px; font-size:10px; font-weight:700; cursor:pointer; }
 .tbl-btn-reset { background:var(--surface2); border:1px solid var(--bar-amber); color:var(--bar-amber); padding:3px 7px; border-radius:4px; font-size:10px; font-weight:700; cursor:pointer; }
+.tbl-btn-del { background:var(--surface2); border:1px solid var(--loss); color:var(--loss); padding:3px 7px; border-radius:4px; font-size:10px; font-weight:700; cursor:pointer; }
 
 /* ── CONFIG ── */
 .cfg-section { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px; margin-bottom:10px; }
@@ -454,6 +455,23 @@ tbody tr:last-child td { border-bottom:none; }
 
 
 
+<div id="modal-add-lote" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-body">
+      <div class="m-title" style="color:var(--accent);">➕ Adicionar Lote</div>
+      <p style="font-size:12px;color:var(--text);margin:8px 0 4px;">Mercado do lote:</p>
+      <select id="sel-add-lote-mercado" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:9px;border-radius:var(--radius-sm);font-size:13px;font-family:var(--sans);"></select>
+      <p style="font-size:12px;color:var(--text);margin:12px 0 4px;">Quantidade:</p>
+      <input type="number" id="inp-add-lote-qtd" value="1" min="1" max="200" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:9px;border-radius:var(--radius-sm);font-size:13px;font-family:var(--mono);">
+      <p style="font-size:10px;color:var(--muted);margin-top:8px;line-height:1.5;">A odd é a do mercado (definida na Config). Você pode ter vários lotes do mesmo mercado.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="fecharModal('modal-add-lote')">Cancelar</button>
+      <button class="btn-confirm" onclick="confirmarAddLote()">Adicionar</button>
+    </div>
+  </div>
+</div>
+
 <div id="modal-meta-dia" class="modal-overlay">
   <div class="modal-box">
     <div class="modal-body" style="text-align:center;">
@@ -513,7 +531,7 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v34.6</span></div>
+      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v35.3</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
@@ -542,7 +560,7 @@ tbody tr:last-child td { border-bottom:none; }
   </button>
   <button class="nav-item" id="nav-lotes" onclick="openTab('lotes')">
     <span class="nav-icon">📋</span>
-    <span class="nav-label">Lotes</span>
+    <span class="nav-label">Operação</span>
   </button>
   <button class="nav-item" id="nav-config" onclick="openTab('config')">
     <span class="nav-icon">⚙️</span>
@@ -620,6 +638,7 @@ tbody tr:last-child td { border-bottom:none; }
 
   <!-- ABA: LOTES -->
   <div id="lotes" class="tab-content">
+    <button class="btn-save" style="margin-bottom:8px;" onclick="abrirModalAddLote()">➕ Adicionar lote</button>
     <div class="action-row action-row-3" style="margin-bottom:8px;">
       <button class="btn-action btn-rotate" onclick="solicitarAberturaJanelaRodada()">🔄 Rotação</button>
       <button class="btn-action btn-conclude" onclick="fecharEtapa()">💾 Concluir Etapa</button>
@@ -666,7 +685,6 @@ tbody tr:last-child td { border-bottom:none; }
         <thead>
           <tr>
             <th>Lote</th>
-            <th>Letra</th>
             <th>Mercado</th>
             <th>Meta</th>
             <th>Risco</th>
@@ -729,13 +747,10 @@ tbody tr:last-child td { border-bottom:none; }
     <div class="cfg-section">
       <div class="cfg-title accent">🎲 Estrutura de Aposta</div>
       <div class="form-row2">
-        <div class="form-group"><label class="cfg-label">Meta Base por Letra (%)</label><input type="number" id="cfg-aposta-base-pct" class="cfg-input" step="0.001" value="1.0"></div>
-        <div class="form-group"><label class="cfg-label">Qtd. Lotes</label><input type="number" id="cfg-lote" class="cfg-input" value="500"></div>
+        <div class="form-group"><label class="cfg-label">Aposta Base (%)</label><input type="number" id="cfg-aposta-base-pct" class="cfg-input" step="0.001" value="1.0"></div>
+        <div class="form-group"><label class="cfg-label">Meta por Lote (%)</label><input type="number" id="cfg-meta-global" class="cfg-input" step="0.1" min="0" value="1.0"></div>
       </div>
-      <div class="form-group">
-        <label class="cfg-label">Letras Ativas</label>
-        <input type="number" id="cfg-aleatoriedade" class="cfg-input" value="6" min="1" max="26" oninput="ajustarCamposDeOddsMenu()">
-      </div>
+      <p style="font-size:10px;color:var(--muted);line-height:1.5;margin:-4px 0 10px;">A <b>meta por lote</b> vale para todos os lotes. Os lotes são criados na aba Operação (botão ➕ Adicionar lote), cada um com seu mercado — e a odd vem do mercado (tabela abaixo).</p>
       <div class="form-row2">
         <div class="form-group">
           <label class="cfg-label">⚙️ Modo de Progressão</label>
@@ -779,13 +794,8 @@ tbody tr:last-child td { border-bottom:none; }
 
     <!-- 4. ODDS E METAS POR LETRA -->
     <div class="cfg-section">
-      <div class="cfg-title purple">🔤 Odds e Metas por Letra</div>
-      <div id="odds-inputs-placeholder"></div>
-    </div>
-
-    <div class="cfg-section">
       <div class="cfg-title accent">🎯 Tipos de Mercado</div>
-      <p style="font-size:10px;color:var(--muted);line-height:1.5;margin-bottom:8px;">Estes são os mercados que aparecem no seletor de cada lote e nas estatísticas. Edite os nomes, adicione ou remova conforme sua operação. O <b>código</b> é a sigla curta (ex.: V1); o <b>nome</b> é a descrição.</p>
+      <p style="font-size:10px;color:var(--muted);line-height:1.5;margin-bottom:8px;">Estes são os mercados que aparecem no seletor de cada lote e nas estatísticas. Edite os nomes, adicione ou remova conforme sua operação. O <b>código</b> é a sigla (ex.: V1), o <b>nome</b> é a descrição e a <b>odd</b> é usada em todos os lotes desse mercado.</p>
       <div id="mercados-editor"></div>
       <button onclick="adicionarMercado()" style="width:100%;margin-top:8px;padding:9px;background:var(--surface2);border:1px dashed var(--accent);border-radius:var(--radius-sm);color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--sans);">➕ Adicionar mercado</button>
       <button onclick="salvarMercados()" style="width:100%;margin-top:6px;padding:9px;background:var(--accent);border:none;border-radius:var(--radius-sm);color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--sans);">💾 Salvar mercados</button>
@@ -951,7 +961,7 @@ const DEFAULT_MODO = {
   sequencias:[], historico:[], vitoriasRodadaVoltarInicial:0,
   maxGales:4, stopLotePercent:5.0,
   modoProgressao:"RECUPERACAO", incrFixoPercent:10.0, vistaOperacao:"cards",
-  metaPorLetra:{"A":1.0,"B":1.0,"C":1.0,"D":1.0,"E":1.0,"F":1.0}, lucroLetraEtapa:{}, letrasMetaCumprida:{},
+  metaPorLetra:{"A":1.0,"B":1.0,"C":1.0,"D":1.0,"E":1.0,"F":1.0}, metaGlobalPercent:1.0, lucroLetraEtapa:{}, letrasMetaCumprida:{},
   estatSequencias:[], streakPorLetra:{}, registroApostas:[], perdasAssumidasTotal:0, assumidasCount:0, stopTravado:false
 };
 
@@ -1083,7 +1093,8 @@ function aplicarBlindagemDeVariaveis(){
   // Defaults de todos os campos operacionais, agora direto em state
   const m=state;
   if(!Array.isArray(m.mercadosCustom)||m.mercadosCustom.length===0) m.mercadosCustom=JSON.parse(JSON.stringify(MERCADOS_PADRAO));
-    if(Array.isArray(m.sequencias)) m.sequencias.forEach(sq=>{ if(!sq.ultimos) sq.ultimos=[]; if(!sq.mercado) sq.mercado=m.mercadosCustom[0].cod; });
+    else m.mercadosCustom.forEach(x=>{ if(x.odd===undefined||x.odd===null||x.odd==='') x.odd=2.00; });
+    if(Array.isArray(m.sequencias)) m.sequencias.forEach(sq=>{ if(!sq.ultimos) sq.ultimos=[]; if(!sq.mercado) sq.mercado=m.mercadosCustom[0].cod; if(sq.lucroEtapa===undefined) sq.lucroEtapa=0; if(sq.metaAvisada===undefined) sq.metaAvisada=false; });
   if(!m.marantanLancamentosRodada) m.marantanLancamentosRodada={};
   if(!m.oddsPorLetra) m.oddsPorLetra={"A":1.80,"B":1.80,"C":1.80,"D":1.80,"E":1.80,"F":1.80};
   if(!m.anotacoesPorLetra) m.anotacoesPorLetra={"A":"","B":"","C":"","D":"","E":"","F":""};
@@ -1109,6 +1120,7 @@ function aplicarBlindagemDeVariaveis(){
   if(!m.vistaOperacao) m.vistaOperacao="cards";
   if(!m.chartMode) m.chartMode="DATA";
   if(!m.metaPorLetra) m.metaPorLetra={"A":1.0,"B":1.0,"C":1.0,"D":1.0,"E":1.0,"F":1.0};
+  if(m.metaGlobalPercent===undefined) m.metaGlobalPercent=1.0;
   if(!m.lucroLetraEtapa) m.lucroLetraEtapa={};
   if(!m.letrasMetaCumprida) m.letrasMetaCumprida={};
   if(!m.estatSequencias) m.estatSequencias=[];
@@ -1176,7 +1188,7 @@ async function carregarDaNuvem(){
       SHEETS_URL_MEMORIA=url;
       state=data;
       aplicarBlindagemDeVariaveis();
-      if(!state.sequencias||state.sequencias.length===0){ gerarEstruturaLotesIniciais(); }
+      if(!Array.isArray(state.sequencias)) state.sequencias=[];
       try{ preencherCamposConfig(); ajustarCamposDeOddsMenu(true); atualizarPainelUI(true); }
       catch(e){ console.warn('Aviso ao renderizar após carregar (dados OK):', e); }
       atualizarStatusSheets('on');
@@ -1266,31 +1278,21 @@ function openTab(tabId){
 // Base FIXA por etapa: calculada sobre o capital global (plataforma + banco) do INÍCIO da etapa.
 // Só é recalculada ao concluir etapa / salvar config / ajustar banca (quando bancaInicioEtapa muda).
 function getLucroDesejadoBase(){ const capitalInicioEtapa=state.bancaInicioEtapa+(parseFloat(state.bancoCapital)||0); return capitalInicioEtapa*(ms().apostaBasePercent/100); }
+// Meta agora é GLOBAL (um % para todos os lotes)
+function metaGlobalPct(){ const v=parseFloat(ms().metaGlobalPercent); return isNaN(v)?1.0:v; }
 function getValorApostaBase(odd){ return getLucroDesejadoBase()/((odd||2)-1); }
 function obterTodasLetrasConfiguradas(){ const n=Math.min(ms().aleatoriedade||6,26); const az="ABCDEFGHIJKLMNOPQRSTUVWXYZ"; let l=[]; for(let i=0;i<n;i++) l.push(az[i]); return l; }
+// Mercados distintos presentes nos lotes atuais (nova arquitetura)
+function mercadosAtivosDosLotes(){ const set=[]; (ms().sequencias||[]).forEach(sq=>{ const k=sq.mercado||sq.letraRandomica; if(k&&set.indexOf(k)<0) set.push(k); }); return set; }
 function calcularSomaCapitalGeralUI(){ const b=parseFloat(document.getElementById('cfg-banco-capital').value)||0; const c=parseFloat(document.getElementById('cfg-banca-capital').value)||0; document.getElementById('cfg-banca-total-disabled').value=(b+c).toFixed(2); }
 
 function gerarEstruturaLotesIniciais(){
-  const total=parseInt(ms().loteQtd)||500;
-  const letras=obterTodasLetrasConfiguradas();
-  let cotas={}; let dist=0;
-  if(ms().modoDistribuicao==="LINEAR"){
-    const ig=Math.floor(total/letras.length);
-    letras.forEach((l,i)=>{ if(i===letras.length-1){ cotas[l]=total-dist; }else{ cotas[l]=ig; dist+=ig; } });
-  }else{
-    let pesos={}; let soma=0;
-    letras.forEach(l=>{ const o=ms().oddsPorLetra[l]||1.80; const p=1/(o>1?o:1.1); pesos[l]=p; soma+=p; });
-    letras.forEach((l,i)=>{ if(i===letras.length-1){ cotas[l]=total-dist; }else{ let q=Math.round((pesos[l]/soma)*total); cotas[l]=q; dist+=q; } });
-  }
-  let pool=[];
-  letras.forEach(l=>{ for(let k=0;k<cotas[l];k++) pool.push(l); });
-  while(pool.length<total) pool.push(letras[0]);
-  if(pool.length>total) pool=pool.slice(0,total);
-  const seqs=Array.from({length:total},(_,i)=>{ const l=pool[i]; const o=ms().oddsPorLetra[l]||2; return { id:i+1, apostaAtual:sniperArredondarAposta(getValorApostaBase(o)), streakLoss:0, letraRandomica:l, winsEtapa:0, lossesEtapa:0, perdasAcumuladas:0, status:'PENDING', ultimos:[], mercado:(getMercados()[0]?getMercados()[0].cod:'V1') }; }); ms().sequencias=seqs;
-  ms().lucroLetraEtapa={}; ms().letrasMetaCumprida={}; ms().lucroLetraArquivado={};
+  // Nova arquitetura: a operação começa VAZIA — os lotes são criados na aba Operação (➕ Adicionar lote).
+  if(!Array.isArray(ms().sequencias)) ms().sequencias=[];
+  ms().lucroLetraEtapa=ms().lucroLetraEtapa||{}; ms().letrasMetaCumprida=ms().letrasMetaCumprida||{}; ms().lucroLetraArquivado=ms().lucroLetraArquivado||{};
   ms().marantanLancamentosRodada={};
   ms().letrasBloqueadasRodada={};
-  ms().stopTravado=false; // nova grade = decisão deliberada; destrava o stop
+  ms().stopTravado=false;
   salvarDadosEAtualizarTudo();
 }
 
@@ -1321,7 +1323,7 @@ function confirmarEncerramentoRodadaReal(){
   //   (antes, um lote com perdas mantinha a aposta dimensionada para a odd da letra antiga)
   // (no modo PERCENTUAL a aposta não volta à base nem é recalculada — continua o composto)
   if(ms().modoProgressao!=="PERCENTUAL"){
-    ms().sequencias.forEach(s=>{ if(s.status==='PENDING'){ const odd=ms().oddsPorLetra[s.letraRandomica]||2; s.apostaAtual=(s.perdasAcumuladas+getLucroDesejadoBase())/(odd-1); } });
+    ms().sequencias.forEach(s=>{ if(s.status==='PENDING'){ const odd=oddDoLote(s); s.apostaAtual=(s.perdasAcumuladas+getLucroDesejadoBase())/(odd-1); } });
   }
   salvarDadosEAtualizarTudo();
 }
@@ -1332,20 +1334,7 @@ function toggleLockChaveSeletora(letra,el){
   salvarDadosEAtualizarTudo();
 }
 
-function ajustarCamposDeOddsMenu(usarState=false){
-  const n=parseInt(document.getElementById('cfg-aleatoriedade').value)||6;
-  const container=document.getElementById('odds-inputs-placeholder'); if(!container) return;
-  const az="ABCDEFGHIJKLMNOPQRSTUVWXYZ"; let html='';
-  for(let i=0;i<Math.min(n,26);i++){
-    const l=az[i];
-    let odd=1.80; let nota=""; let metaL=1.0;
-    if(usarState&&ms().oddsPorLetra&&ms().oddsPorLetra[l]!==undefined) odd=ms().oddsPorLetra[l];
-    if(usarState&&ms().anotacoesPorLetra&&ms().anotacoesPorLetra[l]) nota=ms().anotacoesPorLetra[l];
-    if(usarState&&ms().metaPorLetra&&ms().metaPorLetra[l]!==undefined) metaL=ms().metaPorLetra[l];
-    html+=`<div class="odds-item"><div><div class="cfg-label" style="margin-bottom:4px;">Odd ${l}</div><input type="number" id="cfg-odd-letra-${l}" class="cfg-input" style="font-size:13px;padding:6px 8px;" step="0.01" value="${odd.toFixed(2)}"></div><div><div class="cfg-label" style="margin-bottom:4px;">Meta ${l} (%)</div><input type="number" id="cfg-meta-letra-${l}" class="cfg-input" style="font-size:13px;padding:6px 8px;" step="0.1" min="0" value="${metaL}"></div><div><div class="cfg-label" style="margin-bottom:4px;">Nota ${l}</div><input type="text" id="cfg-nota-letra-${l}" class="cfg-input" style="font-size:12px;padding:6px 8px;font-family:var(--sans);" value="${nota}" placeholder="Mercado..."></div></div>`;
-  }
-  container.innerHTML=html;
-}
+function ajustarCamposDeOddsMenu(usarState=false){ /* removido: odds agora vêm da tabela de mercados */ }
 
 function salvarDadosEAtualizarTudo(){ state.ultimoTimestampSinc=Date.now(); state.sheetsUrl=state.sheetsUrl||SHEETS_URL_MEMORIA; if(state.sheetsUrl) SHEETS_URL_MEMORIA=state.sheetsUrl; atualizarPainelUI(false); agendarSalvarNuvem(); } // sem localStorage
 function reiniciarBancaTotalSistema(){ if(confirm("⚠️ Resetar o sistema inteiro?")){ state=JSON.parse(JSON.stringify(DEFAULT_STATE)); sinalizadoMeta=false; sinalizadoStop=false; gerarEstruturaLotesIniciais(); } }
@@ -1372,22 +1361,17 @@ function salvarConfiguracoes(){
   ms().maxGales=parseInt(document.getElementById('cfg-max-gales').value)||4;
   ms().stopLotePercent=parseFloat(document.getElementById('cfg-stop-lote').value)||5.0;
   ms().apostaBasePercent=parseFloat(document.getElementById('cfg-aposta-base-pct').value);
-  ms().loteQtd=parseInt(document.getElementById('cfg-lote').value)||500;
-  ms().aleatoriedade=parseInt(document.getElementById('cfg-aleatoriedade').value)||6;
+  const clote=document.getElementById('cfg-lote'); if(clote) ms().loteQtd=parseInt(clote.value)||500;
   ms().modoDistribuicao=document.getElementById('cfg-modo-distribuicao').value;
   ms().modoProgressao=document.getElementById('cfg-modo-progressao').value;
   ms().incrFixoPercent=parseFloat(document.getElementById('cfg-incr-fixo').value)||10.0;
   ms().metaDiaria=parseFloat(document.getElementById('cfg-meta-diaria').value)||1.0;
   ms().diasAcomp=parseInt(document.getElementById('cfg-dias-acomp').value)||30;
-  ms().oddsPorLetra={}; ms().anotacoesPorLetra={}; ms().metaPorLetra={};
-  const az="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  for(let i=0;i<Math.min(ms().aleatoriedade,26);i++){
-    const l=az[i];
-    const oi=document.getElementById(`cfg-odd-letra-${l}`); const ni=document.getElementById(`cfg-nota-letra-${l}`); const mi=document.getElementById(`cfg-meta-letra-${l}`);
-    ms().oddsPorLetra[l]=oi?parseFloat(oi.value)||1.80:1.80; ms().anotacoesPorLetra[l]=ni?ni.value:"";
-    const vMeta=mi?parseFloat(mi.value):NaN; ms().metaPorLetra[l]=isNaN(vMeta)?1.0:vMeta; // vazio → default 1.0; "0" digitado → desativa
-  }
-  gerarEstruturaLotesIniciais(); alert("Configurações salvas e grade recriada!");
+  const mg=document.getElementById('cfg-meta-global'); if(mg){ const v=parseFloat(mg.value); ms().metaGlobalPercent=isNaN(v)?1.0:v; }
+  // Recalcula a aposta base dos lotes existentes (a base pode ter mudado), sem apagar lotes.
+  (ms().sequencias||[]).forEach(sq=>{ if(sq.status==='PENDING'&&(parseFloat(sq.perdasAcumuladas)||0)<0.005){ sq.apostaAtual=sniperArredondarAposta(getValorApostaBase(oddDoLote(sq))); } });
+  salvarDadosEAtualizarTudo();
+  alert("Configurações salvas.");
 }
 
 function sniperArredondarAposta(val){ return Math.max(0.01, Math.round(val*100)/100); }
@@ -1412,24 +1396,28 @@ function registrarEventoLetra(l,resultado){
 
 // ── MOTOR DE RESULTADO POR LOTE (com teto de gales e stop por lote) ──
 const MERCADOS_PADRAO=[
-  {cod:"V1",nome:"Vitória Mandante"},
-  {cod:"EMP",nome:"Empate"},
-  {cod:"V2",nome:"Vitória Visitante"},
-  {cod:"1T1",nome:"1º Tempo - Mandante"},
-  {cod:"1TX",nome:"1º Tempo - Empate"},
-  {cod:"1T2",nome:"1º Tempo - Visitante"},
-  {cod:"MA25",nome:"Mais de 2,5 gols"},
-  {cod:"ME15",nome:"Menos de 1,5 gols"},
-  {cod:"AMS",nome:"Ambos Marcam - Sim"},
-  {cod:"AMN",nome:"Ambos Marcam - Não"},
-  {cod:"PM1",nome:"Primeiro a Marcar - Mandante"},
-  {cod:"PM2",nome:"Primeiro a Marcar - Visitante"},
-  {cod:"UM1",nome:"Último a Marcar - Mandante"},
-  {cod:"UM2",nome:"Último a Marcar - Visitante"}
+  {cod:"V1",nome:"Vitória Mandante",odd:2.00},
+  {cod:"EMP",nome:"Empate",odd:3.00},
+  {cod:"V2",nome:"Vitória Visitante",odd:3.50},
+  {cod:"1T1",nome:"1º Tempo - Mandante",odd:2.80},
+  {cod:"1TX",nome:"1º Tempo - Empate",odd:2.10},
+  {cod:"1T2",nome:"1º Tempo - Visitante",odd:4.50},
+  {cod:"MA25",nome:"Mais de 2,5 gols",odd:2.00},
+  {cod:"ME15",nome:"Menos de 1,5 gols",odd:3.20},
+  {cod:"AMS",nome:"Ambos Marcam - Sim",odd:1.90},
+  {cod:"AMN",nome:"Ambos Marcam - Não",odd:1.90},
+  {cod:"PM1",nome:"Primeiro a Marcar - Mandante",odd:2.20},
+  {cod:"PM2",nome:"Primeiro a Marcar - Visitante",odd:3.00},
+  {cod:"UM1",nome:"Último a Marcar - Mandante",odd:2.20},
+  {cod:"UM2",nome:"Último a Marcar - Visitante",odd:3.00}
 ];
 // Retorna a lista de mercados vigente (do estado, ou o padrão)
 function getMercados(){ const m=ms().mercadosCustom; return (Array.isArray(m)&&m.length>0)?m : MERCADOS_PADRAO; }
 function labelMercado(cod){ const m=getMercados().find(x=>x.cod===cod); return m?(m.cod+" · "+m.nome):cod; }
+function oddDoMercado(cod){ const m=getMercados().find(x=>x.cod===cod); return m&&m.odd?parseFloat(m.odd):2.00; }
+// Odd de um lote = odd do mercado dele (a odd deixou de ser "por letra")
+function oddDoLote(seq){ if(!seq) return 2.00; return oddDoMercado(seq.mercado||(getMercados()[0]?getMercados()[0].cod:'V1')); }
+function oddPorLetra(l){ const seqs=(ms().sequencias||[]).filter(s=>s.letraRandomica===l); return seqs.length?oddDoLote(seqs[0]):2.00; }
 
 function registrarAposta(letra,odd,venceu,mercado){
   if(!ms().registroApostas) ms().registroApostas=[];
@@ -1515,6 +1503,7 @@ function processarWinSeq(seq,odd){
   const lw=seq.letraRandomica;
   if(!ms().lucroLetraEtapa) ms().lucroLetraEtapa={};
   ms().lucroLetraEtapa[lw]=(ms().lucroLetraEtapa[lw]||0)+(val*(odd-1));
+  seq.lucroEtapa=(seq.lucroEtapa||0)+(val*(odd-1)); // lucro do LOTE individual (para a barra por lote)
   if(ms().modoProgressao==="PERCENTUAL"){
     // Percentual Fixo: vitória NÃO volta à base — segue incrementando de forma composta.
     // O ganho abate o risco acumulado do lote (exposição líquida), mantendo o stop por lote coerente.
@@ -1525,13 +1514,13 @@ function processarWinSeq(seq,odd){
     seq.perdasAcumuladas=0; seq.streakLoss=0;
     seq.apostaAtual=sniperArredondarAposta(getValorApostaBase(odd));
   }
-  // Verifica a meta da letra ANTES de decidir o status — assim a vitória que cruza a meta já blinda o lote
+  // Verifica a meta agregada do mercado (para estatística) e a meta do LOTE (para blindagem individual)
   verificarMetaLetra(lw);
+  const loteBateuMeta=verificarMetaLote(seq);
   if(ms().modoPosWin==="BLINDAR"){
-    const temMeta=ms().metaPorLetra&&parseFloat(ms().metaPorLetra[lw])>0;
-    // Com meta definida (>0): só blinda quando a letra cumpriu a missão; até lá, o lote segue apostando.
-    // Meta 0/desativada: comportamento original (blinda em qualquer vitória).
-    seq.status=(!temMeta||(ms().letrasMetaCumprida&&ms().letrasMetaCumprida[lw]))?"FINISHED":"PENDING";
+    const temMeta=metaGlobalPct()>0;
+    // Com meta definida: blinda este lote quando ELE cumpriu a própria meta. Sem meta: blinda em qualquer vitória.
+    seq.status=(!temMeta||loteBateuMeta)?"FINISHED":"PENDING";
   } else {
     seq.status="PENDING";
   }
@@ -1544,13 +1533,13 @@ let letraParaReabrir=null;
 function reabrirLetra(l){
   letraParaReabrir=l;
   const lucro=(ms().lucroLetraEtapa&&ms().lucroLetraEtapa[l])||0;
-  const metaPct=(ms().metaPorLetra&&parseFloat(ms().metaPorLetra[l]))||0;
+  const metaPct=metaGlobalPct();
   const lotes=ms().sequencias.filter(s=>s.letraRandomica===l).length;
   const msg=document.getElementById('modal-reabrir-msg');
   if(msg) msg.innerHTML=`Você está prestes a <b>reabrir a letra ${l}</b>, que já cumpriu a missão.<br><br>
     Lucro travado nesta etapa: <b style="color:var(--win);">${fmt(lucro)}</b> (meta era ${metaPct}%)<br>
     Lotes que voltarão a operar: <b>${lotes}</b><br>
-    Aposta de reabertura: <b style="color:var(--accent);">${fmt(getValorApostaBase(ms().oddsPorLetra[l]||2))}</b> <span style="font-size:11px;color:var(--muted);">(volta à base, risco zerado)</span><br><br>
+    Aposta de reabertura: <b style="color:var(--accent);">${fmt(getValorApostaBase(oddPorLetra(l)))}</b> <span style="font-size:11px;color:var(--muted);">(volta à base, risco zerado)</span><br><br>
     <b style="color:var(--bar-amber);">⚠️ O lucro desta letra deixa de estar protegido.</b> A partir daqui ele volta a ficar exposto ao risco, e o resultado acumulado pode ser reduzido ou revertido pelas próximas apostas.<br><br>
     <span style="font-size:11px;color:var(--muted);">Lembre-se: uma letra que bateu a meta não é uma letra "quente" — a próxima aposta nela tem exatamente a mesma expectativa de antes.</span>`;
   document.getElementById('modal-reabrir').style.display='flex';
@@ -1562,7 +1551,7 @@ function confirmarReabertura(){
   // Reabre os lotes da letra em ESTADO DE ORIGEM: aposta volta à base, risco acumulado zerado,
   // sequência de gales reiniciada. Reabrir é recomeçar do zero — não retomar de onde parou.
   // (Também no modo PERCENTUAL: o composto reinicia, senão a reabertura herdaria uma aposta inflada.)
-  const oddL=ms().oddsPorLetra[l]||2;
+  const oddL=oddPorLetra(l);
   // Reabrir reseta TODOS os lotes da letra ao estado de origem — não só os blindados (FINISHED).
   // No modo Resetar, os lotes de uma letra que bateu a meta seguem PENDING; antes eles eram
   // ignorados aqui e a aposta não voltava à base. Agora qualquer lote da letra recomeça do zero.
@@ -1572,6 +1561,8 @@ function confirmarReabertura(){
       s.apostaAtual=sniperArredondarAposta(getValorApostaBase(oddL));
       s.perdasAcumuladas=0;
       s.streakLoss=0;
+      s.lucroEtapa=0;
+      s.metaAvisada=false;
     }
   });
 
@@ -1721,11 +1712,31 @@ function retirarLucroDiaParaBanco(){
   salvarDadosEAtualizarTudo();
 }
 
+function verificarMetaLote(seq){
+  if(!seq) return false;
+  const metaPct=metaGlobalPct();
+  if(metaPct<=0) return false; // meta desativada
+  const baseCapital=state.bancaInicioEtapa+(parseFloat(state.bancoCapital)||0);
+  const alvo=baseCapital*(metaPct/100);
+  const lucro=seq.lucroEtapa||0;
+  if(lucro>=alvo){
+    // Missão do LOTE cumprida — mostra o aviso uma vez por lote
+    if(!seq.metaAvisada){
+      seq.metaAvisada=true;
+      const msg=document.getElementById('modal-meta-letra-msg');
+      if(msg) msg.innerHTML=`O lote <b>#${String(seq.id).padStart(3,'0')}</b> (${seq.mercado}) cumpriu a missão! 🎯<br><br>Lucro do lote nesta etapa: <b style="color:var(--win);">${fmt(lucro)}</b><br>Meta: <b>${metaPct.toFixed(2)}%</b> sobre o capital do início da etapa (${fmt(alvo)}).<br><br>${ms().modoPosWin==="BLINDAR"?'O lote foi <b>🔒 blindado</b> — sai de "Pendentes" e protege o resultado.':'Modo <b>Resetar</b> ativo: o lote segue operando. Blinde manualmente se quiser proteger.'}`;
+      const modal=document.getElementById('modal-meta-letra');
+      if(modal) modal.style.display='flex';
+    }
+    return true;
+  }
+  return false;
+}
+
 function verificarMetaLetra(l){
-  if(!ms().metaPorLetra||ms().metaPorLetra[l]===undefined) return;
   if(!ms().letrasMetaCumprida) ms().letrasMetaCumprida={};
   if(ms().letrasMetaCumprida[l]) return; // avisa uma única vez por etapa
-  const metaPct=parseFloat(ms().metaPorLetra[l])||0;
+  const metaPct=metaGlobalPct();
   if(metaPct<=0) return; // meta 0 = desativada para essa letra
   const banco=parseFloat(state.bancoCapital)||0;
   const baseCapital=state.bancaInicioEtapa+banco;
@@ -1753,6 +1764,7 @@ function processarPerdaSeq(seq,odd){
   state.bancaAtual-=val;
   if(!ms().lucroLetraEtapa) ms().lucroLetraEtapa={};
   ms().lucroLetraEtapa[seq.letraRandomica]=(ms().lucroLetraEtapa[seq.letraRandomica]||0)-val;
+  seq.lucroEtapa=(seq.lucroEtapa||0)-val; // lucro do LOTE individual
   seq.perdasAcumuladas+=val;
   seq.streakLoss=(seq.streakLoss||0)+1;
   const capitalGlobal=state.bancaAtual+(parseFloat(state.bancoCapital)||0);
@@ -1800,7 +1812,7 @@ function registrarApostaIndividual(index,resultado,emMassa=false){
   if(index<0||index>=ms().sequencias.length) return;
   if(verificarTravaStop()) return;
   const seq=ms().sequencias[index]; if(seq.status==='FINISHED') return;
-  const l=seq.letraRandomica; const odd=ms().oddsPorLetra[l]||2;
+  const l=seq.letraRandomica; const odd=oddDoLote(seq);
   registrarEventoLetra(l,resultado);
   let infoAssumida=null;
   if(resultado==='WIN'){ processarWinSeq(seq,odd); ms().vitoriasRodadaVoltarInicial++; }
@@ -1816,7 +1828,7 @@ function registrarApostaIndividual(index,resultado,emMassa=false){
 function executarAcaoEmMassaCard(letraAlvo,resultado){
   if(verificarTravaStop()) return;
   const lu=letraAlvo.toUpperCase(); let ok=false; let vits=0; let assumidas=0; let valAssumido=0;
-  const odd=ms().oddsPorLetra[lu]||2;
+  const odd=oddPorLetra(lu);
   if(ms().sequencias.some(s=>s.letraRandomica===lu&&s.status!=='FINISHED')) registrarEventoLetra(lu,resultado);
   ms().sequencias.forEach(seq=>{
     if(seq.letraRandomica===lu&&seq.status!=='FINISHED'){
@@ -1868,8 +1880,9 @@ function renderEditorMercados(){
   let html='';
   lista.forEach((m,i)=>{
     html+=`<div style="display:flex;gap:6px;align-items:center;margin-bottom:5px;">
-      <input type="text" value="${(m.cod||'').replace(/"/g,'&quot;')}" oninput="editarMercadoCampo(${i},'cod',this.value)" placeholder="V1" style="width:64px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:11px;font-weight:700;padding:6px;border-radius:4px;text-transform:uppercase;">
+      <input type="text" value="${(m.cod||'').replace(/"/g,'&quot;')}" oninput="editarMercadoCampo(${i},'cod',this.value)" placeholder="V1" style="width:54px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:11px;font-weight:700;padding:6px;border-radius:4px;text-transform:uppercase;">
       <input type="text" value="${(m.nome||'').replace(/"/g,'&quot;')}" oninput="editarMercadoCampo(${i},'nome',this.value)" placeholder="Descrição" style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:var(--sans);font-size:11px;padding:6px;border-radius:4px;">
+      <input type="number" step="0.01" min="1.01" value="${m.odd!==undefined?m.odd:2.00}" oninput="editarMercadoCampo(${i},'odd',this.value)" title="Odd" placeholder="Odd" style="width:58px;background:var(--surface2);border:1px solid var(--accent);color:var(--text);font-family:var(--mono);font-size:11px;font-weight:700;padding:6px;border-radius:4px;">
       <button onclick="removerMercado(${i})" title="Remover" style="flex:none;width:28px;height:28px;background:var(--surface2);border:1px solid var(--loss);color:var(--loss);border-radius:4px;cursor:pointer;font-weight:700;">✕</button>
     </div>`;
   });
@@ -1882,11 +1895,13 @@ function _garantirEdit(){ if(!_mercadosEdit) _mercadosEdit=JSON.parse(JSON.strin
 function editarMercadoCampo(i,campo,valor){
   const l=_garantirEdit();
   if(!l[i]) return;
-  l[i][campo]=campo==='cod'?valor.toUpperCase().trim().replace(/\s+/g,''):valor;
+  if(campo==='cod') l[i].cod=valor.toUpperCase().trim().replace(/\s+/g,'');
+  else if(campo==='odd') l[i].odd=parseFloat(valor)||2.00;
+  else l[i][campo]=valor;
 }
 function adicionarMercado(){
   const l=_garantirEdit();
-  l.push({cod:'', nome:''});
+  l.push({cod:'', nome:'', odd:2.00});
   ms().mercadosCustom=l; // reflete para render
   renderEditorMercados();
 }
@@ -1914,6 +1929,60 @@ function salvarMercados(){
   renderEditorMercados();
 }
 
+// ── CRIAÇÃO/REMOÇÃO DE LOTES (nova arquitetura: lote = um mercado) ──
+function proximoIdLote(){
+  const seqs=ms().sequencias||[];
+  let max=0; seqs.forEach(s=>{ if(s.id>max) max=s.id; });
+  return max+1;
+}
+function adicionarLote(mercadoCod){
+  if(!ms().sequencias) ms().sequencias=[];
+  const cod=mercadoCod || (getMercados()[0]?getMercados()[0].cod:'V1');
+  const odd=oddDoMercado(cod);
+  const novo={
+    id: proximoIdLote(),
+    apostaAtual: sniperArredondarAposta(getValorApostaBase(odd)),
+    streakLoss:0,
+    letraRandomica: cod,   // rótulo de agrupamento = o próprio mercado
+    mercado: cod,
+    winsEtapa:0, lossesEtapa:0,
+    perdasAcumuladas:0,
+    lucroEtapa:0,
+    status:'PENDING',
+    ultimos:[]
+  };
+  ms().sequencias.push(novo);
+  salvarDadosEAtualizarTudo();
+}
+function abrirModalAddLote(){
+  const sel=document.getElementById('sel-add-lote-mercado');
+  if(sel){
+    let opts='';
+    getMercados().forEach(m=>{ opts+=`<option value="${m.cod}">${m.cod} · ${m.nome} (@${(parseFloat(m.odd)||2).toFixed(2)})</option>`; });
+    sel.innerHTML=opts;
+  }
+  document.getElementById('modal-add-lote').style.display='flex';
+}
+function confirmarAddLote(){
+  const sel=document.getElementById('sel-add-lote-mercado');
+  const qtdEl=document.getElementById('inp-add-lote-qtd');
+  const cod=sel?sel.value:null;
+  let qtd=qtdEl?parseInt(qtdEl.value):1;
+  if(isNaN(qtd)||qtd<1) qtd=1; if(qtd>200) qtd=200;
+  for(let k=0;k<qtd;k++) adicionarLote(cod);
+  fecharModal('modal-add-lote');
+}
+function removerLote(index){
+  const seq=ms().sequencias[index]; if(!seq) return;
+  const risco=parseFloat(seq.perdasAcumuladas)||0;
+  const msg=risco>0.005
+    ? `Remover o lote #${seq.id} (${seq.mercado})?\n\n⚠️ Ele tem ${fmt(risco)} de risco acumulado — essa perda será descartada do acompanhamento.`
+    : `Remover o lote #${seq.id} (${seq.mercado})?`;
+  if(!confirm(msg)) return;
+  ms().sequencias.splice(index,1);
+  salvarDadosEAtualizarTudo();
+}
+
 function mudarMercadoLote(index,valor){
   const seq=ms().sequencias[index]; if(!seq) return;
   seq.mercado=valor;
@@ -1930,13 +1999,15 @@ function resetarLoteIndividual(index){
       : `A aposta volta ao valor inicial e a sequência recomeça. (Este lote não tem risco acumulado no momento.)`);
   if(!confirm(msg)) return;
 
-  const oddL=ms().oddsPorLetra[l]||2;
+  const oddL=oddPorLetra(l);
   const assumido=risco;
   // Reset TOTAL do lote: aposta base, perdas zeradas, gales reiniciados, status volta a ativo.
   seq.status='PENDING';
   seq.apostaAtual=sniperArredondarAposta(getValorApostaBase(oddL));
   seq.perdasAcumuladas=0;
   seq.streakLoss=0;
+  seq.lucroEtapa=0;
+  seq.metaAvisada=false;
 
   if(assumido>0.005){
     ms().perdasAssumidasTotal=(ms().perdasAssumidasTotal||0)+assumido;
@@ -1955,8 +2026,8 @@ function distributingRiscoLoteCritico(indexAlvo){
   if(lc.perdasAcumuladas<=0){ alert("Este lote não tem risco acumulado para distribuir."); return; }
   if(outros.length===0){ alert("Não há outro lote ativo para receber o risco.\n\nOs demais lotes estão blindados (finalizados) — e lotes blindados não recebem risco, para não expor o lucro já protegido. Reabra um lote se quiser usá-lo como destino."); return; }
   if(confirm("⚖️ Diluir o risco acumulado entre os outros lotes ativos?")){
-    const frac=lc.perdasAcumuladas/outros.length; const oddLc=ms().oddsPorLetra[lc.letraRandomica]||2; lc.perdasAcumuladas=0; lc.apostaAtual=sniperArredondarAposta(getValorApostaBase(oddLc));
-    ms().sequencias.forEach(seq=>{ if(seq.status!=='FINISHED'&&seq.id!==lc.id){ seq.perdasAcumuladas=roundedFixo(seq.perdasAcumuladas+frac); if(ms().modoProgressao!=="PERCENTUAL"){ const odd=ms().oddsPorLetra[seq.letraRandomica]||2; seq.apostaAtual=sniperArredondarAposta((seq.perdasAcumuladas+getLucroDesejadoBase())/(odd-1)); } } });
+    const frac=lc.perdasAcumuladas/outros.length; const oddLc=oddDoLote(lc); lc.perdasAcumuladas=0; lc.apostaAtual=sniperArredondarAposta(getValorApostaBase(oddLc));
+    ms().sequencias.forEach(seq=>{ if(seq.status!=='FINISHED'&&seq.id!==lc.id){ seq.perdasAcumuladas=roundedFixo(seq.perdasAcumuladas+frac); if(ms().modoProgressao!=="PERCENTUAL"){ const odd=oddDoLote(seq); seq.apostaAtual=sniperArredondarAposta((seq.perdasAcumuladas+getLucroDesejadoBase())/(odd-1)); } } });
     dispararAnimacaoToastLotes(()=>{ salvarDadosEAtualizarTudo(); });
   }
 }
@@ -2012,6 +2083,18 @@ function confirmarConclusaoEtapa(){
   ms().etapaAtual++;
   sinalizadoMeta=false; sinalizadoStop=false; ms().vitoriasRodadaVoltarInicial=0;
   ms().letrasBloqueadasRodada={};
+  // Nova etapa: reinicia cada lote existente (aposta base, risco/lucro/gales zerados), sem apagar a lista de lotes.
+  (ms().sequencias||[]).forEach(sq=>{
+    sq.status='PENDING';
+    sq.perdasAcumuladas=0;
+    sq.streakLoss=0;
+    sq.lucroEtapa=0;
+    sq.metaAvisada=false;
+    sq.winsEtapa=0;
+    sq.lossesEtapa=0;
+    sq.apostaAtual=sniperArredondarAposta(getValorApostaBase(oddDoLote(sq)));
+  });
+  ms().lucroLetraEtapa={}; ms().letrasMetaCumprida={};
   gerarEstruturaLotesIniciais();
   preencherCamposConfig();
 }
@@ -2050,14 +2133,13 @@ function renderLinhas(){
 
   let html='';
   lista.forEach(({seq,i})=>{
-    const l=seq.letraRandomica; const odd=ms().oddsPorLetra[l]||1.80;
+    const l=seq.letraRandomica; const odd=oddDoLote(seq);
     const rowCls=seq.status==='FINISHED'?'row-finished':(seq.perdasAcumuladas>0?'row-loss':'');
     const streak=seq.streakLoss||0;
     const seqCor=corSeq(streak,maxG);
     const seqTxt=streak>0?`<b style="color:${seqCor};">${streak}/${maxG}</b>`:`<span style="color:var(--muted);">—</span>`;
     html+=`<tr class="${rowCls}">
       <td class="t-mono">#${String(seq.id).padStart(3,'0')}</td>
-      <td><span class="lote-badge">${l}</span></td>
       <td>${(function(){
         const mkt=seq.mercado||(getMercados()[0]?getMercados()[0].cod:'V1');
         let opts='';
@@ -2065,18 +2147,18 @@ function renderLinhas(){
         return `<select class="t-mercado-sel" onchange="mudarMercadoLote(${i},this.value)">${opts}</select>`;
       })()}</td>
       <td class="t-meta-cell">${(function(){
-        const mp=(ms().metaPorLetra&&parseFloat(ms().metaPorLetra[l]))||0;
+        const mp=metaGlobalPct();
         if(mp<=0) return '<span style="color:var(--muted);font-size:10px;">—</span>';
         const alvo=(state.bancaInicioEtapa+(parseFloat(state.bancoCapital)||0))*(mp/100);
-        const luc=(ms().lucroLetraEtapa&&ms().lucroLetraEtapa[l])||0;
+        const luc=seq.lucroEtapa||0;
         const prog=alvo>0?Math.max(0,Math.min(100,(luc/alvo)*100)):0;
-        const cumprida=(ms().letrasMetaCumprida&&ms().letrasMetaCumprida[l])||prog>=100;
+        const cumprida=seq.status==='FINISHED'||prog>=100;
         // Tons FORTES e sólidos (deuteranopia): verde forte / âmbar forte / vermelho forte. Texto sempre presente.
         const cor=cumprida?'var(--bar-win)':(luc<0?'var(--bar-loss)':'var(--bar-amber)');
         const lbl=cumprida?'✔100%':(luc<0?Math.round(prog)+'%':Math.round(prog)+'%');
         return `<div style="min-width:66px;">
           <div style="display:flex;justify-content:flex-end;font-size:9px;font-family:var(--mono);font-weight:700;color:${cumprida?'var(--bar-win)':(luc<0?'var(--bar-loss)':'var(--text)')};margin-bottom:2px;">${lbl}</div>
-          <div style="height:7px;background:var(--surface2);border:1px solid var(--border);border-radius:99px;overflow:hidden;">
+          <div style="height:11px;background:var(--surface2);border:1px solid var(--border);border-radius:99px;overflow:hidden;">
             <div style="height:100%;width:${prog}%;background:${cor};border-radius:99px;transition:width .3s;"></div>
           </div>
         </div>`;
@@ -2092,6 +2174,7 @@ function renderLinhas(){
         <button class="tbl-btn-loss" onclick="registrarApostaIndividual(${i},'LOSS',false)">Der</button>
         <button class="tbl-btn-eq" onclick="distributingRiscoLoteCritico(${i})">⚖️</button>
         <button class="tbl-btn-reset" onclick="resetarLoteIndividual(${i})" title="Resetar este lote (aposta e perdas ao inicial)">🛡️</button>
+        <button class="tbl-btn-del" onclick="removerLote(${i})" title="Remover este lote">✕</button>
       </div></td>
     </tr>`;
   });
@@ -2163,7 +2246,7 @@ function renderCards(){
 
     // ── Barra de progresso da meta da letra ──
     let metaBarHtml='';
-    const metaPctL=(ms().metaPorLetra&&parseFloat(ms().metaPorLetra[l]))||0;
+    const metaPctL=metaGlobalPct();
     if(metaPctL>0){
       const bancoMB=parseFloat(state.bancoCapital)||0;
       const alvoL=(state.bancaInicioEtapa+bancoMB)*(metaPctL/100);
@@ -2257,8 +2340,8 @@ function preencherCamposConfig(){ if(typeof aplicarVisibilidadeAbas==="function"
   document.getElementById('cfg-max-gales').value=ms().maxGales||4;
   document.getElementById('cfg-stop-lote').value=ms().stopLotePercent||5.0;
   document.getElementById('cfg-aposta-base-pct').value=ms().apostaBasePercent;
-  document.getElementById('cfg-lote').value=ms().loteQtd||500;
-  document.getElementById('cfg-aleatoriedade').value=ms().aleatoriedade;
+  const clote2=document.getElementById('cfg-lote'); if(clote2) clote2.value=ms().loteQtd||500;
+  const mg=document.getElementById('cfg-meta-global'); if(mg) mg.value=metaGlobalPct();
   document.getElementById('cfg-data-inicio').value=ms().dataInicioCiclo||hojeISO;
   document.getElementById('cfg-modo-distribuicao').value=ms().modoDistribuicao||"PROPORCIONAL";
   document.getElementById('cfg-modo-progressao').value=ms().modoProgressao||"RECUPERACAO";
@@ -2295,7 +2378,7 @@ function calcularPrevistoNaData(dataStr){
 function simularSobrevivenciaLetra(l){
   const ativos=ms().sequencias.filter(s=>s.letraRandomica===l&&s.status!=='FINISHED');
   if(ativos.length===0) return null;
-  const odd=ms().oddsPorLetra[l]||2;
+  const odd=oddPorLetra(l);
   const base=getValorApostaBase(odd);
   let sim=ativos.map(s=>({acc:s.perdasAcumuladas, stake:sniperArredondarAposta(s.apostaAtual)}));
   let banca=state.bancaAtual+(parseFloat(state.bancoCapital)||0); // global: banco é reserva do mesmo dinheiro
@@ -2321,7 +2404,7 @@ function renderExposicao(){
   let html=''; let riscoTotal=0; let proximaTotal=0;
   letras.forEach(l=>{
     const sim=simularSobrevivenciaLetra(l);
-    const odd=ms().oddsPorLetra[l]||2;
+    const odd=oddPorLetra(l);
     if(!sim){
       html+=`<div class="preview-row"><span><b style="font-family:var(--mono);">[${l}]</b> @${odd.toFixed(2)} · finalizada</span><span style="color:var(--muted);font-size:11px;">—</span></div>`;
       return;
@@ -2510,7 +2593,7 @@ function renderEstatisticas(){
   // Streaks atuais por letra
   const chips=document.getElementById('estat-streaks-atuais');
   if(chips){
-    const letras=obterTodasLetrasConfiguradas();
+    const letras=mercadosAtivosDosLotes();
     chips.innerHTML=letras.map(l=>{
       const s=(ms().streakPorLetra||{})[l]||0;
       const cor=s>=8?'var(--loss)':(s>=4?'var(--bar-amber)':'var(--muted)');
@@ -2528,8 +2611,8 @@ function renderEstatisticas(){
   const cont={}; let maior=0;
   eventos.forEach(e=>{ cont[e.c]=(cont[e.c]||0)+1; if(e.c>maior) maior=e.c; });
   // p implícito médio (otimista) das letras configuradas
-  const letras=obterTodasLetrasConfiguradas();
-  const pMedio=letras.reduce((a,l)=>a+1/(ms().oddsPorLetra[l]||2),0)/letras.length;
+  const letras=mercadosAtivosDosLotes();
+  const pMedio=letras.length?letras.reduce((a,l)=>a+1/oddDoMercado(l),0)/letras.length:0.5;
   const maxLinha=Math.min(maior,15);
   let rows='';
   for(let k=0;k<=maxLinha;k++){
