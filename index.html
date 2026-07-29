@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#0D1117">
-<title>Método Marantan v36.2</title>
+<title>Método Marantan v36.6</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox=%270 0 48 48%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Crect x=%271.5%27 y=%271.5%27 width=%2745%27 height=%2745%27 rx=%2711%27 fill=%27%23161B22%27 stroke=%27%2330363D%27 stroke-width=%271.5%27/%3E%3Cpath d=%27M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3Cpath d=%27M30.5 9.5 L37.5 9 L36.8 16%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -200,15 +200,15 @@ header { background:var(--surface); border-bottom:1px solid var(--border); paddi
 .btn-reabrir { width:100%; background:var(--surface2); border:1px solid var(--accent); color:var(--accent); padding:6px; border-radius:var(--radius-sm); font-size:11px; font-weight:700; cursor:pointer; font-family:var(--sans); }
 .btn-reabrir:hover { background:var(--accent-dim); }
 .t-meta-cell { min-width:70px; vertical-align:middle; }
-.t-mercado-sel { background:var(--surface2); border:1px solid var(--border); color:var(--text); font-family:var(--sans); font-size:9px; font-weight:600; padding:2px 3px; border-radius:4px; cursor:pointer; max-width:120px; }
+.t-mercado-sel { background:var(--surface2); border:1px solid var(--border); color:var(--text); font-family:var(--mono); font-size:11px; font-weight:700; padding:2px 4px; border-radius:4px; cursor:pointer; max-width:66px; }
 .u10-wrap { display:flex; gap:2px; align-items:center; }
 .u10-box { display:flex; align-items:center; gap:4px; }
-/* Larg. p/ 15 caixas de 20px + gaps ≈ 330px */
-.u10-scroll { display:flex; gap:3px; align-items:center; overflow-x:auto; max-width:340px; scroll-behavior:smooth; padding:2px; scrollbar-width:none; }
+/* Larg. p/ 15 caixas de 16px + gaps ≈ 270px */
+.u10-scroll { display:flex; gap:2px; align-items:center; overflow-x:auto; max-width:270px; scroll-behavior:smooth; padding:2px; scrollbar-width:none; }
 .u10-scroll::-webkit-scrollbar { display:none; }
-.u10-arrow { flex:none; width:22px; height:26px; border:1.5px solid var(--border); background:var(--surface2); color:var(--text); border-radius:5px; cursor:pointer; font-size:12px; line-height:1; padding:0; font-weight:800; }
+.u10-arrow { flex:none; width:18px; height:20px; border:1.5px solid var(--border); background:var(--surface2); color:var(--text); border-radius:4px; cursor:pointer; font-size:10px; line-height:1; padding:0; font-weight:800; }
 .u10-arrow:hover { background:var(--accent-dim); border-color:var(--accent); }
-.u10 { width:20px; height:20px; border-radius:4px; display:inline-flex; align-items:center; justify-content:center; font-size:13px; font-weight:900; line-height:1; box-sizing:border-box; flex:none; }
+.u10 { width:16px; height:16px; border-radius:3px; display:inline-flex; align-items:center; justify-content:center; font-size:11px; font-weight:900; line-height:1; box-sizing:border-box; flex:none; }
 /* Vitória: quadrado PREENCHIDO, cantos arredondados, ✓ branco */
 .u10-win { background:var(--bar-win); color:#FFFFFF; border:2px solid var(--bar-win); }
 /* Derrota: quadrado VAZADO (contorno grosso), cantos retos, ✕ na cor — forma distinta da vitória */
@@ -310,7 +310,6 @@ tbody tr:last-child td { border-bottom:none; }
 .tbl-btn-del { background:var(--surface2); border:1px solid var(--loss); color:var(--loss); padding:2px 5px; border-radius:4px; font-size:9px; font-weight:700; cursor:pointer; }
 .tbl-btn-move { background:var(--surface2); border:1px solid var(--border); color:var(--text); width:20px; height:14px; border-radius:3px; font-size:8px; font-weight:800; cursor:pointer; line-height:1; padding:0; }
 .row-paused td { opacity:0.45; }
-.row-paused { border-left:4px dashed var(--muted); background:repeating-linear-gradient(45deg,transparent,transparent 6px,var(--surface2) 6px,var(--surface2) 12px); }
 .row-paused .chk-pausa { opacity:1 !important; }
 .pill-pausa { display:inline-block; font-size:8px; font-weight:800; padding:1px 5px; border-radius:10px; background:var(--surface2); color:var(--text); border:1px solid var(--muted); letter-spacing:.04em; vertical-align:middle; opacity:1; }
 .chk-pausa { width:15px; height:15px; cursor:pointer; accent-color:var(--accent); }
@@ -462,6 +461,24 @@ tbody tr:last-child td { border-bottom:none; }
 
 
 
+<div id="modal-escolher-lotes" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-body">
+      <div class="m-title" style="color:var(--accent);">👁️ Escolher lotes visíveis</div>
+      <p style="font-size:11px;color:var(--muted);margin:6px 0 10px;line-height:1.5;">Marque os lotes que quer ver na tabela agora. Os desmarcados apenas somem da tela — continuam operando normalmente.</p>
+      <div style="display:flex;gap:6px;margin-bottom:10px;">
+        <button onclick="marcarTodosLotesVis(true)" style="flex:1;padding:6px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:11px;font-weight:700;cursor:pointer;">✓ Marcar todos</button>
+        <button onclick="marcarTodosLotesVis(false)" style="flex:1;padding:6px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:11px;font-weight:700;cursor:pointer;">✕ Desmarcar todos</button>
+      </div>
+      <div id="lista-escolher-lotes" style="max-height:320px;overflow-y:auto;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="fecharModal('modal-escolher-lotes')">Cancelar</button>
+      <button class="btn-confirm" onclick="aplicarLotesVisiveis()">Aplicar</button>
+    </div>
+  </div>
+</div>
+
 <div id="modal-add-lote" class="modal-overlay">
   <div class="modal-box">
     <div class="modal-body">
@@ -538,7 +555,7 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v36.2</span></div>
+      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v36.6</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
@@ -660,6 +677,7 @@ tbody tr:last-child td { border-bottom:none; }
       <div style="display:flex; gap:6px; margin-bottom:8px; flex-wrap:wrap;">
         <button id="btn-sort-id" class="filter-btn filter-ord active" onclick="alterarOrdemLotes('id')">📋 Por Número</button>
         <button id="btn-sort-risco" class="filter-btn filter-ord" onclick="alterarOrdemLotes('risco')">🔴 Por Risco</button>
+        <button id="btn-escolher-lotes" class="filter-btn" onclick="abrirModalEscolherLotes()">👁️ Escolher lotes</button>
       </div>
       <div class="table-wrap">
         <table>
@@ -1124,6 +1142,7 @@ function aplicarBlindagemDeVariaveis(){
     else m.mercadosCustom.forEach(x=>{ if(x.odd===undefined||x.odd===null||x.odd==='') x.odd=2.00; });
     if(Array.isArray(m.sequencias)) m.sequencias.forEach(sq=>{ if(!sq.ultimos) sq.ultimos=[]; if(!sq.mercado) sq.mercado=m.mercadosCustom[0].cod; if(sq.lucroEtapa===undefined) sq.lucroEtapa=0; if(sq.metaAvisada===undefined) sq.metaAvisada=false; if(sq.pausado===undefined) sq.pausado=false; });
   if(!Array.isArray(m.ordemBlocosOperacao)) m.ordemBlocosOperacao=['tabela','acoes','painel','notas'];
+  if(m.lotesVisiveis===undefined) m.lotesVisiveis=null; // null = todos os lotes visíveis
   if(!m.marantanLancamentosRodada) m.marantanLancamentosRodada={};
   if(!m.oddsPorLetra) m.oddsPorLetra={"A":1.80,"B":1.80,"C":1.80,"D":1.80,"E":1.80,"F":1.80};
   if(!m.anotacoesPorLetra) m.anotacoesPorLetra={"A":"","B":"","C":"","D":"","E":"","F":""};
@@ -1304,6 +1323,7 @@ function openTab(tabId){
   const nav=document.getElementById('nav-'+tabId); if(nav) nav.classList.add('active');
   atualizarPainelUI(false);
   if(tabId==='lotes'&&typeof aplicarOrdemBlocos==='function') aplicarOrdemBlocos();
+  if(tabId==='lotes'&&typeof atualizarIndicadorFiltroLotes==='function') atualizarIndicadorFiltroLotes();
   if(tabId==='grafico') renderizarGrafico();
   if(tabId==='config') preencherScriptBox();
 }
@@ -2118,6 +2138,79 @@ function moverLote(index,dir){
   salvarDadosEAtualizarTudo();
 }
 
+// ── ESCOLHER LOTES VISÍVEIS (filtro de exibição) ──
+window._selecaoLotesTemp={}; // {id:true/false} durante a edição no modal (window p/ acesso via onchange inline)
+function setSelecaoLote(id,checked){ window._selecaoLotesTemp[id]=checked; }
+
+function abrirModalEscolherLotes(){
+  const seqs=ms().sequencias||[];
+  window._selecaoLotesTemp={};
+  const vis=ms().lotesVisiveis;
+  seqs.forEach(s=>{
+    // se não há filtro (null), todos começam marcados; senão, respeita a seleção salva
+    window._selecaoLotesTemp[s.id]=(vis===null||!Array.isArray(vis))?true:(vis.indexOf(s.id)>=0);
+  });
+  renderListaEscolherLotes();
+  document.getElementById('modal-escolher-lotes').style.display='flex';
+}
+
+function renderListaEscolherLotes(){
+  const box=document.getElementById('lista-escolher-lotes'); if(!box) return;
+  const seqs=ms().sequencias||[];
+  if(seqs.length===0){ box.innerHTML='<p style="font-size:11px;color:var(--muted);text-align:center;padding:12px;">Nenhum lote criado ainda.</p>'; return; }
+  let html='';
+  seqs.forEach(s=>{
+    const marc=window._selecaoLotesTemp[s.id]?'checked':'';
+    const pausadoTag=s.pausado?' <span style="font-size:8px;color:var(--muted);">⏸</span>':'';
+    html+=`<label style="display:flex;align-items:center;gap:8px;padding:7px 8px;border:1px solid var(--border);border-radius:6px;margin-bottom:4px;cursor:pointer;background:var(--surface);">
+      <input type="checkbox" ${marc} onchange="setSelecaoLote(${s.id},this.checked)" style="width:15px;height:15px;cursor:pointer;accent-color:var(--accent);">
+      <span style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);">#${String(s.id).padStart(3,'0')}</span>
+      <span style="font-family:var(--mono);font-size:11px;color:var(--accent);font-weight:700;">${s.mercado||''}</span>${pausadoTag}
+    </label>`;
+  });
+  box.innerHTML=html;
+}
+
+function marcarTodosLotesVis(valor){
+  (ms().sequencias||[]).forEach(s=>{ window._selecaoLotesTemp[s.id]=valor; });
+  renderListaEscolherLotes();
+}
+
+function aplicarLotesVisiveis(){
+  const seqs=ms().sequencias||[];
+  const escolhidos=seqs.filter(s=>window._selecaoLotesTemp[s.id]).map(s=>s.id);
+  // Se todos estão marcados, limpa o filtro (null = todos) para não carregar estado desnecessário
+  if(escolhidos.length===seqs.length){
+    ms().lotesVisiveis=null;
+  } else {
+    ms().lotesVisiveis=escolhidos;
+  }
+  fecharModal('modal-escolher-lotes');
+  atualizarIndicadorFiltroLotes();
+  salvarDadosEAtualizarTudo();
+}
+
+function limparFiltroLotesVisiveis(){
+  ms().lotesVisiveis=null;
+  atualizarIndicadorFiltroLotes();
+  salvarDadosEAtualizarTudo();
+}
+
+function atualizarIndicadorFiltroLotes(){
+  const btn=document.getElementById('btn-escolher-lotes'); if(!btn) return;
+  if(Array.isArray(ms().lotesVisiveis)){
+    const n=ms().lotesVisiveis.length;
+    const total=(ms().sequencias||[]).length;
+    btn.innerHTML=`👁️ Vendo ${n}/${total} ✕`;
+    btn.classList.add('active');
+    btn.onclick=function(ev){ ev.stopPropagation(); limparFiltroLotesVisiveis(); };
+  } else {
+    btn.innerHTML='👁️ Escolher lotes';
+    btn.classList.remove('active');
+    btn.onclick=function(){ abrirModalEscolherLotes(); };
+  }
+}
+
 function alternarPausaLote(index){
   const seq=ms().sequencias[index]; if(!seq) return;
   seq.pausado=!seq.pausado;
@@ -2269,6 +2362,8 @@ function renderLinhas(){
     return !metaCumprida;
   });
   if(filtroAtualExibicao==='loss') lista=lista.filter(({seq})=>seq.perdasAcumuladas>0);
+  // Filtro "Escolher lotes": se há uma seleção ativa, mostra só os lotes escolhidos
+  if(Array.isArray(ms().lotesVisiveis)) lista=lista.filter(({seq})=>ms().lotesVisiveis.indexOf(seq.id)>=0);
 
   // Ordenação
   if(ordemLotes==='risco'){
@@ -2290,8 +2385,9 @@ function renderLinhas(){
       <td>${(function(){
         const mkt=seq.mercado||(getMercados()[0]?getMercados()[0].cod:'V1');
         let opts='';
-        getMercados().forEach(mo=>{ opts+=`<option value="${mo.cod}" ${mo.cod===mkt?'selected':''}>${mo.cod} · ${mo.nome}</option>`; });
-        return `<select class="t-mercado-sel" onchange="mudarMercadoLote(${i},this.value)">${opts}</select>`;
+        getMercados().forEach(mo=>{ opts+=`<option value="${mo.cod}" ${mo.cod===mkt?'selected':''}>${mo.cod}</option>`; });
+        const nomeMkt=(getMercados().find(x=>x.cod===mkt)||{}).nome||'';
+        return `<select class="t-mercado-sel" title="${nomeMkt}" onchange="mudarMercadoLote(${i},this.value)">${opts}</select>`;
       })()}</td>
       <td class="t-meta-cell">${(function(){
         const mp=metaGlobalPct();
