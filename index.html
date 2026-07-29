@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#0D1117">
-<title>Método Marantan v36.0</title>
+<title>Método Marantan v36.2</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox=%270 0 48 48%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Crect x=%271.5%27 y=%271.5%27 width=%2745%27 height=%2745%27 rx=%2711%27 fill=%27%23161B22%27 stroke=%27%2330363D%27 stroke-width=%271.5%27/%3E%3Cpath d=%27M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3Cpath d=%27M30.5 9.5 L37.5 9 L36.8 16%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -308,6 +308,13 @@ tbody tr:last-child td { border-bottom:none; }
 .tbl-btn-eq { background:var(--surface2); border:1px solid var(--border); color:var(--muted); padding:2px 5px; border-radius:4px; font-size:9px; font-weight:700; cursor:pointer; }
 .tbl-btn-reset { background:var(--surface2); border:1px solid var(--bar-amber); color:var(--bar-amber); padding:2px 5px; border-radius:4px; font-size:9px; font-weight:700; cursor:pointer; }
 .tbl-btn-del { background:var(--surface2); border:1px solid var(--loss); color:var(--loss); padding:2px 5px; border-radius:4px; font-size:9px; font-weight:700; cursor:pointer; }
+.tbl-btn-move { background:var(--surface2); border:1px solid var(--border); color:var(--text); width:20px; height:14px; border-radius:3px; font-size:8px; font-weight:800; cursor:pointer; line-height:1; padding:0; }
+.row-paused td { opacity:0.45; }
+.row-paused { border-left:4px dashed var(--muted); background:repeating-linear-gradient(45deg,transparent,transparent 6px,var(--surface2) 6px,var(--surface2) 12px); }
+.row-paused .chk-pausa { opacity:1 !important; }
+.pill-pausa { display:inline-block; font-size:8px; font-weight:800; padding:1px 5px; border-radius:10px; background:var(--surface2); color:var(--text); border:1px solid var(--muted); letter-spacing:.04em; vertical-align:middle; opacity:1; }
+.chk-pausa { width:15px; height:15px; cursor:pointer; accent-color:var(--accent); }
+
 
 /* ── CONFIG ── */
 .cfg-section { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px; margin-bottom:10px; }
@@ -531,7 +538,7 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v36.0</span></div>
+      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v36.2</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
@@ -554,10 +561,6 @@ tbody tr:last-child td { border-bottom:none; }
     <span class="nav-icon">📊</span>
     <span class="nav-label">Painel</span>
   </button>
-<button class="nav-item" id="nav-grafico" onclick="openTab('grafico')">
-    <span class="nav-icon">📈</span>
-    <span class="nav-label">Gráfico</span>
-  </button>
   <button class="nav-item" id="nav-lotes" onclick="openTab('lotes')">
     <span class="nav-icon">📋</span>
     <span class="nav-label">Operação</span>
@@ -565,6 +568,10 @@ tbody tr:last-child td { border-bottom:none; }
   <button class="nav-item" id="nav-config" onclick="openTab('config')">
     <span class="nav-icon">⚙️</span>
     <span class="nav-label">Config</span>
+  </button>
+  <button class="nav-item" id="nav-grafico" onclick="openTab('grafico')">
+    <span class="nav-icon">📈</span>
+    <span class="nav-label">Gráfico</span>
   </button>
   <button class="nav-item" id="nav-historico" onclick="openTab('historico')">
     <span class="nav-icon">📜</span>
@@ -633,73 +640,95 @@ tbody tr:last-child td { border-bottom:none; }
 
   <!-- ABA: LOTES -->
   <div id="lotes" class="tab-content">
-    <button class="btn-save" style="margin-bottom:8px;" onclick="abrirModalAddLote()">➕ Adicionar lote</button>
-    <div class="action-row action-row-3" style="margin-bottom:8px;">
-      <button class="btn-action btn-rotate" onclick="solicitarAberturaJanelaRodada()">🔄 Rotação</button>
-      <button class="btn-action btn-conclude" onclick="fecharEtapa()">💾 Concluir Etapa</button>
-      <button id="btn-toggle-modo-pos-win" class="btn-action btn-modo blindar" style="justify-content:center;" onclick="alternarModoPosWin()">🔒 Pós-Win: Blindar</button>
+    <!-- Barra de organização de blocos -->
+    <div id="org-blocos-bar" style="display:none; background:var(--surface2); border:1px solid var(--accent); border-radius:var(--radius-sm); padding:8px 10px; margin-bottom:8px;">
+      <div style="font-size:10px; color:var(--accent); font-weight:700; margin-bottom:6px;">🔧 ORGANIZAR BLOCOS — use ▲▼ para mover, ✓ para concluir</div>
+      <div id="org-blocos-lista"></div>
     </div>
-
     <div style="display:flex; justify-content:flex-end; margin-bottom:6px;">
-      <button id="btn-recolher-info" class="hdr-btn" onclick="toggleInfoLotes()" style="font-size:11px;">▲ Recolher painel</button>
+      <button id="btn-org-blocos" class="hdr-btn" style="font-size:10px;" onclick="toggleOrganizarBlocos()">⋮⋮ Organizar blocos</button>
     </div>
 
-    <div id="wrap-info-lotes">
-      <div class="prog-lote-card">
-        <div class="prog-lote-linha">
-          <span class="prog-lote-lbl">📅 Avanço do Dia</span>
-          <span class="prog-lote-val" id="prog-dia-val">0%</span>
+    <div id="blocos-container">
+
+    <div class="bloco-op" data-bloco="tabela">
+      <div class="filter-row" style="margin-bottom:6px;">
+        <button id="btn-filter-all" class="filter-btn filter-exib active" onclick="alterarFiltroExibicao('all')">Todas</button>
+        <button id="btn-filter-pending" class="filter-btn filter-exib" onclick="alterarFiltroExibicao('pending')">Pendentes</button>
+        <button id="btn-filter-loss" class="filter-btn filter-exib" onclick="alterarFiltroExibicao('loss')">Críticas</button>
+      </div>
+      <div style="display:flex; gap:6px; margin-bottom:8px; flex-wrap:wrap;">
+        <button id="btn-sort-id" class="filter-btn filter-ord active" onclick="alterarOrdemLotes('id')">📋 Por Número</button>
+        <button id="btn-sort-risco" class="filter-btn filter-ord" onclick="alterarOrdemLotes('risco')">🔴 Por Risco</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:28px;">⏸</th>
+              <th>Lote</th>
+              <th>Mercado</th>
+              <th>Meta</th>
+              <th>Risco</th>
+              <th>Aposta</th>
+              <th>Seq.</th>
+              <th>V/D</th>
+              <th>Últimos 30</th>
+              <th>Status</th>
+              <th style="width:44px;">Ordem</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tabela-linhas-lotes"></tbody>
+        </table>
+      </div>
+      <div id="rodape-soma-letras" style="margin-top:8px; font-size:11px; font-family:var(--mono); color:var(--muted); text-align:right;"></div>
+    </div>
+
+    <div class="bloco-op" data-bloco="acoes">
+      <button class="btn-save" style="margin-bottom:8px;" onclick="abrirModalAddLote()">➕ Adicionar lote</button>
+      <div class="action-row action-row-3" style="margin-bottom:8px;">
+        <button class="btn-action btn-rotate" onclick="solicitarAberturaJanelaRodada()">🔄 Rotação</button>
+        <button class="btn-action btn-conclude" onclick="fecharEtapa()">💾 Concluir Etapa</button>
+        <button id="btn-toggle-modo-pos-win" class="btn-action btn-modo blindar" style="justify-content:center;" onclick="alternarModoPosWin()">🔒 Pós-Win: Blindar</button>
+      </div>
+    </div>
+
+    <div class="bloco-op" data-bloco="painel">
+      <div style="display:flex; justify-content:flex-end; margin-bottom:6px;">
+        <button id="btn-recolher-info" class="hdr-btn" onclick="toggleInfoLotes()" style="font-size:11px;">▲ Recolher painel</button>
+      </div>
+      <div id="wrap-info-lotes">
+        <div class="prog-lote-card">
+          <div class="prog-lote-linha">
+            <span class="prog-lote-lbl">📅 Avanço do Dia</span>
+            <span class="prog-lote-val" id="prog-dia-val">0%</span>
+          </div>
+          <div class="prog-lote-track"><div class="prog-lote-fill" id="prog-dia-bar" style="background:var(--bar-win);"></div></div>
         </div>
-        <div class="prog-lote-track"><div class="prog-lote-fill" id="prog-dia-bar" style="background:var(--bar-win);"></div></div>
-      </div>
-
-      <div class="info-bar" style="margin-bottom:8px; flex-wrap:wrap; gap:6px;">
-        <div class="info-item accent">Etapa <b id="lbl-etapa-num-lt">#1</b></div>
-        <div class="info-item">Início: <b id="lbl-valor-inicial-lt">R$0,00</b></div>
-        <div class="info-item" style="cursor:pointer;" onclick="editarSaldoReal()" title="Toque para ajustar ao saldo real da casa">Atual: <b id="lbl-valor-atual-lt">R$0,00</b> <span style="font-size:9px;opacity:.7;">✏️</span></div>
-        <div class="info-item win">Meta: <b id="lbl-meta-lt">R$0,00</b></div>
-        <div class="info-item accent">Falta: <b id="lbl-falta-lt">R$0,00</b></div>
-      </div>
-</div>
-    <div class="filter-row" style="margin-bottom:6px;">
-      <button id="btn-filter-all" class="filter-btn filter-exib active" onclick="alterarFiltroExibicao('all')">Todas</button>
-      <button id="btn-filter-pending" class="filter-btn filter-exib" onclick="alterarFiltroExibicao('pending')">Pendentes</button>
-      <button id="btn-filter-loss" class="filter-btn filter-exib" onclick="alterarFiltroExibicao('loss')">Críticas</button>
-    </div>
-    <div style="display:flex; gap:6px; margin-bottom:8px; flex-wrap:wrap;">
-      <button id="btn-sort-id" class="filter-btn filter-ord active" onclick="alterarOrdemLotes('id')">📋 Por Número</button>
-      <button id="btn-sort-risco" class="filter-btn filter-ord" onclick="alterarOrdemLotes('risco')">🔴 Por Risco</button>
-    </div>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Lote</th>
-            <th>Mercado</th>
-            <th>Meta</th>
-            <th>Risco</th>
-            <th>Aposta</th>
-            <th>Seq.</th>
-            <th>V/D</th>
-            <th>Últimos 30</th>
-            <th>Status</th>
-            <th>Ações</th>
-          </tr>
-        </thead>
-        <tbody id="tabela-linhas-lotes"></tbody>
-      </table>
-    </div>
-    <div id="rodape-soma-letras" style="margin-top:8px; font-size:11px; font-family:var(--mono); color:var(--muted); text-align:right;"></div>
-
-    <div style="margin-top:12px;">
-      <button id="btn-toggle-notas" class="hdr-btn" style="width:100%; text-align:left;" onclick="toggleNotasLivres()">📝 Anotações e orientações</button>
-      <div id="wrap-notas-livres" style="display:none; margin-top:8px;">
-        <textarea id="txt-notas-livres" placeholder="Registre aqui observações que ajudem a orientar ajustes: padrões percebidos, mercados que renderam mais, decisões tomadas, ideias para testar..." oninput="agendarSalvarNotasLivres()" style="width:100%; min-height:160px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text); font-family:var(--sans); font-size:13px; line-height:1.6; padding:12px; resize:vertical; outline:none;"></textarea>
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
-          <span id="notas-status" style="font-size:10px; color:var(--muted); font-family:var(--mono);"></span>
-          <span id="notas-contador" style="font-size:10px; color:var(--muted); font-family:var(--mono);"></span>
+        <div class="info-bar" style="margin-bottom:8px; flex-wrap:wrap; gap:6px;">
+          <div class="info-item accent">Etapa <b id="lbl-etapa-num-lt">#1</b></div>
+          <div class="info-item">Início: <b id="lbl-valor-inicial-lt">R$0,00</b></div>
+          <div class="info-item" style="cursor:pointer;" onclick="editarSaldoReal()" title="Toque para ajustar ao saldo real da casa">Atual: <b id="lbl-valor-atual-lt">R$0,00</b> <span style="font-size:9px;opacity:.7;">✏️</span></div>
+          <div class="info-item win">Meta: <b id="lbl-meta-lt">R$0,00</b></div>
+          <div class="info-item accent">Falta: <b id="lbl-falta-lt">R$0,00</b></div>
         </div>
       </div>
+    </div>
+
+    <div class="bloco-op" data-bloco="notas">
+      <div style="margin-top:12px;">
+        <button id="btn-toggle-notas" class="hdr-btn" style="width:100%; text-align:left;" onclick="toggleNotasLivres()">📝 Anotações e orientações</button>
+        <div id="wrap-notas-livres" style="display:none; margin-top:8px;">
+          <textarea id="txt-notas-livres" placeholder="Registre aqui observações que ajudem a orientar ajustes: padrões percebidos, mercados que renderam mais, decisões tomadas, ideias para testar..." oninput="agendarSalvarNotasLivres()" style="width:100%; min-height:160px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text); font-family:var(--sans); font-size:13px; line-height:1.6; padding:12px; resize:vertical; outline:none;"></textarea>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
+            <span id="notas-status" style="font-size:10px; color:var(--muted); font-family:var(--mono);"></span>
+            <span id="notas-contador" style="font-size:10px; color:var(--muted); font-family:var(--mono);"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
     </div>
   </div>
 
@@ -1093,7 +1122,8 @@ function aplicarBlindagemDeVariaveis(){
   const m=state;
   if(!Array.isArray(m.mercadosCustom)||m.mercadosCustom.length===0) m.mercadosCustom=JSON.parse(JSON.stringify(MERCADOS_PADRAO));
     else m.mercadosCustom.forEach(x=>{ if(x.odd===undefined||x.odd===null||x.odd==='') x.odd=2.00; });
-    if(Array.isArray(m.sequencias)) m.sequencias.forEach(sq=>{ if(!sq.ultimos) sq.ultimos=[]; if(!sq.mercado) sq.mercado=m.mercadosCustom[0].cod; if(sq.lucroEtapa===undefined) sq.lucroEtapa=0; if(sq.metaAvisada===undefined) sq.metaAvisada=false; });
+    if(Array.isArray(m.sequencias)) m.sequencias.forEach(sq=>{ if(!sq.ultimos) sq.ultimos=[]; if(!sq.mercado) sq.mercado=m.mercadosCustom[0].cod; if(sq.lucroEtapa===undefined) sq.lucroEtapa=0; if(sq.metaAvisada===undefined) sq.metaAvisada=false; if(sq.pausado===undefined) sq.pausado=false; });
+  if(!Array.isArray(m.ordemBlocosOperacao)) m.ordemBlocosOperacao=['tabela','acoes','painel','notas'];
   if(!m.marantanLancamentosRodada) m.marantanLancamentosRodada={};
   if(!m.oddsPorLetra) m.oddsPorLetra={"A":1.80,"B":1.80,"C":1.80,"D":1.80,"E":1.80,"F":1.80};
   if(!m.anotacoesPorLetra) m.anotacoesPorLetra={"A":"","B":"","C":"","D":"","E":"","F":""};
@@ -1273,6 +1303,7 @@ function openTab(tabId){
   const panel=document.getElementById(tabId); if(panel) panel.classList.add('active');
   const nav=document.getElementById('nav-'+tabId); if(nav) nav.classList.add('active');
   atualizarPainelUI(false);
+  if(tabId==='lotes'&&typeof aplicarOrdemBlocos==='function') aplicarOrdemBlocos();
   if(tabId==='grafico') renderizarGrafico();
   if(tabId==='config') preencherScriptBox();
 }
@@ -1315,7 +1346,7 @@ function solicitarAberturaJanelaRodada(){
 function confirmarEncerramentoRodadaReal(){
   fecharModal('modal-encerrar-rodada'); ms().marantanLancamentosRodada={};
   const livresIdx=[]; const livresLetras=[];
-  ms().sequencias.forEach((s,i)=>{ if(!ms().letrasBloqueadasRodada[s.letraRandomica]){ livresIdx.push(i); livresLetras.push(s.letraRandomica); } });
+  ms().sequencias.forEach((s,i)=>{ if(!s.pausado && !ms().letrasBloqueadasRodada[s.letraRandomica]){ livresIdx.push(i); livresLetras.push(s.letraRandomica); } });
   if(livresLetras.length>0){
     for(let i=livresLetras.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [livresLetras[i],livresLetras[j]]=[livresLetras[j],livresLetras[i]]; }
     livresIdx.forEach((si,ai)=>{ ms().sequencias[si].letraRandomica=livresLetras[ai]; });
@@ -2017,6 +2048,82 @@ function removerLote(index){
   salvarDadosEAtualizarTudo();
 }
 
+// ── ORGANIZAÇÃO DE BLOCOS DA ABA OPERAÇÃO ──
+const BLOCOS_LABELS={tabela:'📋 Tabela de lotes', acoes:'🎛️ Botões de ação', painel:'📊 Painel (barra do dia + saldos)', notas:'📝 Anotações'};
+const BLOCOS_ORDEM_PADRAO=['tabela','acoes','painel','notas'];
+
+function getOrdemBlocos(){
+  const o=ms().ordemBlocosOperacao;
+  if(Array.isArray(o)&&o.length){
+    // garante que todos os blocos conhecidos estão presentes (acrescenta novos no fim)
+    const faltantes=BLOCOS_ORDEM_PADRAO.filter(b=>o.indexOf(b)<0);
+    return o.concat(faltantes);
+  }
+  return BLOCOS_ORDEM_PADRAO.slice();
+}
+
+function aplicarOrdemBlocos(){
+  const cont=document.getElementById('blocos-container'); if(!cont) return;
+  const ordem=getOrdemBlocos();
+  ordem.forEach(nome=>{
+    const bloco=cont.querySelector(`.bloco-op[data-bloco="${nome}"]`);
+    if(bloco) cont.appendChild(bloco); // reanexar na ordem = reordena
+  });
+}
+
+function toggleOrganizarBlocos(){
+  const bar=document.getElementById('org-blocos-bar');
+  const btn=document.getElementById('btn-org-blocos');
+  if(!bar) return;
+  const abrindo=bar.style.display==='none';
+  bar.style.display=abrindo?'block':'none';
+  if(btn) btn.innerText=abrindo?'✓ Concluir organização':'⋮⋮ Organizar blocos';
+  if(abrindo) renderListaOrganizarBlocos();
+}
+
+function renderListaOrganizarBlocos(){
+  const box=document.getElementById('org-blocos-lista'); if(!box) return;
+  const ordem=getOrdemBlocos();
+  let html='';
+  ordem.forEach((nome,i)=>{
+    html+=`<div style="display:flex; align-items:center; justify-content:space-between; background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:6px 8px; margin-bottom:4px;">
+      <span style="font-size:12px; color:var(--text); font-weight:600;">${BLOCOS_LABELS[nome]||nome}</span>
+      <span style="display:flex; gap:4px;">
+        <button onclick="moverBloco(${i},-1)" ${i===0?'disabled':''} style="width:26px; height:26px; border:1px solid var(--border); background:var(--surface2); color:var(--text); border-radius:4px; cursor:pointer; font-weight:800; ${i===0?'opacity:.3;':''}">▲</button>
+        <button onclick="moverBloco(${i},1)" ${i===ordem.length-1?'disabled':''} style="width:26px; height:26px; border:1px solid var(--border); background:var(--surface2); color:var(--text); border-radius:4px; cursor:pointer; font-weight:800; ${i===ordem.length-1?'opacity:.3;':''}">▼</button>
+      </span>
+    </div>`;
+  });
+  box.innerHTML=html;
+}
+
+function moverBloco(i,dir){
+  const ordem=getOrdemBlocos();
+  const j=i+dir;
+  if(j<0||j>=ordem.length) return;
+  [ordem[i],ordem[j]]=[ordem[j],ordem[i]];
+  ms().ordemBlocosOperacao=ordem;
+  aplicarOrdemBlocos();
+  renderListaOrganizarBlocos();
+  salvarDadosEAtualizarTudo();
+}
+
+function moverLote(index,dir){
+  // Só permite mover no modo 'Por Número' (ordem manual), para não conflitar com 'Por Risco'.
+  if(ordemLotes!=='id') return;
+  const arr=ms().sequencias;
+  const j=index+dir;
+  if(j<0||j>=arr.length) return;
+  [arr[index],arr[j]]=[arr[j],arr[index]];
+  salvarDadosEAtualizarTudo();
+}
+
+function alternarPausaLote(index){
+  const seq=ms().sequencias[index]; if(!seq) return;
+  seq.pausado=!seq.pausado;
+  salvarDadosEAtualizarTudo();
+}
+
 function mudarMercadoLote(index,valor){
   const seq=ms().sequencias[index]; if(!seq) return;
   seq.mercado=valor;
@@ -2029,8 +2136,8 @@ function resetarLoteIndividual(index){
   const l=seq.letraRandomica;
   const msg=`Resetar o lote #${seq.id} (letra ${l})?\n\n`+
     (risco>0.005
-      ? `⚠️ Este lote tem ${fmt(risco)} de risco acumulado. Ao resetar, você ASSUME essa perda — ela não é recuperada, apenas para de ser perseguida.\n\nA aposta volta ao valor inicial, as perdas zeram e a sequência de gales recomeça.`
-      : `A aposta volta ao valor inicial e a sequência recomeça. (Este lote não tem risco acumulado no momento.)`);
+      ? `⚠️ Este lote tem ${fmt(risco)} de risco acumulado. Ao resetar, você ASSUME essa perda — ela não é recuperada, apenas para de ser perseguida.\n\nA aposta volta ao valor inicial, as perdas zeram, a sequência de gales recomeça e o histórico de marcações (Últimos) é limpo.`
+      : `A aposta volta ao valor inicial, a sequência recomeça e o histórico de marcações (Últimos) é limpo. (Este lote não tem risco acumulado no momento.)`);
   if(!confirm(msg)) return;
 
   const oddL=oddPorLetra(l);
@@ -2042,6 +2149,9 @@ function resetarLoteIndividual(index){
   seq.streakLoss=0;
   seq.lucroEtapa=0;
   seq.metaAvisada=false;
+  seq.ultimos=[];         // zera a caixa de marcação de vitórias/derrotas (Últimos)
+  seq.winsEtapa=0;        // zera contadores V/D da etapa para o lote
+  seq.lossesEtapa=0;
 
   if(assumido>0.005){
     ms().perdasAssumidasTotal=(ms().perdasAssumidasTotal||0)+assumido;
@@ -2164,16 +2274,19 @@ function renderLinhas(){
   if(ordemLotes==='risco'){
     lista.sort((a,b)=>(b.seq.streakLoss||0)-(a.seq.streakLoss||0)||(b.seq.perdasAcumuladas-a.seq.perdasAcumuladas));
   }
+  // Lotes pausados vão sempre para o fim da lista (mantendo a ordem relativa entre eles)
+  lista.sort((a,b)=>(a.seq.pausado?1:0)-(b.seq.pausado?1:0));
 
   let html='';
   lista.forEach(({seq,i})=>{
     const l=seq.letraRandomica; const odd=oddDoLote(seq);
-    const rowCls=seq.status==='FINISHED'?'row-finished':(seq.perdasAcumuladas>0?'row-loss':'');
+    const rowCls=(seq.pausado?'row-paused ':'')+(seq.status==='FINISHED'?'row-finished':(seq.perdasAcumuladas>0?'row-loss':''));
     const streak=seq.streakLoss||0;
     const seqCor=corSeq(streak,maxG);
     const seqTxt=streak>0?`<b style="color:${seqCor};">${streak}/${maxG}</b>`:`<span style="color:var(--muted);">—</span>`;
     html+=`<tr class="${rowCls}">
-      <td class="t-mono">#${String(seq.id).padStart(3,'0')}</td>
+      <td style="text-align:center;"><input type="checkbox" class="chk-pausa" ${seq.pausado?'checked':''} onchange="alternarPausaLote(${i})" title="Pausar/retomar este lote"></td>
+      <td class="t-mono">#${String(seq.id).padStart(3,'0')}${seq.pausado?' <span class="pill-pausa">⏸ PAUSADO</span>':''}</td>
       <td>${(function(){
         const mkt=seq.mercado||(getMercados()[0]?getMercados()[0].cod:'V1');
         let opts='';
@@ -2203,6 +2316,13 @@ function renderLinhas(){
       <td><span class="t-win">${seq.winsEtapa}</span>/<span class="t-loss">${seq.lossesEtapa}</span></td>
       <td>${renderUltimos10(seq.ultimos)}</td>
       <td>${seq.status==='FINISHED'?'<span class="status-ok">OK</span>':'<span class="status-pend">Pend</span>'}</td>
+      <td>${(function(){
+        if(ordemLotes!=='id') return '<span style="color:var(--muted);font-size:9px;">—</span>';
+        return `<div style="display:flex;flex-direction:column;gap:1px;">
+          <button class="tbl-btn-move" onclick="moverLote(${i},-1)" title="Mover para cima">▲</button>
+          <button class="tbl-btn-move" onclick="moverLote(${i},1)" title="Mover para baixo">▼</button>
+        </div>`;
+      })()}</td>
       <td><div style="display:flex;gap:3px;">
         <button class="tbl-btn-win" onclick="registrarApostaIndividual(${i},'WIN',false)">Vit</button>
         <button class="tbl-btn-loss" onclick="registrarApostaIndividual(${i},'LOSS',false)">Der</button>
