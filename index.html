@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#0D1117">
-<title>Método Marantan v36.6</title>
+<title>Método Marantan v37.0</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox=%270 0 48 48%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Crect x=%271.5%27 y=%271.5%27 width=%2745%27 height=%2745%27 rx=%2711%27 fill=%27%23161B22%27 stroke=%27%2330363D%27 stroke-width=%271.5%27/%3E%3Cpath d=%27M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3Cpath d=%27M30.5 9.5 L37.5 9 L36.8 16%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -555,7 +555,7 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v36.6</span></div>
+      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v37.0</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
@@ -2721,6 +2721,43 @@ function wilsonIC(vitorias, total){
 }
 
 // Veredito honesto: a taxa observada é distinguível de sorte?
+// Traduz o veredito estatístico numa frase de DECISÃO, em português claro.
+// Retorna {frase, acao, corAcao} — o que o número significa para o Marco na prática.
+function vereditoHumano(v, mercadoLabel, d){
+  const oddMedia=d.so/d.n;
+  const be=1/oddMedia;              // ponto de equilíbrio = 1/odd (ex: odd 2,0 → 50%)
+  const taxa=(v.ic.p*100).toFixed(0);
+  const eq=(be*100).toFixed(0);
+  if(v.cod==='INSUF'){
+    const faltam=100-d.n;
+    return {
+      frase:`Ainda não dá para saber se ${mercadoLabel} é bom ou ruim. Você tem só ${d.n} ${d.n===1?'aposta':'apostas'} aqui — poucas para qualquer conclusão.`,
+      acao:`Continue registrando. Faltam ~${faltam>0?faltam:0} apostas para começar a ter uma leitura confiável.`,
+      corAcao:'var(--muted)', selo:'⏳ Poucos dados'
+    };
+  }
+  if(v.cod==='VANTAGEM'){
+    return {
+      frase:`${mercadoLabel} está sendo lucrativo de verdade. Você acerta ${taxa}% e precisa de só ${eq}% para empatar — e isso já não é sorte, os números comprovam.`,
+      acao:`Este é um mercado onde você tem vantagem real. Faz sentido priorizá-lo.`,
+      corAcao:'var(--win)', selo:'✔️ Vantagem real'
+    };
+  }
+  if(v.cod==='DESVANTAGEM'){
+    return {
+      frase:`${mercadoLabel} está te custando dinheiro de forma consistente. Você acerta ${taxa}%, mas precisaria de ${eq}% só para empatar — e a diferença não é azar passageiro.`,
+      acao:`Considere seriamente parar de operar este mercado. Os números dizem que ele drena a banca.`,
+      corAcao:'var(--loss)', selo:'✖️ Está perdendo'
+    };
+  }
+  // INCONCLUSIVO
+  return {
+    frase:`${mercadoLabel} pode estar te ajudando ou te prejudicando — com os dados de hoje, não dá para afirmar. Você acerta ${taxa}% e o ponto de empate é ${eq}%, mas ainda há margem para ser sorte (ou azar).`,
+    acao:`Não tire conclusões ainda. Siga operando com cautela e deixe os dados crescerem.`,
+    corAcao:'var(--bar-amber)', selo:'❓ Indefinido'
+  };
+}
+
 function vereditoEstatistico(vitorias,total,breakeven){
   const ic=wilsonIC(vitorias,total);
   if(total<100) return {cod:'INSUF', ic:ic, txt:'AMOSTRA INSUFICIENTE', det:`${total} apostas. Nada aqui é conclusivo — nem a favor, nem contra. Ruído puro abaixo de ~100 apostas.`};
@@ -2808,7 +2845,7 @@ function renderPainelVantagem(){
     // fecha sequências ainda abertas no fim do registro
     Object.keys(seqCtrl).forEach(k=>{ if(seqCtrl[k]>0) porMerc[k].seqsFechadas.push(seqCtrl[k]); });
 
-    html+=`<div style="font-size:10px;color:var(--muted);font-family:var(--mono);font-weight:700;letter-spacing:.06em;margin:14px 0 6px;">DESEMPENHO POR TIPO DE MERCADO</div>`;
+    html+=`<div style="font-size:10px;color:var(--muted);font-family:var(--mono);font-weight:700;letter-spacing:.06em;margin:14px 0 6px;">📊 CADA MERCADO, EM PORTUGUÊS CLARO</div>`;
     Object.keys(porMerc).sort((a,b)=>porMerc[b].n-porMerc[a].n).forEach(k=>{
       const d=porMerc[k], be=breakevenDeOdd(d.so/d.n), v=vereditoEstatistico(d.w,d.n,be);
       const pctBar=Math.max(0,Math.min(100,v.ic.p*100));
@@ -2820,34 +2857,32 @@ function renderPainelVantagem(){
       const lotesMktOk=lotesMkt.filter(s=>s.status==='FINISHED'||(ms().letrasMetaCumprida&&ms().letrasMetaCumprida[s.letraRandomica])).length;
       const pctMetas=lotesMkt.length>0?(lotesMktOk/lotesMkt.length)*100:0;
       const corMetas=pctMetas>=50?'var(--win)':(pctMetas>0?'var(--bar-amber)':'var(--muted)');
+      const vh=vereditoHumano(v,lbl,d);
       html+=`
-      <div style="background:var(--surface);border:1px solid var(--border);border-left:4px solid ${cores[v.cod]};border-radius:8px;padding:10px;margin-bottom:6px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-            <span style="font-family:var(--sans);font-weight:800;font-size:12px;color:var(--text);">${lbl}</span>
-            <span style="font-size:10px;font-weight:700;color:${cores[v.cod]};font-family:var(--mono);">${icones[v.cod]} ${v.txt}</span>
+      <div style="background:var(--surface);border:1px solid var(--border);border-left:4px solid ${cores[v.cod]};border-radius:8px;padding:12px;margin-bottom:8px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <span style="font-family:var(--sans);font-weight:800;font-size:14px;color:var(--text);">${lbl}</span>
+          <span style="font-size:11px;font-weight:800;color:${cores[v.cod]};font-family:var(--sans);white-space:nowrap;">${vh.selo}</span>
+        </div>
+        <div style="font-size:12px;line-height:1.5;color:var(--text);font-family:var(--sans);margin-bottom:8px;">${vh.frase}</div>
+        <div style="font-size:11px;line-height:1.5;color:${vh.corAcao};font-family:var(--sans);font-weight:700;background:var(--surface2);border-radius:6px;padding:7px 9px;margin-bottom:8px;">👉 ${vh.acao}</div>
+        <div style="border-top:1px solid var(--border2);padding-top:8px;">
+          <div style="font-size:9px;color:var(--muted);font-family:var(--mono);font-weight:700;letter-spacing:.05em;margin-bottom:5px;">NÚMEROS DE APOIO</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;font-size:11px;color:var(--text);font-family:var(--sans);">
+            <span>✅ Acertos: <b>${d.w}</b> de <b>${d.n}</b> (${(v.ic.p*100).toFixed(0)}%)</span>
+            <span>⚖️ Empate a partir de: <b>${(be*100).toFixed(0)}%</b></span>
+            <span>🔻 Pior seca: <b style="color:var(--loss);">${d.maxSeqL}</b> derrotas seguidas</span>
+            <span>📊 Seca média: <b>${mediaSeq.toFixed(1)}</b> derrotas</span>
+            <span>🎯 Metas batidas: <b style="color:${corMetas};">${pctMetas.toFixed(0)}%</b> (${lotesMktOk}/${lotesMkt.length})</span>
+            <span>📈 Odd média: <b>${(d.so/d.n).toFixed(2)}</b></span>
           </div>
-          <span style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);">${(v.ic.p*100).toFixed(1)}% <span style="color:var(--muted);font-size:10px;">(${d.w}/${d.n})</span></span>
         </div>
-        <div style="position:relative;height:8px;background:var(--surface2);border:1px solid var(--border);border-radius:99px;overflow:hidden;">
-          <div style="position:absolute;left:0;top:0;height:100%;width:${pctBar}%;background:${cores[v.cod]};"></div>
-          <div style="position:absolute;left:${bePos}%;top:-2px;width:2px;height:12px;background:var(--text);"></div>
-        </div>
-        <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:10px;color:var(--text);font-family:var(--mono);margin-top:7px;">
-          <span>🔻 Pior sequência: <b style="color:var(--loss);">${d.maxSeqL}</b> derrotas</span>
-          <span>📊 Média: <b>${mediaSeq.toFixed(1)}</b> derrotas/sequência</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 8px;margin-top:6px;">
-          <span style="font-size:10px;color:var(--text);font-family:var(--sans);font-weight:600;">🎯 Metas cumpridas (etapa atual)</span>
-          <span style="font-family:var(--mono);font-size:12px;font-weight:800;color:${corMetas};">${pctMetas.toFixed(0)}% <span style="color:var(--muted);font-size:9px;font-weight:600;">(${lotesMktOk}/${lotesMkt.length})</span></span>
-        </div>
-        <div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:4px;">IC95%: ${(v.ic.baixo*100).toFixed(1)}–${(v.ic.alto*100).toFixed(1)}% · equilíbrio ${(be*100).toFixed(1)}% · odd méd. ${(d.so/d.n).toFixed(2)}</div>
       </div>`;
     });
   }
 
   html+=`<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:11px;margin-top:10px;font-size:11px;color:var(--text);line-height:1.6;">
-    <b>Como ler:</b> o traço vertical é o ponto de equilíbrio — a taxa de acerto mínima para não perder dinheiro naquela odd. Estar acima dele por sorte é comum em amostras pequenas; por isso o veredito só afirma vantagem quando o <b>intervalo inteiro</b> está acima da linha. Abaixo de 100 apostas, nada é conclusivo.
+    <b>Como ler:</b> cada cartão te diz, em uma frase, se o mercado está te ajudando, te prejudicando, ou se ainda é cedo para saber. A frase 👉 é a sugestão de ação. Os "números de apoio" embaixo são a prova por trás da frase — você não precisa entendê-los para decidir, mas eles estão aí se quiser conferir. Importante: abaixo de 100 apostas num mercado, qualquer resultado ainda pode ser sorte.
   </div>`;
 
   box.innerHTML=html;
