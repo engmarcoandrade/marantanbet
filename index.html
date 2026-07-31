@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#0D1117">
-<title>Método Marantan v37.0</title>
+<title>Método Marantan v37.3</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox=%270 0 48 48%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Crect x=%271.5%27 y=%271.5%27 width=%2745%27 height=%2745%27 rx=%2711%27 fill=%27%23161B22%27 stroke=%27%2330363D%27 stroke-width=%271.5%27/%3E%3Cpath d=%27M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3Cpath d=%27M30.5 9.5 L37.5 9 L36.8 16%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -555,7 +555,7 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v37.0</span></div>
+      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v37.3</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
@@ -725,7 +725,7 @@ tbody tr:last-child td { border-bottom:none; }
           <div class="prog-lote-track"><div class="prog-lote-fill" id="prog-dia-bar" style="background:var(--bar-win);"></div></div>
         </div>
         <div class="info-bar" style="margin-bottom:8px; flex-wrap:wrap; gap:6px;">
-          <div class="info-item accent">Etapa <b id="lbl-etapa-num-lt">#1</b></div>
+          <div class="info-item accent">📅 Hoje</div>
           <div class="info-item">Início: <b id="lbl-valor-inicial-lt">R$0,00</b></div>
           <div class="info-item" style="cursor:pointer;" onclick="editarSaldoReal()" title="Toque para ajustar ao saldo real da casa">Atual: <b id="lbl-valor-atual-lt">R$0,00</b> <span style="font-size:9px;opacity:.7;">✏️</span></div>
           <div class="info-item win">Meta: <b id="lbl-meta-lt">R$0,00</b></div>
@@ -841,7 +841,7 @@ tbody tr:last-child td { border-bottom:none; }
     <!-- 4. ODDS E METAS POR LETRA -->
     <div class="cfg-section">
       <div class="cfg-title accent">🎯 Tipos de Mercado</div>
-      <p style="font-size:10px;color:var(--muted);line-height:1.5;margin-bottom:8px;">Estes são os mercados que aparecem no seletor de cada lote e nas estatísticas. Edite os nomes, adicione ou remova conforme sua operação. O <b>código</b> é a sigla (ex.: V1), o <b>nome</b> é a descrição e a <b>odd</b> é usada em todos os lotes desse mercado.</p>
+      <p style="font-size:10px;color:var(--muted);line-height:1.5;margin-bottom:8px;">Estes são os mercados que aparecem no seletor de cada lote e nas estatísticas. Edite os nomes, adicione ou remova conforme sua operação. O <b>código</b> é a sigla (ex.: V1), o <b>nome</b> é a descrição e a <b>odd</b> e a <b>base%</b> (aposta base) valem para todos os lotes desse mercado.</p>
       <div id="mercados-editor"></div>
       <button onclick="adicionarMercado()" style="width:100%;margin-top:8px;padding:9px;background:var(--surface2);border:1px dashed var(--accent);border-radius:var(--radius-sm);color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--sans);">➕ Adicionar mercado</button>
       <button onclick="salvarMercados()" style="width:100%;margin-top:6px;padding:9px;background:var(--accent);border:none;border-radius:var(--radius-sm);color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--sans);">💾 Salvar mercados</button>
@@ -1139,7 +1139,7 @@ function aplicarBlindagemDeVariaveis(){
   // Defaults de todos os campos operacionais, agora direto em state
   const m=state;
   if(!Array.isArray(m.mercadosCustom)||m.mercadosCustom.length===0) m.mercadosCustom=JSON.parse(JSON.stringify(MERCADOS_PADRAO));
-    else m.mercadosCustom.forEach(x=>{ if(x.odd===undefined||x.odd===null||x.odd==='') x.odd=2.00; });
+    else m.mercadosCustom.forEach(x=>{ if(x.odd===undefined||x.odd===null||x.odd==='') x.odd=2.00; if(x.basePct===undefined||x.basePct===null||x.basePct==='') x.basePct=(parseFloat(m.apostaBasePercent)||1.0); });
     if(Array.isArray(m.sequencias)) m.sequencias.forEach(sq=>{ if(!sq.ultimos) sq.ultimos=[]; if(!sq.mercado) sq.mercado=m.mercadosCustom[0].cod; if(sq.lucroEtapa===undefined) sq.lucroEtapa=0; if(sq.metaAvisada===undefined) sq.metaAvisada=false; if(sq.pausado===undefined) sq.pausado=false; });
   if(!Array.isArray(m.ordemBlocosOperacao)) m.ordemBlocosOperacao=['tabela','acoes','painel','notas'];
   if(m.lotesVisiveis===undefined) m.lotesVisiveis=null; // null = todos os lotes visíveis
@@ -1331,6 +1331,10 @@ function openTab(tabId){
 // Base FIXA por etapa: calculada sobre o capital global (plataforma + banco) do INÍCIO da etapa.
 // Só é recalculada ao concluir etapa / salvar config / ajustar banca (quando bancaInicioEtapa muda).
 function getLucroDesejadoBase(){ const capitalInicioEtapa=state.bancaInicioEtapa+(parseFloat(state.bancoCapital)||0); return capitalInicioEtapa*(ms().apostaBasePercent/100); }
+// Versões POR LOTE: o lucro desejado usa a aposta base (%) do MERCADO daquele lote.
+function getLucroDesejadoBaseLote(seq){ const capitalInicioEtapa=state.bancaInicioEtapa+(parseFloat(state.bancoCapital)||0); return capitalInicioEtapa*(basePctDoLote(seq)/100); }
+function getValorApostaBaseLote(seq){ const odd=oddDoLote(seq); return getLucroDesejadoBaseLote(seq)/((odd||2)-1); }
+function getValorApostaBasePorCod(cod){ const capIni=state.bancaInicioEtapa+(parseFloat(state.bancoCapital)||0); const odd=oddDoMercado(cod); return (capIni*(basePctDoMercado(cod)/100))/((odd||2)-1); }
 // Meta agora é GLOBAL (um % para todos os lotes)
 function metaGlobalPct(){ const v=parseFloat(ms().metaGlobalPercent); return isNaN(v)?1.0:v; }
 function getValorApostaBase(odd){ return getLucroDesejadoBase()/((odd||2)-1); }
@@ -1376,7 +1380,7 @@ function confirmarEncerramentoRodadaReal(){
   //   (antes, um lote com perdas mantinha a aposta dimensionada para a odd da letra antiga)
   // (no modo PERCENTUAL a aposta não volta à base nem é recalculada — continua o composto)
   if(ms().modoProgressao!=="PERCENTUAL"){
-    ms().sequencias.forEach(s=>{ if(s.status==='PENDING'){ const odd=oddDoLote(s); s.apostaAtual=(s.perdasAcumuladas+getLucroDesejadoBase())/(odd-1); } });
+    ms().sequencias.forEach(s=>{ if(s.status==='PENDING'){ const odd=oddDoLote(s); s.apostaAtual=(s.perdasAcumuladas+getLucroDesejadoBaseLote(s))/(odd-1); } });
   }
   salvarDadosEAtualizarTudo();
 }
@@ -1423,7 +1427,7 @@ function salvarConfiguracoes(){
   ms().diasAcomp=parseInt(document.getElementById('cfg-dias-acomp').value)||30;
   const mg=document.getElementById('cfg-meta-global'); if(mg){ const v=parseFloat(mg.value); ms().metaGlobalPercent=isNaN(v)?1.0:v; }
   // Recalcula a aposta base dos lotes existentes (a base pode ter mudado), sem apagar lotes.
-  (ms().sequencias||[]).forEach(sq=>{ if(sq.status==='PENDING'&&(parseFloat(sq.perdasAcumuladas)||0)<0.005){ sq.apostaAtual=sniperArredondarAposta(getValorApostaBase(oddDoLote(sq))); } });
+  (ms().sequencias||[]).forEach(sq=>{ if(sq.status==='PENDING'&&(parseFloat(sq.perdasAcumuladas)||0)<0.005){ sq.apostaAtual=sniperArredondarAposta(getValorApostaBaseLote(sq)); } });
   salvarDadosEAtualizarTudo();
   alert("Configurações salvas.");
 }
@@ -1450,24 +1454,27 @@ function registrarEventoLetra(l,resultado){
 
 // ── MOTOR DE RESULTADO POR LOTE (com teto de gales e stop por lote) ──
 const MERCADOS_PADRAO=[
-  {cod:"V1",nome:"Vitória Mandante",odd:2.00},
-  {cod:"EMP",nome:"Empate",odd:3.00},
-  {cod:"V2",nome:"Vitória Visitante",odd:3.50},
-  {cod:"1T1",nome:"1º Tempo - Mandante",odd:2.80},
-  {cod:"1TX",nome:"1º Tempo - Empate",odd:2.10},
-  {cod:"1T2",nome:"1º Tempo - Visitante",odd:4.50},
-  {cod:"MA25",nome:"Mais de 2,5 gols",odd:2.00},
-  {cod:"ME15",nome:"Menos de 1,5 gols",odd:3.20},
-  {cod:"AMS",nome:"Ambos Marcam - Sim",odd:1.90},
-  {cod:"AMN",nome:"Ambos Marcam - Não",odd:1.90},
-  {cod:"PM1",nome:"Primeiro a Marcar - Mandante",odd:2.20},
-  {cod:"PM2",nome:"Primeiro a Marcar - Visitante",odd:3.00},
-  {cod:"UM1",nome:"Último a Marcar - Mandante",odd:2.20},
-  {cod:"UM2",nome:"Último a Marcar - Visitante",odd:3.00}
+  {cod:"V1",nome:"Vitória Mandante",odd:2.00,basePct:1.0},
+  {cod:"EMP",nome:"Empate",odd:3.00,basePct:1.0},
+  {cod:"V2",nome:"Vitória Visitante",odd:3.50,basePct:1.0},
+  {cod:"1T1",nome:"1º Tempo - Mandante",odd:2.80,basePct:1.0},
+  {cod:"1TX",nome:"1º Tempo - Empate",odd:2.10,basePct:1.0},
+  {cod:"1T2",nome:"1º Tempo - Visitante",odd:4.50,basePct:1.0},
+  {cod:"MA25",nome:"Mais de 2,5 gols",odd:2.00,basePct:1.0},
+  {cod:"ME15",nome:"Menos de 1,5 gols",odd:3.20,basePct:1.0},
+  {cod:"AMS",nome:"Ambos Marcam - Sim",odd:1.90,basePct:1.0},
+  {cod:"AMN",nome:"Ambos Marcam - Não",odd:1.90,basePct:1.0},
+  {cod:"PM1",nome:"Primeiro a Marcar - Mandante",odd:2.20,basePct:1.0},
+  {cod:"PM2",nome:"Primeiro a Marcar - Visitante",odd:3.00,basePct:1.0},
+  {cod:"UM1",nome:"Último a Marcar - Mandante",odd:2.20,basePct:1.0},
+  {cod:"UM2",nome:"Último a Marcar - Visitante",odd:3.00,basePct:1.0}
 ];
 // Retorna a lista de mercados vigente (do estado, ou o padrão)
 function getMercados(){ const m=ms().mercadosCustom; return (Array.isArray(m)&&m.length>0)?m : MERCADOS_PADRAO; }
 function labelMercado(cod){ const m=getMercados().find(x=>x.cod===cod); return m?(m.cod+" · "+m.nome):cod; }
+// Aposta base (%) de um mercado. Se não definida, usa a global (apostaBasePercent) como fallback.
+function basePctDoMercado(cod){ const m=getMercados().find(x=>x.cod===cod); const v=m&&m.basePct!==undefined?parseFloat(m.basePct):NaN; return isNaN(v)?(parseFloat(ms().apostaBasePercent)||1.0):v; }
+function basePctDoLote(seq){ if(!seq) return parseFloat(ms().apostaBasePercent)||1.0; return basePctDoMercado(seq.mercado||(getMercados()[0]?getMercados()[0].cod:'V1')); }
 function oddDoMercado(cod){ const m=getMercados().find(x=>x.cod===cod); return m&&m.odd?parseFloat(m.odd):2.00; }
 // Odd de um lote = odd do mercado dele (a odd deixou de ser "por letra")
 function oddDoLote(seq){ if(!seq) return 2.00; return oddDoMercado(seq.mercado||(getMercados()[0]?getMercados()[0].cod:'V1')); }
@@ -1577,7 +1584,7 @@ function processarWinSeq(seq,odd){
     seq.apostaAtual=sniperArredondarAposta(seq.apostaAtual*fatorIncremento('WIN'));
   } else {
     seq.perdasAcumuladas=0; seq.streakLoss=0;
-    seq.apostaAtual=sniperArredondarAposta(getValorApostaBase(odd));
+    seq.apostaAtual=sniperArredondarAposta(getValorApostaBaseLote(seq));
   }
   // Verifica a meta agregada do mercado (para estatística) e a meta do LOTE (para blindagem individual)
   verificarMetaLetra(lw);
@@ -1604,7 +1611,7 @@ function reabrirLetra(l){
   if(msg) msg.innerHTML=`Você está prestes a <b>reabrir a letra ${l}</b>, que já cumpriu a missão.<br><br>
     Lucro travado nesta etapa: <b style="color:var(--win);">${fmt(lucro)}</b> (meta era ${metaPct}%)<br>
     Lotes que voltarão a operar: <b>${lotes}</b><br>
-    Aposta de reabertura: <b style="color:var(--accent);">${fmt(getValorApostaBase(oddPorLetra(l)))}</b> <span style="font-size:11px;color:var(--muted);">(volta à base, risco zerado)</span><br><br>
+    Aposta de reabertura: <b style="color:var(--accent);">${fmt(getValorApostaBasePorCod(l))}</b> <span style="font-size:11px;color:var(--muted);">(volta à base, risco zerado)</span><br><br>
     <b style="color:var(--bar-amber);">⚠️ O lucro desta letra deixa de estar protegido.</b> A partir daqui ele volta a ficar exposto ao risco, e o resultado acumulado pode ser reduzido ou revertido pelas próximas apostas.<br><br>
     <span style="font-size:11px;color:var(--muted);">Lembre-se: uma letra que bateu a meta não é uma letra "quente" — a próxima aposta nela tem exatamente a mesma expectativa de antes.</span>`;
   document.getElementById('modal-reabrir').style.display='flex';
@@ -1623,7 +1630,7 @@ function confirmarReabertura(){
   ms().sequencias.forEach(s=>{
     if(s.letraRandomica===l){
       s.status='PENDING';
-      s.apostaAtual=sniperArredondarAposta(getValorApostaBase(oddL));
+      s.apostaAtual=sniperArredondarAposta(getValorApostaBaseLote(s));
       s.perdasAcumuladas=0;
       s.streakLoss=0;
       s.lucroEtapa=0;
@@ -1856,7 +1863,7 @@ function processarPerdaSeq(seq,odd){
   const limiteLote=capitalGlobal*((ms().stopLotePercent||5)/100);
   const proximaAposta=ms().modoProgressao==="PERCENTUAL"
     ? sniperArredondarAposta(seq.apostaAtual*fatorIncremento('LOSS'))
-    : (seq.perdasAcumuladas+getLucroDesejadoBase())/(odd-1);
+    : (seq.perdasAcumuladas+getLucroDesejadoBaseLote(seq))/(odd-1);
   const estourouGales=seq.streakLoss>=(ms().maxGales||4);
   const estourouLote=seq.perdasAcumuladas>=limiteLote||proximaAposta>=limiteLote;
   if(estourouGales||estourouLote){
@@ -1865,7 +1872,7 @@ function processarPerdaSeq(seq,odd){
     ms().perdasAssumidasTotal=(ms().perdasAssumidasTotal||0)+valorAssumido;
     ms().assumidasCount=(ms().assumidasCount||0)+1;
     seq.perdasAcumuladas=0; seq.streakLoss=0;
-    seq.apostaAtual=sniperArredondarAposta(getValorApostaBase(odd));
+    seq.apostaAtual=sniperArredondarAposta(getValorApostaBaseLote(seq));
     lotesAvisadosRisco.delete(`op_${seq.id}`); // libera aviso para próxima sequência
     return {assumida:true, motivo:estourouGales?'teto de gales':'stop por lote', valor:valorAssumido};
   }
@@ -1967,7 +1974,8 @@ function renderEditorMercados(){
     html+=`<div style="display:flex;gap:6px;align-items:center;margin-bottom:5px;">
       <input type="text" value="${(m.cod||'').replace(/"/g,'&quot;')}" oninput="editarMercadoCampo(${i},'cod',this.value)" placeholder="V1" style="width:54px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:11px;font-weight:700;padding:6px;border-radius:4px;text-transform:uppercase;">
       <input type="text" value="${(m.nome||'').replace(/"/g,'&quot;')}" oninput="editarMercadoCampo(${i},'nome',this.value)" placeholder="Descrição" style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:var(--sans);font-size:11px;padding:6px;border-radius:4px;">
-      <input type="number" step="0.01" min="1.01" value="${m.odd!==undefined?m.odd:2.00}" oninput="editarMercadoCampo(${i},'odd',this.value)" title="Odd" placeholder="Odd" style="width:58px;background:var(--surface2);border:1px solid var(--accent);color:var(--text);font-family:var(--mono);font-size:11px;font-weight:700;padding:6px;border-radius:4px;">
+      <input type="number" step="0.01" min="1.01" value="${m.odd!==undefined?m.odd:2.00}" oninput="editarMercadoCampo(${i},'odd',this.value)" title="Odd" placeholder="Odd" style="width:52px;background:var(--surface2);border:1px solid var(--accent);color:var(--text);font-family:var(--mono);font-size:11px;font-weight:700;padding:6px;border-radius:4px;">
+      <input type="number" step="0.1" min="0.1" value="${m.basePct!==undefined?m.basePct:1.0}" oninput="editarMercadoCampo(${i},'basePct',this.value)" title="Aposta base (%)" placeholder="Base%" style="width:52px;background:var(--surface2);border:1px solid var(--bar-amber);color:var(--text);font-family:var(--mono);font-size:11px;font-weight:700;padding:6px;border-radius:4px;">
       <button onclick="removerMercado(${i})" title="Remover" style="flex:none;width:28px;height:28px;background:var(--surface2);border:1px solid var(--loss);color:var(--loss);border-radius:4px;cursor:pointer;font-weight:700;">✕</button>
     </div>`;
   });
@@ -1982,11 +1990,12 @@ function editarMercadoCampo(i,campo,valor){
   if(!l[i]) return;
   if(campo==='cod') l[i].cod=valor.toUpperCase().trim().replace(/\s+/g,'');
   else if(campo==='odd') l[i].odd=parseFloat(valor)||2.00;
+  else if(campo==='basePct') l[i].basePct=parseFloat(valor)||1.0;
   else l[i][campo]=valor;
 }
 function adicionarMercado(){
   const l=_garantirEdit();
-  l.push({cod:'', nome:'', odd:2.00});
+  l.push({cod:'', nome:'', odd:2.00, basePct:1.0});
   ms().mercadosCustom=l; // reflete para render
   renderEditorMercados();
 }
@@ -2005,7 +2014,7 @@ function salvarMercados(){
   if(cods.length!==l.length){ alert('Todo mercado precisa de um código (sigla).'); return; }
   const dup=cods.find((c,idx)=>cods.indexOf(c)!==idx);
   if(dup){ alert('Código duplicado: '+dup+'. Cada código deve ser único.'); return; }
-  l.forEach(m=>{ if(!m.nome||!m.nome.trim()) m.nome=m.cod; });
+  l.forEach(m=>{ if(!m.nome||!m.nome.trim()) m.nome=m.cod; if(m.basePct===undefined||isNaN(parseFloat(m.basePct))) m.basePct=1.0; });
   ms().mercadosCustom=JSON.parse(JSON.stringify(l));
   _mercadosEdit=null;
   const st=document.getElementById('mercados-status');
@@ -2024,9 +2033,11 @@ function adicionarLote(mercadoCod){
   if(!ms().sequencias) ms().sequencias=[];
   const cod=mercadoCod || (getMercados()[0]?getMercados()[0].cod:'V1');
   const odd=oddDoMercado(cod);
+  const capIni=state.bancaInicioEtapa+(parseFloat(state.bancoCapital)||0);
+  const apostaBaseInicial=(capIni*(basePctDoMercado(cod)/100))/((odd||2)-1);
   const novo={
     id: proximoIdLote(),
-    apostaAtual: sniperArredondarAposta(getValorApostaBase(odd)),
+    apostaAtual: sniperArredondarAposta(apostaBaseInicial),
     streakLoss:0,
     letraRandomica: cod,   // rótulo de agrupamento = o próprio mercado
     mercado: cod,
@@ -2219,7 +2230,34 @@ function alternarPausaLote(index){
 
 function mudarMercadoLote(index,valor){
   const seq=ms().sequencias[index]; if(!seq) return;
+  if(valor===seq.mercado) return; // não mudou nada
+  const risco=parseFloat(seq.perdasAcumuladas)||0;
+  const nomeNovo=(getMercados().find(x=>x.cod===valor)||{}).nome||valor;
+  // Se o lote tem risco acumulado, confirma antes (a troca reseta o lote e assume a perda).
+  if(risco>0.005){
+    const ok=confirm(`Trocar o lote #${String(seq.id).padStart(3,'0')} para ${valor} (${nomeNovo})?\n\n`+
+      `⚠️ Este lote tem ${fmt(risco)} de risco acumulado. Ao trocar de mercado, o lote é RESETADO: você assume essa perda, a aposta volta à base do novo mercado e a sequência recomeça.`);
+    if(!ok){
+      // reverte o <select> para o mercado atual e sai
+      renderLinhas();
+      return;
+    }
+    // assume a perda no acumulado
+    ms().perdasAssumidasTotal=(ms().perdasAssumidasTotal||0)+risco;
+    ms().assumidasCount=(ms().assumidasCount||0)+1;
+  }
+  // Troca o mercado e RESETA o lote com os parâmetros (odd + base%) do novo mercado.
   seq.mercado=valor;
+  seq.letraRandomica=valor;   // mantém o agrupamento estatístico coerente com o mercado
+  seq.status='PENDING';
+  seq.perdasAcumuladas=0;
+  seq.streakLoss=0;
+  seq.lucroEtapa=0;
+  seq.metaAvisada=false;
+  seq.ultimos=[];
+  seq.winsEtapa=0;
+  seq.lossesEtapa=0;
+  seq.apostaAtual=sniperArredondarAposta(getValorApostaBaseLote(seq));
   salvarDadosEAtualizarTudo();
 }
 
@@ -2237,7 +2275,7 @@ function resetarLoteIndividual(index){
   const assumido=risco;
   // Reset TOTAL do lote: aposta base, perdas zeradas, gales reiniciados, status volta a ativo.
   seq.status='PENDING';
-  seq.apostaAtual=sniperArredondarAposta(getValorApostaBase(oddL));
+  seq.apostaAtual=sniperArredondarAposta(getValorApostaBaseLote(seq));
   seq.perdasAcumuladas=0;
   seq.streakLoss=0;
   seq.lucroEtapa=0;
@@ -2263,8 +2301,8 @@ function distributingRiscoLoteCritico(indexAlvo){
   if(lc.perdasAcumuladas<=0){ alert("Este lote não tem risco acumulado para distribuir."); return; }
   if(outros.length===0){ alert("Não há outro lote ativo para receber o risco.\n\nOs demais lotes estão blindados (finalizados) — e lotes blindados não recebem risco, para não expor o lucro já protegido. Reabra um lote se quiser usá-lo como destino."); return; }
   if(confirm("⚖️ Diluir o risco acumulado entre os outros lotes ativos?")){
-    const frac=lc.perdasAcumuladas/outros.length; const oddLc=oddDoLote(lc); lc.perdasAcumuladas=0; lc.apostaAtual=sniperArredondarAposta(getValorApostaBase(oddLc));
-    ms().sequencias.forEach(seq=>{ if(seq.status!=='FINISHED'&&seq.id!==lc.id){ seq.perdasAcumuladas=roundedFixo(seq.perdasAcumuladas+frac); if(ms().modoProgressao!=="PERCENTUAL"){ const odd=oddDoLote(seq); seq.apostaAtual=sniperArredondarAposta((seq.perdasAcumuladas+getLucroDesejadoBase())/(odd-1)); } } });
+    const frac=lc.perdasAcumuladas/outros.length; lc.perdasAcumuladas=0; lc.apostaAtual=sniperArredondarAposta(getValorApostaBaseLote(lc));
+    ms().sequencias.forEach(seq=>{ if(seq.status!=='FINISHED'&&seq.id!==lc.id){ seq.perdasAcumuladas=roundedFixo(seq.perdasAcumuladas+frac); if(ms().modoProgressao!=="PERCENTUAL"){ const odd=oddDoLote(seq); seq.apostaAtual=sniperArredondarAposta((seq.perdasAcumuladas+getLucroDesejadoBaseLote(seq))/(odd-1)); } } });
     dispararAnimacaoToastLotes(()=>{ salvarDadosEAtualizarTudo(); });
   }
 }
@@ -2329,7 +2367,7 @@ function confirmarConclusaoEtapa(){
     sq.metaAvisada=false;
     sq.winsEtapa=0;
     sq.lossesEtapa=0;
-    sq.apostaAtual=sniperArredondarAposta(getValorApostaBase(oddDoLote(sq)));
+    sq.apostaAtual=sniperArredondarAposta(getValorApostaBaseLote(sq));
   });
   ms().lucroLetraEtapa={}; ms().letrasMetaCumprida={};
   gerarEstruturaLotesIniciais();
@@ -2394,15 +2432,23 @@ function renderLinhas(){
         if(mp<=0) return '<span style="color:var(--muted);font-size:10px;">—</span>';
         const alvo=(state.bancaInicioEtapa+(parseFloat(state.bancoCapital)||0))*(mp/100);
         const luc=seq.lucroEtapa||0;
-        const prog=alvo>0?Math.max(0,Math.min(100,(luc/alvo)*100)):0;
+        const pctReal=alvo>0?(luc/alvo)*100:0;              // % real (pode ser negativo)
+        const prog=Math.max(0,Math.min(100,pctReal));       // largura da barra (0–100)
         const cumprida=seq.status==='FINISHED'||prog>=100;
-        // Tons FORTES e sólidos (deuteranopia): verde forte / âmbar forte / vermelho forte. Texto sempre presente.
-        const cor=cumprida?'var(--bar-win)':(luc<0?'var(--bar-loss)':'var(--bar-amber)');
-        const lbl=cumprida?'✔100%':(luc<0?Math.round(prog)+'%':Math.round(prog)+'%');
+        const negativo=luc<0;
+        // Tons FORTES e sólidos (deuteranopia): verde / âmbar / vermelho. Texto sempre presente e com sinal.
+        const cor=cumprida?'var(--bar-win)':(negativo?'var(--bar-loss)':'var(--bar-amber)');
+        // Rótulo: mostra o sinal. Negativo aparece como "▼ -15%" (símbolo + sinal, não só cor).
+        const lbl=cumprida?'✔ 100%':(negativo?('▼ '+Math.round(pctReal)+'%'):(Math.round(pctReal)+'%'));
+        const corTexto=cumprida?'var(--bar-win)':(negativo?'var(--bar-loss)':'var(--text)');
+        // Quando negativo, a barra fica vazia mas com um traço vermelho de aviso à esquerda (não depende só de cor: tem o ▼ e o sinal no texto).
+        const fill=negativo
+          ? `<div style="height:100%;width:8%;background:var(--bar-loss);border-radius:99px;"></div>`
+          : `<div style="height:100%;width:${prog}%;background:${cor};border-radius:99px;transition:width .3s;"></div>`;
         return `<div style="min-width:66px;">
-          <div style="display:flex;justify-content:flex-end;font-size:9px;font-family:var(--mono);font-weight:700;color:${cumprida?'var(--bar-win)':(luc<0?'var(--bar-loss)':'var(--text)')};margin-bottom:2px;">${lbl}</div>
-          <div style="height:11px;background:var(--surface2);border:1px solid var(--border);border-radius:99px;overflow:hidden;">
-            <div style="height:100%;width:${prog}%;background:${cor};border-radius:99px;transition:width .3s;"></div>
+          <div style="display:flex;justify-content:flex-end;font-size:9px;font-family:var(--mono);font-weight:700;color:${corTexto};margin-bottom:2px;">${lbl}</div>
+          <div style="height:11px;background:var(--surface2);border:1px solid ${negativo?'var(--bar-loss)':'var(--border)'};border-radius:99px;overflow:hidden;">
+            ${fill}
           </div>
         </div>`;
       })()}</td>
@@ -2648,7 +2694,7 @@ function simularSobrevivenciaLetra(l){
   const ativos=ms().sequencias.filter(s=>s.letraRandomica===l&&s.status!=='FINISHED');
   if(ativos.length===0) return null;
   const odd=oddPorLetra(l);
-  const base=getValorApostaBase(odd);
+  const base=getValorApostaBasePorCod(l);
   let sim=ativos.map(s=>({acc:s.perdasAcumuladas, stake:sniperArredondarAposta(s.apostaAtual)}));
   let banca=state.bancaAtual+(parseFloat(state.bancoCapital)||0); // global: banco é reserva do mesmo dinheiro
   let rodadas=0;
@@ -3125,12 +3171,17 @@ function atualizarPainelUI(forcarGrafico=false){
   const faltaEl=document.getElementById('lbl-falta-op');
   if(faltaEl){ faltaEl.innerText=fmt(faltaOp); faltaEl.style.color=faltaOp<=0?'var(--win)':'var(--accent)'; }
   // Espelho na aba Lotes
-  el('lbl-etapa-num-lt','#'+ms().etapaAtual);
-  el('lbl-valor-inicial-lt',fmt(baseEtapa));
-  el('lbl-valor-atual-lt',fmt(state.bancaAtual+(parseFloat(state.bancoCapital)||0)));
-  el('lbl-meta-lt',fmt(metaVal));
+  // Info-bar da aba Operação: referência é o DIA (coerente com a barra "Avanço do Dia" logo acima)
+  const _baseDiaInfo=(ms().saldoInicioDia!==undefined)?ms().saldoInicioDia:saldoTotalAtual();
+  const _metaDiaPctInfo=parseFloat(ms().metaDiaria)||0;
+  const _metaDiaValInfo=_baseDiaInfo*(1+_metaDiaPctInfo/100);
+  const _atualInfo=saldoTotalAtual();
+  const _faltaDiaInfo=Math.max(0,_metaDiaValInfo-_atualInfo);
+  el('lbl-valor-inicial-lt',fmt(_baseDiaInfo));
+  el('lbl-valor-atual-lt',fmt(_atualInfo));
+  el('lbl-meta-lt',_metaDiaPctInfo>0?fmt(_metaDiaValInfo):'—');
   const faltaElLt=document.getElementById('lbl-falta-lt');
-  if(faltaElLt){ faltaElLt.innerText=fmt(faltaOp); faltaElLt.style.color=faltaOp<=0?'var(--win)':'var(--accent)'; }
+  if(faltaElLt){ faltaElLt.innerText=_metaDiaPctInfo>0?fmt(_faltaDiaInfo):'—'; faltaElLt.style.color=_faltaDiaInfo<=0?'var(--win)':'var(--accent)'; }
 
   // ── Barras de progresso da aba Lotes ──
   // Etapa: mesmo cálculo do progresso da etapa (lucro / lucro necessário)
