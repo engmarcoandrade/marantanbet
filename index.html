@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#0D1117">
-<title>Método Marantan v37.9</title>
+<title>Método Marantan v38.0</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox=%270 0 48 48%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Crect x=%271.5%27 y=%271.5%27 width=%2745%27 height=%2745%27 rx=%2711%27 fill=%27%23161B22%27 stroke=%27%2330363D%27 stroke-width=%271.5%27/%3E%3Cpath d=%27M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3Cpath d=%27M30.5 9.5 L37.5 9 L36.8 16%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -555,7 +555,7 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v37.9</span></div>
+      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v38.0</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
@@ -766,8 +766,7 @@ tbody tr:last-child td { border-bottom:none; }
                   <th style="background:var(--surface2);padding:4px;border-bottom:1px solid var(--border);text-align:center;">
                     <input id="placar-titulo-b" type="text" value="B" oninput="salvarTituloPlacar('b',this.value)" placeholder="Nome B" style="width:70px;background:var(--surface);border:1px solid var(--loss-border);color:var(--loss);font-size:10px;font-weight:800;text-align:center;padding:3px;border-radius:4px;">
                   </th>
-                  <th id="placar-th-pa" style="background:var(--surface2);color:var(--muted);font-size:9px;font-weight:700;text-transform:uppercase;padding:6px 4px;border-bottom:1px solid var(--border);text-align:center;">% A</th>
-                  <th id="placar-th-pb" style="background:var(--surface2);color:var(--muted);font-size:9px;font-weight:700;text-transform:uppercase;padding:6px 4px;border-bottom:1px solid var(--border);text-align:center;">% B</th>
+                  <th id="placar-th-barra" style="background:var(--surface2);color:var(--muted);font-size:9px;font-weight:700;text-transform:uppercase;padding:6px 4px;border-bottom:1px solid var(--border);text-align:center;">A vs B</th>
                 </tr>
               </thead>
               <tbody id="placar-tbody"></tbody>
@@ -2373,7 +2372,7 @@ function renderPlacarTabela(){
   const tb=document.getElementById('placar-tbody'); if(!tb) return;
   let html='';
   const listaFiltrada=_placarFiltroOdd?placarOddsLista().filter(o=>placarChave(o)===_placarFiltroOdd):placarOddsLista();
-  if(listaFiltrada.length===0){ tb.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--muted);font-size:11px;padding:12px;">—</td></tr>'; return; }
+  if(listaFiltrada.length===0){ tb.innerHTML='<tr><td colspan="4" style="text-align:center;color:var(--muted);font-size:11px;padding:12px;">—</td></tr>'; return; }
   listaFiltrada.forEach(odd=>{
     const c=getContadores(odd);
     const total=c.a+c.b;
@@ -2396,8 +2395,7 @@ function renderPlacarTabela(){
           <button onclick="setContador(${odd},'b',1)" style="width:22px;height:22px;border:1px solid var(--loss-border);background:var(--loss-dim);color:var(--loss);border-radius:4px;cursor:pointer;font-weight:800;font-size:12px;padding:0;">+</button>
         </div>
       </td>
-      <td style="text-align:center;font-family:var(--mono);font-size:12px;font-weight:700;color:${total>0?'var(--accent)':'var(--muted)'};padding:4px;">${total>0?pctA+'%':'—'}</td>
-      <td style="text-align:center;font-family:var(--mono);font-size:12px;font-weight:700;color:${total>0?'var(--loss)':'var(--muted)'};padding:4px;">${total>0?pctB+'%':'—'}</td>
+      <td style="padding:4px 6px;min-width:120px;">${total>0?barraAB(pctA,pctB,'','') : '<span style="color:var(--muted);font-size:10px;">sem dados</span>'}</td>
     </tr>`;
   });
   tb.innerHTML=html;
@@ -2437,25 +2435,90 @@ function classificarOdd(odd){
 
 // Detecta faixas CONTÍNUAS de odds com a mesma classe (agrupa odds vizinhas parecidas).
 // Odds sem dados são "transparentes": não quebram uma faixa, mas também não a criam sozinhas.
+// Detecta os DOIS pontos de corte que dividem a faixa de odds em 3 blocos ORDENADOS:
+// Bloco 1 (odds baixas) → A domina | Bloco 2 (meio) → equilíbrio | Bloco 3 (odds altas) → B domina.
+// Método: testa todas as divisões possíveis (corte1 < corte2) e escolhe a que melhor
+// "explica" os dados — cada odd contribui com um score conforme se encaixa no bloco esperado.
+// Retorna {blocos:[{classe,ini,fim,somaA,somaB}], confianca, temDados}.
 function detectarFaixasPlacar(){
   const odds=placarOddsLista();
-  const faixas=[]; // {classe, ini, fim}
-  let atual=null;
-  odds.forEach(odd=>{
-    const cl=classificarOdd(odd).classe;
-    if(cl==='SEM'){
-      // sem dados: se há faixa aberta, mantém aberta (permite continuidade); senão ignora
-      return;
+  // Coleta as odds que têm dados, com seus totais
+  const dados=odds.map(odd=>{
+    const c=getContadores(odd);
+    return {odd, a:c.a, b:c.b, total:c.a+c.b};
+  });
+  const comDados=dados.filter(d=>d.total>0);
+  if(comDados.length===0){ return {blocos:[], confianca:0, temDados:false}; }
+
+  const n=odds.length;
+  // "Voto" de cada odd: +peso para A se A>B, -peso para B se B>A, 0 se empate. Peso = nº de lançamentos.
+  function voto(d){
+    if(d.total===0) return 0;
+    const pctA=(d.a/d.total)*100, pctB=(d.b/d.total)*100;
+    const dif=pctA-pctB; // positivo = A, negativo = B
+    return {dif, peso:d.total};
+  }
+
+  // Score de um bloco conforme a classe esperada ('A','EQ','B')
+  function scoreBloco(iIni,iFim,classeEsperada){
+    let s=0;
+    for(let i=iIni;i<=iFim;i++){
+      const d=dados[i]; if(d.total===0) continue;
+      const v=voto(d);
+      if(classeEsperada==='A') s += v.dif*v.peso;         // premia A dominante
+      else if(classeEsperada==='B') s += (-v.dif)*v.peso; // premia B dominante
+      else s += (Math.abs(v.dif)<=getLimitePlacar()? v.peso*getLimitePlacar() : -Math.abs(v.dif)*v.peso); // meio: premia equilíbrio
     }
-    if(atual && atual.classe===cl){
-      atual.fim=odd;
-    } else {
-      if(atual) faixas.push(atual);
-      atual={classe:cl, ini:odd, fim:odd};
+    return s;
+  }
+
+  // Busca os melhores cortes: c1 separa bloco1|bloco2, c2 separa bloco2|bloco3.
+  // Permite blocos vazios nas pontas (ex: sem bloco A), mas mantém a ordem.
+  let melhor={score:-Infinity, c1:0, c2:0};
+  for(let c1=0;c1<=n;c1++){
+    for(let c2=c1;c2<=n;c2++){
+      // bloco1: [0, c1-1] classe A | bloco2: [c1, c2-1] classe EQ | bloco3: [c2, n-1] classe B
+      let s=0;
+      if(c1>0) s+=scoreBloco(0,c1-1,'A');
+      if(c2>c1) s+=scoreBloco(c1,c2-1,'EQ');
+      if(c2<n) s+=scoreBloco(c2,n-1,'B');
+      if(s>melhor.score){ melhor={score:s, c1, c2}; }
+    }
+  }
+
+  // Monta os blocos resultantes (só inclui blocos não-vazios em odds com dados)
+  const blocos=[];
+  function montaBloco(iIni,iFim,classe){
+    if(iIni>iFim) return null;
+    let somaA=0,somaB=0,temAlgum=false,oi=null,of=null;
+    for(let i=iIni;i<=iFim;i++){
+      const d=dados[i];
+      if(d.total>0){ temAlgum=true; somaA+=d.a; somaB+=d.b; if(oi===null)oi=d.odd; of=d.odd; }
+    }
+    if(!temAlgum) return null;
+    return {classe, ini:oi, fim:of, somaA, somaB};
+  }
+  const b1=montaBloco(0,melhor.c1-1,'A');
+  const b2=montaBloco(melhor.c1,melhor.c2-1,'EQ');
+  const b3=montaBloco(melhor.c2,n-1,'B');
+  [b1,b2,b3].forEach(b=>{ if(b) blocos.push(b); });
+
+  // Confiança: quão bem os blocos "acertam" a direção esperada (0 a 100).
+  // Conta, ponderado por lançamentos, quantos votos concordam com a classe do seu bloco.
+  let acertos=0, totalPeso=0;
+  blocos.forEach(b=>{
+    const iIni=odds.indexOf(b.ini), iFim=odds.indexOf(b.fim);
+    for(let i=iIni;i<=iFim;i++){
+      const d=dados[i]; if(d.total===0) continue;
+      const v=voto(d); totalPeso+=v.peso;
+      const difAbs=Math.abs(v.dif);
+      if(b.classe==='A' && v.dif>0) acertos+=v.peso;
+      else if(b.classe==='B' && v.dif<0) acertos+=v.peso;
+      else if(b.classe==='EQ' && difAbs<=getLimitePlacar()) acertos+=v.peso;
     }
   });
-  if(atual) faixas.push(atual);
-  return faixas;
+  const confianca=totalPeso>0?Math.round((acertos/totalPeso)*100):0;
+  return {blocos, confianca, temDados:true};
 }
 
 function nomeClasse(classe){
@@ -2470,22 +2533,47 @@ function fmtOdd(o){ return o.toFixed(2).replace('.',','); }
 
 function renderPlacarFaixas(){
   const box=document.getElementById('placar-faixas'); if(!box) return;
-  const faixas=detectarFaixasPlacar();
-  if(faixas.length===0){
+  const res=detectarFaixasPlacar();
+  if(!res.temDados || res.blocos.length===0){
     box.innerHTML='<span style="font-size:11px;color:var(--muted);">Ainda sem dados suficientes para desenhar as faixas. Registre resultados nas odds.</span>';
     return;
   }
+  const nomeA=(_placarEstado.tituloA||'A'), nomeB=(_placarEstado.tituloB||'B');
   let html='';
-  faixas.forEach(f=>{
-    const nc=nomeClasse(f.classe);
-    const intervalo=f.ini===f.fim?fmtOdd(f.ini):(fmtOdd(f.ini)+' – '+fmtOdd(f.fim));
-    html+=`<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--surface);border:1px solid var(--border);border-left:4px solid ${nc.cor};border-radius:6px;padding:6px 9px;margin-bottom:4px;">
-      <span style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);">${intervalo}</span>
-      <span style="font-size:11px;font-weight:800;color:${nc.cor};">${nc.selo}</span>
+  res.blocos.forEach(b=>{
+    const nc=nomeClasse(b.classe);
+    const intervalo=b.ini===b.fim?fmtOdd(b.ini):(fmtOdd(b.ini)+' – '+fmtOdd(b.fim));
+    const tot=b.somaA+b.somaB;
+    const pA=tot>0?Math.round(b.somaA/tot*100):0, pB=tot>0?Math.round(b.somaB/tot*100):0;
+    html+=`<div style="background:var(--surface);border:1px solid var(--border);border-left:4px solid ${nc.cor};border-radius:6px;padding:6px 9px;margin-bottom:4px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:5px;">
+        <span style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);">${intervalo}</span>
+        <span style="font-size:11px;font-weight:800;color:${nc.cor};">${nc.selo}</span>
+      </div>
+      ${barraAB(pA,pB,nomeA,nomeB)}
     </div>`;
   });
-  html+=`<div style="font-size:9px;color:var(--muted);margin-top:4px;">Faixas contínuas de odds com o mesmo comportamento. Domina quem abre ${getLimitePlacar()}+ pontos de diferença.</div>`;
+  // Indicador de confiança (quão bem os 3 blocos descrevem os dados)
+  const corConf = res.confianca>=70?'var(--win)':(res.confianca>=50?'var(--bar-amber)':'var(--loss)');
+  const txtConf = res.confianca>=70?'padrão claro':(res.confianca>=50?'padrão parcial':'padrão fraco — poucos dados ou irregular');
+  html+=`<div style="display:flex;align-items:center;gap:6px;margin-top:6px;font-size:10px;">
+    <span style="color:var(--muted);">Confiança do padrão:</span>
+    <span style="font-weight:800;color:${corConf};">${res.confianca}% (${txtConf})</span>
+  </div>`;
+  html+=`<div style="font-size:9px;color:var(--muted);margin-top:3px;">Três blocos na ordem ${nomeA} → equilíbrio → ${nomeB}. Domina quem abre ${getLimitePlacar()}+ pontos.</div>`;
   box.innerHTML=html;
+}
+
+// Barra horizontal A vs B (percentuais lado a lado). Usa forma + rótulo, não só cor (deuteranopia).
+function barraAB(pA,pB,nomeA,nomeB){
+  return `<div style="display:flex;align-items:center;gap:0;height:16px;border-radius:4px;overflow:hidden;border:1px solid var(--border);">
+    <div style="width:${pA}%;background:var(--accent);display:flex;align-items:center;justify-content:flex-start;padding-left:4px;min-width:${pA>0?'18px':'0'};">
+      ${pA>=15?`<span style="font-size:9px;font-weight:800;color:#fff;font-family:var(--mono);">${pA}%</span>`:''}
+    </div>
+    <div style="width:${pB}%;background:var(--loss);display:flex;align-items:center;justify-content:flex-end;padding-right:4px;min-width:${pB>0?'18px':'0'};">
+      ${pB>=15?`<span style="font-size:9px;font-weight:800;color:#fff;font-family:var(--mono);">${pB}%</span>`:''}
+    </div>
+  </div>`;
 }
 
 
