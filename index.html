@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#0D1117">
-<title>Método Marantan v37.5</title>
+<title>Método Marantan v37.9</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox=%270 0 48 48%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Crect x=%271.5%27 y=%271.5%27 width=%2745%27 height=%2745%27 rx=%2711%27 fill=%27%23161B22%27 stroke=%27%2330363D%27 stroke-width=%271.5%27/%3E%3Cpath d=%27M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3Cpath d=%27M30.5 9.5 L37.5 9 L36.8 16%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -461,51 +461,6 @@ tbody tr:last-child td { border-bottom:none; }
 
 
 
-<div id="modal-placar-odds" class="modal-overlay" style="z-index:9999;">
-  <div class="modal-box" style="max-width:560px;width:96%;max-height:90vh;display:flex;flex-direction:column;">
-    <div class="modal-body" style="overflow-y:auto;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-        <div class="m-title" style="color:var(--accent);margin:0;">🎯 Placar por Odd</div>
-        <button onclick="fecharModal('modal-placar-odds')" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);width:28px;height:28px;border-radius:6px;cursor:pointer;font-weight:800;">✕</button>
-      </div>
-      <p style="font-size:10px;color:var(--muted);margin:0 0 10px;line-height:1.5;">Ferramenta de apoio independente da operação. Atalho: <b>Ctrl+Q</b>. Os dados ficam salvos.</p>
-
-      <!-- Seletor de odd em jogo + sugestão -->
-      <div style="background:var(--surface2);border:1px solid var(--accent);border-radius:8px;padding:10px;margin-bottom:12px;">
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
-          <span style="font-size:11px;font-weight:700;color:var(--text);">Odd em jogo:</span>
-          <select id="placar-odd-jogo" onchange="selecionarOddPlacar()" style="background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:13px;font-weight:700;padding:5px 8px;border-radius:5px;cursor:pointer;"></select>
-          <button id="placar-btn-vertodas" onclick="mostrarTodasOddsPlacar()" style="display:none;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:10px;font-weight:700;padding:5px 9px;border-radius:5px;cursor:pointer;white-space:nowrap;">📋 Ver todas</button>
-        </div>
-        <div id="placar-sugestao" style="font-size:12px;line-height:1.5;"></div>
-      </div>
-
-      <!-- Tabela -->
-      <div style="overflow-x:auto;">
-        <table style="width:100%;border-collapse:collapse;">
-          <thead>
-            <tr>
-              <th style="background:var(--surface2);color:var(--muted);font-size:9px;font-weight:700;text-transform:uppercase;padding:6px 4px;border-bottom:1px solid var(--border);text-align:center;">Odd</th>
-              <th style="background:var(--surface2);padding:4px;border-bottom:1px solid var(--border);text-align:center;">
-                <input id="placar-titulo-a" type="text" value="A" oninput="salvarTituloPlacar('a',this.value)" placeholder="Nome A" style="width:70px;background:var(--surface);border:1px solid var(--accent-border);color:var(--accent);font-size:10px;font-weight:800;text-align:center;padding:3px;border-radius:4px;">
-              </th>
-              <th style="background:var(--surface2);padding:4px;border-bottom:1px solid var(--border);text-align:center;">
-                <input id="placar-titulo-b" type="text" value="B" oninput="salvarTituloPlacar('b',this.value)" placeholder="Nome B" style="width:70px;background:var(--surface);border:1px solid var(--loss-border);color:var(--loss);font-size:10px;font-weight:800;text-align:center;padding:3px;border-radius:4px;">
-              </th>
-              <th id="placar-th-pa" style="background:var(--surface2);color:var(--muted);font-size:9px;font-weight:700;text-transform:uppercase;padding:6px 4px;border-bottom:1px solid var(--border);text-align:center;">% A</th>
-              <th id="placar-th-pb" style="background:var(--surface2);color:var(--muted);font-size:9px;font-weight:700;text-transform:uppercase;padding:6px 4px;border-bottom:1px solid var(--border);text-align:center;">% B</th>
-            </tr>
-          </thead>
-          <tbody id="placar-tbody"></tbody>
-        </table>
-      </div>
-      <div style="margin-top:10px;text-align:right;">
-        <button onclick="zerarPlacarOdds()" style="background:var(--surface2);border:1px solid var(--bar-amber);color:var(--bar-amber);padding:6px 12px;border-radius:5px;font-size:11px;font-weight:700;cursor:pointer;">↺ Zerar todos os contadores</button>
-      </div>
-    </div>
-  </div>
-</div>
-
 <div id="modal-escolher-lotes" class="modal-overlay">
   <div class="modal-box">
     <div class="modal-body">
@@ -600,7 +555,7 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v37.5</span></div>
+      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v37.9</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
@@ -779,14 +734,47 @@ tbody tr:last-child td { border-bottom:none; }
       </div>
     </div>
 
-    <div class="bloco-op" data-bloco="notas">
+    <div class="bloco-op" data-bloco="placar">
       <div style="margin-top:12px;">
-        <button id="btn-toggle-notas" class="hdr-btn" style="width:100%; text-align:left;" onclick="toggleNotasLivres()">📝 Anotações e orientações</button>
-        <div id="wrap-notas-livres" style="display:none; margin-top:8px;">
-          <textarea id="txt-notas-livres" placeholder="Registre aqui observações que ajudem a orientar ajustes: padrões percebidos, mercados que renderam mais, decisões tomadas, ideias para testar..." oninput="agendarSalvarNotasLivres()" style="width:100%; min-height:160px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text); font-family:var(--sans); font-size:13px; line-height:1.6; padding:12px; resize:vertical; outline:none;"></textarea>
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
-            <span id="notas-status" style="font-size:10px; color:var(--muted); font-family:var(--mono);"></span>
-            <span id="notas-contador" style="font-size:10px; color:var(--muted); font-family:var(--mono);"></span>
+        <button id="btn-toggle-placar" class="hdr-btn" style="width:100%; text-align:left;" onclick="togglePlacarBloco()">🎯 Placar por Odd</button>
+        <div id="wrap-placar-bloco" style="display:none; margin-top:8px;">
+          <div style="background:var(--surface2);border:1px solid var(--accent);border-radius:8px;padding:10px;margin-bottom:12px;">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+              <span style="font-size:11px;font-weight:700;color:var(--text);">Odd em jogo:</span>
+              <select id="placar-odd-jogo" onchange="selecionarOddPlacar()" style="background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:13px;font-weight:700;padding:5px 8px;border-radius:5px;cursor:pointer;"></select>
+              <button id="placar-btn-vertodas" onclick="mostrarTodasOddsPlacar()" style="display:none;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:10px;font-weight:700;padding:5px 9px;border-radius:5px;cursor:pointer;white-space:nowrap;">📋 Ver todas</button>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+              <span style="font-size:11px;color:var(--muted);">Diferença mínima p/ dominar:</span>
+              <input id="placar-limite" type="number" min="0" max="60" step="1" value="10" oninput="salvarLimitePlacar(this.value)" style="width:56px;background:var(--surface);border:1px solid var(--bar-amber);color:var(--text);font-family:var(--mono);font-size:12px;font-weight:700;padding:4px 6px;border-radius:4px;">
+              <span style="font-size:11px;color:var(--muted);">pontos</span>
+            </div>
+            <div id="placar-sugestao" style="font-size:12px;line-height:1.5;margin-bottom:10px;"></div>
+            <div style="border-top:1px solid var(--border);padding-top:8px;">
+              <div style="font-size:9px;color:var(--muted);font-weight:700;letter-spacing:.05em;margin-bottom:6px;">📊 FAIXAS DE ODDS (pelo histórico registrado)</div>
+              <div id="placar-faixas"></div>
+            </div>
+          </div>
+          <div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;">
+              <thead>
+                <tr>
+                  <th style="background:var(--surface2);color:var(--muted);font-size:9px;font-weight:700;text-transform:uppercase;padding:6px 4px;border-bottom:1px solid var(--border);text-align:center;">Odd</th>
+                  <th style="background:var(--surface2);padding:4px;border-bottom:1px solid var(--border);text-align:center;">
+                    <input id="placar-titulo-a" type="text" value="A" oninput="salvarTituloPlacar('a',this.value)" placeholder="Nome A" style="width:70px;background:var(--surface);border:1px solid var(--accent-border);color:var(--accent);font-size:10px;font-weight:800;text-align:center;padding:3px;border-radius:4px;">
+                  </th>
+                  <th style="background:var(--surface2);padding:4px;border-bottom:1px solid var(--border);text-align:center;">
+                    <input id="placar-titulo-b" type="text" value="B" oninput="salvarTituloPlacar('b',this.value)" placeholder="Nome B" style="width:70px;background:var(--surface);border:1px solid var(--loss-border);color:var(--loss);font-size:10px;font-weight:800;text-align:center;padding:3px;border-radius:4px;">
+                  </th>
+                  <th id="placar-th-pa" style="background:var(--surface2);color:var(--muted);font-size:9px;font-weight:700;text-transform:uppercase;padding:6px 4px;border-bottom:1px solid var(--border);text-align:center;">% A</th>
+                  <th id="placar-th-pb" style="background:var(--surface2);color:var(--muted);font-size:9px;font-weight:700;text-transform:uppercase;padding:6px 4px;border-bottom:1px solid var(--border);text-align:center;">% B</th>
+                </tr>
+              </thead>
+              <tbody id="placar-tbody"></tbody>
+            </table>
+          </div>
+          <div style="margin-top:10px;text-align:right;">
+            <button onclick="zerarPlacarOdds()" style="background:var(--surface2);border:1px solid var(--bar-amber);color:var(--bar-amber);padding:6px 12px;border-radius:5px;font-size:11px;font-weight:700;cursor:pointer;">↺ Zerar todos os contadores</button>
           </div>
         </div>
       </div>
@@ -1186,7 +1174,8 @@ function aplicarBlindagemDeVariaveis(){
   if(!Array.isArray(m.mercadosCustom)||m.mercadosCustom.length===0) m.mercadosCustom=JSON.parse(JSON.stringify(MERCADOS_PADRAO));
     else m.mercadosCustom.forEach(x=>{ if(x.odd===undefined||x.odd===null||x.odd==='') x.odd=2.00; if(x.basePct===undefined||x.basePct===null||x.basePct==='') x.basePct=(parseFloat(m.apostaBasePercent)||1.0); });
     if(Array.isArray(m.sequencias)) m.sequencias.forEach(sq=>{ if(!sq.ultimos) sq.ultimos=[]; if(!sq.mercado) sq.mercado=m.mercadosCustom[0].cod; if(sq.lucroEtapa===undefined) sq.lucroEtapa=0; if(sq.metaAvisada===undefined) sq.metaAvisada=false; if(sq.pausado===undefined) sq.pausado=false; });
-  if(!Array.isArray(m.ordemBlocosOperacao)) m.ordemBlocosOperacao=['tabela','acoes','painel','notas'];
+  if(!Array.isArray(m.ordemBlocosOperacao)) m.ordemBlocosOperacao=['tabela','acoes','painel','placar'];
+  else { m.ordemBlocosOperacao=m.ordemBlocosOperacao.map(b=>b==='notas'?'placar':b); }
   if(m.lotesVisiveis===undefined) m.lotesVisiveis=null; // null = todos os lotes visíveis
   if(!m.marantanLancamentosRodada) m.marantanLancamentosRodada={};
   if(!m.oddsPorLetra) m.oddsPorLetra={"A":1.80,"B":1.80,"C":1.80,"D":1.80,"E":1.80,"F":1.80};
@@ -2125,8 +2114,8 @@ function removerLote(index){
 }
 
 // ── ORGANIZAÇÃO DE BLOCOS DA ABA OPERAÇÃO ──
-const BLOCOS_LABELS={tabela:'📋 Tabela de lotes', acoes:'🎛️ Botões de ação', painel:'📊 Painel (barra do dia + saldos)', notas:'📝 Anotações'};
-const BLOCOS_ORDEM_PADRAO=['tabela','acoes','painel','notas'];
+const BLOCOS_LABELS={tabela:'📋 Tabela de lotes', acoes:'🎛️ Botões de ação', painel:'📊 Painel (barra do dia + saldos)', placar:'🎯 Placar por Odd'};
+const BLOCOS_ORDEM_PADRAO=['tabela','acoes','painel','placar'];
 
 function getOrdemBlocos(){
   const o=ms().ordemBlocosOperacao;
@@ -2280,20 +2269,34 @@ function placarOddsLista(){
 function placarChave(odd){ return odd.toFixed(2); }
 
 function carregarPlacarOdds(){
+  // 1ª prioridade: o estado principal (sincronizado com Google Sheets — protegido na nuvem).
+  try{
+    const st=ms().placarOdds;
+    if(st && typeof st==='object'){
+      return {tituloA:st.tituloA||'A', tituloB:st.tituloB||'B', dados:st.dados||{}, limite:(st.limite!==undefined?st.limite:10)};
+    }
+  }catch(e){}
+  // 2ª prioridade: backup local (localStorage), caso o state ainda não tenha os dados.
   try{
     const raw=localStorage.getItem(PLACAR_STORAGE_KEY);
-    if(raw){ const o=JSON.parse(raw); return {tituloA:o.tituloA||'A', tituloB:o.tituloB||'B', dados:o.dados||{}}; }
+    if(raw){ const o=JSON.parse(raw); return {tituloA:o.tituloA||'A', tituloB:o.tituloB||'B', dados:o.dados||{}, limite:(o.limite!==undefined?o.limite:10)}; }
   }catch(e){}
-  return {tituloA:'A', tituloB:'B', dados:{}};
+  return {tituloA:'A', tituloB:'B', dados:{}, limite:10};
 }
 function salvarPlacarOdds(estado){
+  // Grava nos DOIS lugares: no estado principal (vai para a nuvem na próxima sync) e no localStorage (backup imediato).
+  try{ ms().placarOdds=estado; }catch(e){}
   try{ localStorage.setItem(PLACAR_STORAGE_KEY, JSON.stringify(estado)); }catch(e){}
+  // Dispara o salvamento/sincronização do estado principal, se disponível.
+  try{ if(typeof salvarDadosEAtualizarTudo==='function') salvarDadosEAtualizarTudo(); }catch(e){}
 }
 
 let _placarEstado=null;
 
 function abrirPlacarOdds(){
   _placarEstado=carregarPlacarOdds();
+  // Garante que o estado carregado esteja também no state principal (migração local→nuvem na 1ª abertura).
+  try{ if(!ms().placarOdds){ ms().placarOdds=_placarEstado; } }catch(e){}
   // preencher títulos
   const tA=document.getElementById('placar-titulo-a'); if(tA) tA.value=_placarEstado.tituloA;
   const tB=document.getElementById('placar-titulo-b'); if(tB) tB.value=_placarEstado.tituloB;
@@ -2305,9 +2308,20 @@ function abrirPlacarOdds(){
   }
   _placarFiltroOdd=null;
   const btnVT=document.getElementById('placar-btn-vertodas'); if(btnVT) btnVT.style.display='none';
+  const limEl=document.getElementById('placar-limite'); if(limEl) limEl.value=getLimitePlacar();
   renderPlacarTabela();
   atualizarSugestaoPlacar();
-  document.getElementById('modal-placar-odds').style.display='flex';
+  renderPlacarFaixas();
+}
+
+// Abre/recolhe o bloco do placar na aba Operação.
+function togglePlacarBloco(){
+  const wrap=document.getElementById('wrap-placar-bloco'); if(!wrap) return;
+  const btn=document.getElementById('btn-toggle-placar');
+  const abrindo=wrap.style.display==='none'||!wrap.style.display;
+  wrap.style.display=abrindo?'block':'none';
+  if(btn) btn.innerText=abrindo?'🎯 Placar por Odd ▲':'🎯 Placar por Odd';
+  if(abrindo){ abrirPlacarOdds(); }
 }
 
 function getContadores(odd){
@@ -2323,6 +2337,7 @@ function setContador(odd,lado,delta){
   salvarPlacarOdds(_placarEstado);
   renderPlacarTabela();
   atualizarSugestaoPlacar();
+  renderPlacarFaixas();
 }
 
 function salvarTituloPlacar(lado,valor){
@@ -2388,6 +2403,92 @@ function renderPlacarTabela(){
   tb.innerHTML=html;
 }
 
+// ── Limite de dominância (configurável) ──
+function getLimitePlacar(){
+  // Agora representa a DIFERENÇA mínima (em pontos %) entre os dois lados para haver dominância.
+  const v=_placarEstado&&_placarEstado.limite!==undefined?parseFloat(_placarEstado.limite):10;
+  return isNaN(v)?10:Math.min(60,Math.max(0,v));
+}
+function salvarLimitePlacar(valor){
+  const v=parseFloat(valor); if(isNaN(v)) return;
+  _placarEstado.limite=Math.min(60,Math.max(0,v));
+  salvarPlacarOdds(_placarEstado);
+  atualizarSugestaoPlacar();
+  renderPlacarFaixas();
+}
+
+// Classifica UMA odd: 'A' (A domina), 'B' (B domina), 'EQ' (equilíbrio), 'SEM' (sem dados).
+// Domina = percentual >= limite E é o maior dos dois. Com 2 opções somando 100%,
+// "equilíbrio" é quando o maior ainda não alcançou o limite (ambos perto do meio).
+function classificarOdd(odd){
+  const c=getContadores(odd);
+  const total=c.a+c.b;
+  if(total===0) return {classe:'SEM', pctA:0, pctB:0, total:0};
+  const pctA=Math.round((c.a/total)*100);
+  const pctB=Math.round((c.b/total)*100);
+  const difMin=getLimitePlacar();        // diferença mínima (pontos) para dominar
+  const dif=Math.abs(pctA-pctB);
+  let classe;
+  if(dif<difMin) classe='EQ';            // diferença pequena → equilíbrio ("as duas")
+  else if(pctA>pctB) classe='A';
+  else classe='B';
+  return {classe, pctA, pctB, total, dif};
+}
+
+// Detecta faixas CONTÍNUAS de odds com a mesma classe (agrupa odds vizinhas parecidas).
+// Odds sem dados são "transparentes": não quebram uma faixa, mas também não a criam sozinhas.
+function detectarFaixasPlacar(){
+  const odds=placarOddsLista();
+  const faixas=[]; // {classe, ini, fim}
+  let atual=null;
+  odds.forEach(odd=>{
+    const cl=classificarOdd(odd).classe;
+    if(cl==='SEM'){
+      // sem dados: se há faixa aberta, mantém aberta (permite continuidade); senão ignora
+      return;
+    }
+    if(atual && atual.classe===cl){
+      atual.fim=odd;
+    } else {
+      if(atual) faixas.push(atual);
+      atual={classe:cl, ini:odd, fim:odd};
+    }
+  });
+  if(atual) faixas.push(atual);
+  return faixas;
+}
+
+function nomeClasse(classe){
+  const nomeA=(_placarEstado.tituloA||'A'), nomeB=(_placarEstado.tituloB||'B');
+  if(classe==='A') return {txt:'Faça '+nomeA, cor:'var(--accent)', selo:'▲ '+nomeA};
+  if(classe==='B') return {txt:'Faça '+nomeB, cor:'var(--loss)', selo:'▼ '+nomeB};
+  if(classe==='EQ') return {txt:'Faça as duas', cor:'var(--bar-amber)', selo:'⚖️ Ambas'};
+  return {txt:'Indefinido', cor:'var(--muted)', selo:'— Sem dados'};
+}
+
+function fmtOdd(o){ return o.toFixed(2).replace('.',','); }
+
+function renderPlacarFaixas(){
+  const box=document.getElementById('placar-faixas'); if(!box) return;
+  const faixas=detectarFaixasPlacar();
+  if(faixas.length===0){
+    box.innerHTML='<span style="font-size:11px;color:var(--muted);">Ainda sem dados suficientes para desenhar as faixas. Registre resultados nas odds.</span>';
+    return;
+  }
+  let html='';
+  faixas.forEach(f=>{
+    const nc=nomeClasse(f.classe);
+    const intervalo=f.ini===f.fim?fmtOdd(f.ini):(fmtOdd(f.ini)+' – '+fmtOdd(f.fim));
+    html+=`<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--surface);border:1px solid var(--border);border-left:4px solid ${nc.cor};border-radius:6px;padding:6px 9px;margin-bottom:4px;">
+      <span style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);">${intervalo}</span>
+      <span style="font-size:11px;font-weight:800;color:${nc.cor};">${nc.selo}</span>
+    </div>`;
+  });
+  html+=`<div style="font-size:9px;color:var(--muted);margin-top:4px;">Faixas contínuas de odds com o mesmo comportamento. Domina quem abre ${getLimitePlacar()}+ pontos de diferença.</div>`;
+  box.innerHTML=html;
+}
+
+
 function atualizarSugestaoPlacar(){
   const box=document.getElementById('placar-sugestao'); if(!box) return;
   const sel=document.getElementById('placar-odd-jogo'); if(!sel) return;
@@ -2395,27 +2496,21 @@ function atualizarSugestaoPlacar(){
   const c=getContadores(odd);
   const total=c.a+c.b;
   const nomeA=_placarEstado.tituloA||'A', nomeB=_placarEstado.tituloB||'B';
+  const lim=getLimitePlacar();
   if(total===0){
-    box.innerHTML=`<span style="color:var(--muted);">Sem lançamentos registrados para a odd ${placarChave(odd).replace('.',',')}. Some resultados na tabela abaixo.</span>`;
+    box.innerHTML=`<div style="color:var(--muted);font-weight:700;">— Indefinido — sem dados para a odd ${fmtOdd(odd)}.</div><div style="font-size:10px;color:var(--muted);margin-top:4px;">Registre resultados nesta odd para receber a diretriz.</div>`;
+    renderPlacarFaixas();
     return;
   }
-  const pctA=Math.round((c.a/total)*100);
-  const pctB=Math.round((c.b/total)*100);
-  const diff=Math.abs(pctA-pctB);
-  let veredito;
-  // Próximos (diferença <= 10 pontos) → indeterminado
-  if(diff<=10){
-    veredito=`<div style="color:var(--bar-amber);font-weight:700;">⚖️ Indeterminado — ${nomeA} (${pctA}%) e ${nomeB} (${pctB}%) estão muito próximos. Sem vantagem clara.</div>`;
-  } else {
-    const venc=pctA>pctB?nomeA:nomeB;
-    const pctVenc=Math.max(pctA,pctB);
-    if(pctVenc>=40){
-      veredito=`<div style="color:var(--win);font-weight:700;">✔️ Priorize ${venc} (${pctVenc}%) — está acima de 40% e com boa margem sobre o outro.</div>`;
-    } else {
-      veredito=`<div style="color:var(--loss);font-weight:700;">⚠️ Nenhum acima de 40%. Melhor: ${venc} (${pctVenc}%). Considere buscar outra opção fora desta tabela.</div>`;
-    }
-  }
-  box.innerHTML=`${veredito}<div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:5px;">${nomeA}: ${c.a} · ${nomeB}: ${c.b} · Total: ${total} lançamentos</div>`;
+  const info=classificarOdd(odd);
+  const nc=nomeClasse(info.classe);
+  // Diretriz OBJETIVA e direta
+  let diretriz;
+  if(info.classe==='A') diretriz=`<div style="color:${nc.cor};font-weight:800;font-size:14px;">👉 ${nc.txt}</div><div style="font-size:11px;color:var(--text);margin-top:3px;">${nomeA} ${info.pctA}% × ${nomeB} ${info.pctB}% — diferença de ${info.dif} pontos (≥ ${lim}).</div>`;
+  else if(info.classe==='B') diretriz=`<div style="color:${nc.cor};font-weight:800;font-size:14px;">👉 ${nc.txt}</div><div style="font-size:11px;color:var(--text);margin-top:3px;">${nomeB} ${info.pctB}% × ${nomeA} ${info.pctA}% — diferença de ${info.dif} pontos (≥ ${lim}).</div>`;
+  else diretriz=`<div style="color:${nc.cor};font-weight:800;font-size:14px;">👉 ${nc.txt}</div><div style="font-size:11px;color:var(--text);margin-top:3px;">Equilíbrio: ${nomeA} ${info.pctA}% × ${nomeB} ${info.pctB}% — diferença de só ${info.dif} pontos (< ${lim}).</div>`;
+  box.innerHTML=`${diretriz}<div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:5px;">${nomeA}: ${c.a} · ${nomeB}: ${c.b} · Total: ${total}${total<20?' · <span style=\'color:var(--bar-amber);\'>poucos dados, diretriz preliminar</span>':''}</div>`;
+  renderPlacarFaixas();
 }
 
 function zerarPlacarOdds(){
@@ -2426,13 +2521,17 @@ function zerarPlacarOdds(){
   atualizarSugestaoPlacar();
 }
 
-// Atalho Ctrl+Q
+// Atalho Ctrl+Q — vai para a aba Operação, expande o bloco do Placar e rola até ele.
 document.addEventListener('keydown', function(ev){
   if((ev.ctrlKey||ev.metaKey) && (ev.key==='q'||ev.key==='Q')){
     ev.preventDefault();
-    const modal=document.getElementById('modal-placar-odds');
-    if(modal && modal.style.display==='flex'){ fecharModal('modal-placar-odds'); }
-    else { abrirPlacarOdds(); }
+    if(typeof openTab==='function') openTab('lotes');
+    const wrap=document.getElementById('wrap-placar-bloco');
+    if(wrap){
+      if(wrap.style.display!=='block'){ togglePlacarBloco(); }
+      else { abrirPlacarOdds(); }
+      setTimeout(function(){ const b=document.getElementById('btn-toggle-placar'); if(b&&b.scrollIntoView) b.scrollIntoView({behavior:'smooth',block:'start'}); }, 60);
+    }
   }
 });
 
