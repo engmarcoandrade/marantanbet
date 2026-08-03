@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#0D1117">
-<title>Método Marantan v37.3</title>
+<title>Método Marantan v37.4</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox=%270 0 48 48%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Crect x=%271.5%27 y=%271.5%27 width=%2745%27 height=%2745%27 rx=%2711%27 fill=%27%23161B22%27 stroke=%27%2330363D%27 stroke-width=%271.5%27/%3E%3Cpath d=%27M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3Cpath d=%27M30.5 9.5 L37.5 9 L36.8 16%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -461,6 +461,50 @@ tbody tr:last-child td { border-bottom:none; }
 
 
 
+<div id="modal-placar-odds" class="modal-overlay" style="z-index:9999;">
+  <div class="modal-box" style="max-width:560px;width:96%;max-height:90vh;display:flex;flex-direction:column;">
+    <div class="modal-body" style="overflow-y:auto;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div class="m-title" style="color:var(--accent);margin:0;">🎯 Placar por Odd</div>
+        <button onclick="fecharModal('modal-placar-odds')" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);width:28px;height:28px;border-radius:6px;cursor:pointer;font-weight:800;">✕</button>
+      </div>
+      <p style="font-size:10px;color:var(--muted);margin:0 0 10px;line-height:1.5;">Ferramenta de apoio independente da operação. Atalho: <b>Ctrl+Q</b>. Os dados ficam salvos.</p>
+
+      <!-- Seletor de odd em jogo + sugestão -->
+      <div style="background:var(--surface2);border:1px solid var(--accent);border-radius:8px;padding:10px;margin-bottom:12px;">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+          <span style="font-size:11px;font-weight:700;color:var(--text);">Odd em jogo:</span>
+          <select id="placar-odd-jogo" onchange="atualizarSugestaoPlacar()" style="background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:13px;font-weight:700;padding:5px 8px;border-radius:5px;cursor:pointer;"></select>
+        </div>
+        <div id="placar-sugestao" style="font-size:12px;line-height:1.5;"></div>
+      </div>
+
+      <!-- Tabela -->
+      <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;">
+          <thead>
+            <tr>
+              <th style="background:var(--surface2);color:var(--muted);font-size:9px;font-weight:700;text-transform:uppercase;padding:6px 4px;border-bottom:1px solid var(--border);text-align:center;">Odd</th>
+              <th style="background:var(--surface2);padding:4px;border-bottom:1px solid var(--border);text-align:center;">
+                <input id="placar-titulo-a" type="text" value="A" oninput="salvarTituloPlacar('a',this.value)" placeholder="Nome A" style="width:70px;background:var(--surface);border:1px solid var(--accent-border);color:var(--accent);font-size:10px;font-weight:800;text-align:center;padding:3px;border-radius:4px;">
+              </th>
+              <th style="background:var(--surface2);padding:4px;border-bottom:1px solid var(--border);text-align:center;">
+                <input id="placar-titulo-b" type="text" value="B" oninput="salvarTituloPlacar('b',this.value)" placeholder="Nome B" style="width:70px;background:var(--surface);border:1px solid var(--loss-border);color:var(--loss);font-size:10px;font-weight:800;text-align:center;padding:3px;border-radius:4px;">
+              </th>
+              <th id="placar-th-pa" style="background:var(--surface2);color:var(--muted);font-size:9px;font-weight:700;text-transform:uppercase;padding:6px 4px;border-bottom:1px solid var(--border);text-align:center;">% A</th>
+              <th id="placar-th-pb" style="background:var(--surface2);color:var(--muted);font-size:9px;font-weight:700;text-transform:uppercase;padding:6px 4px;border-bottom:1px solid var(--border);text-align:center;">% B</th>
+            </tr>
+          </thead>
+          <tbody id="placar-tbody"></tbody>
+        </table>
+      </div>
+      <div style="margin-top:10px;text-align:right;">
+        <button onclick="zerarPlacarOdds()" style="background:var(--surface2);border:1px solid var(--bar-amber);color:var(--bar-amber);padding:6px 12px;border-radius:5px;font-size:11px;font-weight:700;cursor:pointer;">↺ Zerar todos os contadores</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="modal-escolher-lotes" class="modal-overlay">
   <div class="modal-box">
     <div class="modal-body">
@@ -555,7 +599,7 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v37.3</span></div>
+      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v37.4</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
@@ -2221,6 +2265,156 @@ function atualizarIndicadorFiltroLotes(){
     btn.onclick=function(){ abrirModalEscolherLotes(); };
   }
 }
+
+// ═══ PLACAR POR ODD (ferramenta de apoio, Ctrl+Q) ═══
+// Estado próprio, salvo em localStorage separado (não interfere na operação).
+const PLACAR_ODD_MIN=2.00, PLACAR_ODD_MAX=2.35, PLACAR_ODD_PASSO=0.01;
+const PLACAR_STORAGE_KEY='marantanPlacarOdds';
+
+function placarOddsLista(){
+  const arr=[]; 
+  for(let v=PLACAR_ODD_MIN; v<=PLACAR_ODD_MAX+0.0001; v+=PLACAR_ODD_PASSO){ arr.push(Math.round(v*100)/100); }
+  return arr;
+}
+function placarChave(odd){ return odd.toFixed(2); }
+
+function carregarPlacarOdds(){
+  try{
+    const raw=localStorage.getItem(PLACAR_STORAGE_KEY);
+    if(raw){ const o=JSON.parse(raw); return {tituloA:o.tituloA||'A', tituloB:o.tituloB||'B', dados:o.dados||{}}; }
+  }catch(e){}
+  return {tituloA:'A', tituloB:'B', dados:{}};
+}
+function salvarPlacarOdds(estado){
+  try{ localStorage.setItem(PLACAR_STORAGE_KEY, JSON.stringify(estado)); }catch(e){}
+}
+
+let _placarEstado=null;
+
+function abrirPlacarOdds(){
+  _placarEstado=carregarPlacarOdds();
+  // preencher títulos
+  const tA=document.getElementById('placar-titulo-a'); if(tA) tA.value=_placarEstado.tituloA;
+  const tB=document.getElementById('placar-titulo-b'); if(tB) tB.value=_placarEstado.tituloB;
+  atualizarCabecalhosPlacar();
+  // preencher seletor de odd
+  const sel=document.getElementById('placar-odd-jogo');
+  if(sel){
+    sel.innerHTML=placarOddsLista().map(o=>`<option value="${placarChave(o)}">${placarChave(o).replace('.',',')}</option>`).join('');
+  }
+  renderPlacarTabela();
+  atualizarSugestaoPlacar();
+  document.getElementById('modal-placar-odds').style.display='flex';
+}
+
+function getContadores(odd){
+  const k=placarChave(odd);
+  const d=_placarEstado.dados[k]||{a:0,b:0};
+  return {a:d.a||0, b:d.b||0};
+}
+function setContador(odd,lado,delta){
+  const k=placarChave(odd);
+  if(!_placarEstado.dados[k]) _placarEstado.dados[k]={a:0,b:0};
+  const atual=_placarEstado.dados[k][lado]||0;
+  _placarEstado.dados[k][lado]=Math.max(0, atual+delta); // nunca negativo
+  salvarPlacarOdds(_placarEstado);
+  renderPlacarTabela();
+  atualizarSugestaoPlacar();
+}
+
+function salvarTituloPlacar(lado,valor){
+  if(lado==='a') _placarEstado.tituloA=valor||'A';
+  else _placarEstado.tituloB=valor||'B';
+  salvarPlacarOdds(_placarEstado);
+  atualizarCabecalhosPlacar();
+  atualizarSugestaoPlacar();
+}
+
+function atualizarCabecalhosPlacar(){
+  const pa=document.getElementById('placar-th-pa'); if(pa) pa.innerText='% '+(_placarEstado.tituloA||'A');
+  const pb=document.getElementById('placar-th-pb'); if(pb) pb.innerText='% '+(_placarEstado.tituloB||'B');
+}
+
+function renderPlacarTabela(){
+  const tb=document.getElementById('placar-tbody'); if(!tb) return;
+  let html='';
+  placarOddsLista().forEach(odd=>{
+    const c=getContadores(odd);
+    const total=c.a+c.b;
+    const pctA=total>0?Math.round((c.a/total)*100):0;
+    const pctB=total>0?Math.round((c.b/total)*100):0;
+    const k=placarChave(odd);
+    html+=`<tr style="border-bottom:1px solid var(--border2);">
+      <td style="text-align:center;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);padding:4px;">${k.replace('.',',')}</td>
+      <td style="text-align:center;padding:3px;">
+        <div style="display:inline-flex;align-items:center;gap:4px;">
+          <button onclick="setContador(${odd},'a',-1)" style="width:22px;height:22px;border:1px solid var(--border);background:var(--surface2);color:var(--text);border-radius:4px;cursor:pointer;font-weight:800;font-size:12px;padding:0;">−</button>
+          <span style="min-width:22px;text-align:center;font-family:var(--mono);font-size:13px;font-weight:800;color:var(--accent);">${c.a}</span>
+          <button onclick="setContador(${odd},'a',1)" style="width:22px;height:22px;border:1px solid var(--accent-border);background:var(--accent-dim);color:var(--accent);border-radius:4px;cursor:pointer;font-weight:800;font-size:12px;padding:0;">+</button>
+        </div>
+      </td>
+      <td style="text-align:center;padding:3px;">
+        <div style="display:inline-flex;align-items:center;gap:4px;">
+          <button onclick="setContador(${odd},'b',-1)" style="width:22px;height:22px;border:1px solid var(--border);background:var(--surface2);color:var(--text);border-radius:4px;cursor:pointer;font-weight:800;font-size:12px;padding:0;">−</button>
+          <span style="min-width:22px;text-align:center;font-family:var(--mono);font-size:13px;font-weight:800;color:var(--loss);">${c.b}</span>
+          <button onclick="setContador(${odd},'b',1)" style="width:22px;height:22px;border:1px solid var(--loss-border);background:var(--loss-dim);color:var(--loss);border-radius:4px;cursor:pointer;font-weight:800;font-size:12px;padding:0;">+</button>
+        </div>
+      </td>
+      <td style="text-align:center;font-family:var(--mono);font-size:12px;font-weight:700;color:${total>0?'var(--accent)':'var(--muted)'};padding:4px;">${total>0?pctA+'%':'—'}</td>
+      <td style="text-align:center;font-family:var(--mono);font-size:12px;font-weight:700;color:${total>0?'var(--loss)':'var(--muted)'};padding:4px;">${total>0?pctB+'%':'—'}</td>
+    </tr>`;
+  });
+  tb.innerHTML=html;
+}
+
+function atualizarSugestaoPlacar(){
+  const box=document.getElementById('placar-sugestao'); if(!box) return;
+  const sel=document.getElementById('placar-odd-jogo'); if(!sel) return;
+  const odd=parseFloat(sel.value);
+  const c=getContadores(odd);
+  const total=c.a+c.b;
+  const nomeA=_placarEstado.tituloA||'A', nomeB=_placarEstado.tituloB||'B';
+  if(total===0){
+    box.innerHTML=`<span style="color:var(--muted);">Sem lançamentos registrados para a odd ${placarChave(odd).replace('.',',')}. Some resultados na tabela abaixo.</span>`;
+    return;
+  }
+  const pctA=Math.round((c.a/total)*100);
+  const pctB=Math.round((c.b/total)*100);
+  const diff=Math.abs(pctA-pctB);
+  let veredito;
+  // Próximos (diferença <= 10 pontos) → indeterminado
+  if(diff<=10){
+    veredito=`<div style="color:var(--bar-amber);font-weight:700;">⚖️ Indeterminado — ${nomeA} (${pctA}%) e ${nomeB} (${pctB}%) estão muito próximos. Sem vantagem clara.</div>`;
+  } else {
+    const venc=pctA>pctB?nomeA:nomeB;
+    const pctVenc=Math.max(pctA,pctB);
+    if(pctVenc>=40){
+      veredito=`<div style="color:var(--win);font-weight:700;">✔️ Priorize ${venc} (${pctVenc}%) — está acima de 40% e com boa margem sobre o outro.</div>`;
+    } else {
+      veredito=`<div style="color:var(--loss);font-weight:700;">⚠️ Nenhum acima de 40%. Melhor: ${venc} (${pctVenc}%). Considere buscar outra opção fora desta tabela.</div>`;
+    }
+  }
+  box.innerHTML=`${veredito}<div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:5px;">${nomeA}: ${c.a} · ${nomeB}: ${c.b} · Total: ${total} lançamentos</div>`;
+}
+
+function zerarPlacarOdds(){
+  if(!confirm('Zerar TODOS os contadores desta tabela? Os títulos das colunas serão mantidos.')) return;
+  _placarEstado.dados={};
+  salvarPlacarOdds(_placarEstado);
+  renderPlacarTabela();
+  atualizarSugestaoPlacar();
+}
+
+// Atalho Ctrl+Q
+document.addEventListener('keydown', function(ev){
+  if((ev.ctrlKey||ev.metaKey) && (ev.key==='q'||ev.key==='Q')){
+    ev.preventDefault();
+    const modal=document.getElementById('modal-placar-odds');
+    if(modal && modal.style.display==='flex'){ fecharModal('modal-placar-odds'); }
+    else { abrirPlacarOdds(); }
+  }
+});
+
 
 function alternarPausaLote(index){
   const seq=ms().sequencias[index]; if(!seq) return;
