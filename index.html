@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#0D1117">
-<title>Método Marantan v37.4</title>
+<title>Método Marantan v37.5</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox=%270 0 48 48%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Crect x=%271.5%27 y=%271.5%27 width=%2745%27 height=%2745%27 rx=%2711%27 fill=%27%23161B22%27 stroke=%27%2330363D%27 stroke-width=%271.5%27/%3E%3Cpath d=%27M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3Cpath d=%27M30.5 9.5 L37.5 9 L36.8 16%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -474,7 +474,8 @@ tbody tr:last-child td { border-bottom:none; }
       <div style="background:var(--surface2);border:1px solid var(--accent);border-radius:8px;padding:10px;margin-bottom:12px;">
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
           <span style="font-size:11px;font-weight:700;color:var(--text);">Odd em jogo:</span>
-          <select id="placar-odd-jogo" onchange="atualizarSugestaoPlacar()" style="background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:13px;font-weight:700;padding:5px 8px;border-radius:5px;cursor:pointer;"></select>
+          <select id="placar-odd-jogo" onchange="selecionarOddPlacar()" style="background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:13px;font-weight:700;padding:5px 8px;border-radius:5px;cursor:pointer;"></select>
+          <button id="placar-btn-vertodas" onclick="mostrarTodasOddsPlacar()" style="display:none;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:10px;font-weight:700;padding:5px 9px;border-radius:5px;cursor:pointer;white-space:nowrap;">📋 Ver todas</button>
         </div>
         <div id="placar-sugestao" style="font-size:12px;line-height:1.5;"></div>
       </div>
@@ -599,7 +600,7 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v37.4</span></div>
+      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v37.5</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
@@ -2302,6 +2303,8 @@ function abrirPlacarOdds(){
   if(sel){
     sel.innerHTML=placarOddsLista().map(o=>`<option value="${placarChave(o)}">${placarChave(o).replace('.',',')}</option>`).join('');
   }
+  _placarFiltroOdd=null;
+  const btnVT=document.getElementById('placar-btn-vertodas'); if(btnVT) btnVT.style.display='none';
   renderPlacarTabela();
   atualizarSugestaoPlacar();
   document.getElementById('modal-placar-odds').style.display='flex';
@@ -2335,10 +2338,28 @@ function atualizarCabecalhosPlacar(){
   const pb=document.getElementById('placar-th-pb'); if(pb) pb.innerText='% '+(_placarEstado.tituloB||'B');
 }
 
+let _placarFiltroOdd=null; // null = mostra todas; senão, mostra só essa odd (chave "2.15")
+
+function selecionarOddPlacar(){
+  const sel=document.getElementById('placar-odd-jogo');
+  _placarFiltroOdd = sel ? sel.value : null;   // filtra pela odd escolhida
+  renderPlacarTabela();
+  atualizarSugestaoPlacar();
+  const btn=document.getElementById('placar-btn-vertodas'); if(btn) btn.style.display=_placarFiltroOdd?'inline-block':'none';
+}
+
+function mostrarTodasOddsPlacar(){
+  _placarFiltroOdd=null;
+  renderPlacarTabela();
+  const btn=document.getElementById('placar-btn-vertodas'); if(btn) btn.style.display='none';
+}
+
 function renderPlacarTabela(){
   const tb=document.getElementById('placar-tbody'); if(!tb) return;
   let html='';
-  placarOddsLista().forEach(odd=>{
+  const listaFiltrada=_placarFiltroOdd?placarOddsLista().filter(o=>placarChave(o)===_placarFiltroOdd):placarOddsLista();
+  if(listaFiltrada.length===0){ tb.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--muted);font-size:11px;padding:12px;">—</td></tr>'; return; }
+  listaFiltrada.forEach(odd=>{
     const c=getContadores(odd);
     const total=c.a+c.b;
     const pctA=total>0?Math.round((c.a/total)*100):0;
