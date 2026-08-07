@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#0D1117">
-<title>Método Marantan v38.0</title>
+<title>Método Marantan v38.1</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox=%270 0 48 48%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Crect x=%271.5%27 y=%271.5%27 width=%2745%27 height=%2745%27 rx=%2711%27 fill=%27%23161B22%27 stroke=%27%2330363D%27 stroke-width=%271.5%27/%3E%3Cpath d=%27M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3Cpath d=%27M30.5 9.5 L37.5 9 L36.8 16%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -415,7 +415,7 @@ tbody tr:last-child td { border-bottom:none; }
   <div class="modal-box">
     <div class="modal-body">
       <div class="m-title">🔄 Confirmar Rotação</div>
-      <p style="font-size:12px;color:var(--muted);margin-bottom:12px;">Exposição ativa por Letra. Letras fixadas mantêm seus lotes.</p>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:12px;">Embaralha a ordem dos lotes na tela. Não muda mercados nem dados.</p>
       <div id="placeholder-preview-valores-rodada"></div>
     </div>
     <div class="modal-footer">
@@ -555,7 +555,7 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v38.0</span></div>
+      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v38.1</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
@@ -1387,34 +1387,26 @@ function gerarEstruturaLotesIniciais(){
 }
 
 function solicitarAberturaJanelaRodada(){
-  const container=document.getElementById('placeholder-preview-valores-rodada'); if(!container) return;
-  const az="ABCDEFGHIJKLMNOPQRSTUVWXYZ"; let html='';
-  for(let i=0;i<Math.min(ms().aleatoriedade,26);i++){
-    const l=az[i];
-    const total=ms().sequencias.filter(s=>s.letraRandomica===l&&s.status!=='FINISHED').reduce((a,c)=>a+c.apostaAtual,0);
-    const cnt=ms().sequencias.filter(s=>s.letraRandomica===l&&s.status!=='FINISHED').length;
-    const fix=ms().letrasBloqueadasRodada[l];
-    html+=`<div class="preview-row" style="${fix?'color:var(--purple);':''}"><span>[${l}] ${cnt} lotes${fix?' · FIXADA':''}</span><b>${fmt(total)}</b></div>`;
+  const container=document.getElementById('placeholder-preview-valores-rodada');
+  const ativos=(ms().sequencias||[]).filter(s=>!s.pausado);
+  const pausados=(ms().sequencias||[]).length-ativos.length;
+  if(container){
+    container.innerHTML=`<div class="preview-row"><span>Lotes que serão reordenados</span><b>${ativos.length}</b></div>`+
+      (pausados>0?`<div class="preview-row" style="color:var(--muted);"><span>Lotes pausados (não entram)</span><b>${pausados}</b></div>`:'')+
+      `<div style="font-size:10px;color:var(--muted);margin-top:6px;line-height:1.5;">A Rotação apenas <b>embaralha a ordem</b> em que os lotes aparecem na tela. Não altera mercados, apostas, riscos nem nenhum dado — é só uma nova disposição visual.</div>`;
   }
-  container.innerHTML=html;
-  document.getElementById('modal-encerrar-rodada').style.display='flex';
+  const modal=document.getElementById('modal-encerrar-rodada'); if(modal) modal.style.display='flex';
 }
 
 function confirmarEncerramentoRodadaReal(){
-  fecharModal('modal-encerrar-rodada'); ms().marantanLancamentosRodada={};
-  const livresIdx=[]; const livresLetras=[];
-  ms().sequencias.forEach((s,i)=>{ if(!s.pausado && !ms().letrasBloqueadasRodada[s.letraRandomica]){ livresIdx.push(i); livresLetras.push(s.letraRandomica); } });
-  if(livresLetras.length>0){
-    for(let i=livresLetras.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [livresLetras[i],livresLetras[j]]=[livresLetras[j],livresLetras[i]]; }
-    livresIdx.forEach((si,ai)=>{ ms().sequencias[si].letraRandomica=livresLetras[ai]; });
-  }
-  // Recalcular apostas com a odd da NOVA letra sorteada:
-  // — lotes sem perda voltam à base; lotes COM perdas têm a recuperação recalculada para a odd nova
-  //   (antes, um lote com perdas mantinha a aposta dimensionada para a odd da letra antiga)
-  // (no modo PERCENTUAL a aposta não volta à base nem é recalculada — continua o composto)
-  if(ms().modoProgressao!=="PERCENTUAL"){
-    ms().sequencias.forEach(s=>{ if(s.status==='PENDING'){ const odd=oddDoLote(s); s.apostaAtual=(s.perdasAcumuladas+getLucroDesejadoBaseLote(s))/(odd-1); } });
-  }
+  fecharModal('modal-encerrar-rodada');
+  // ROTAÇÃO = embaralhar apenas a ORDEM de exibição dos lotes. NÃO altera mercado, odd, aposta ou risco.
+  const arr=ms().sequencias||[];
+  const ativos=arr.filter(s=>!s.pausado);
+  const pausados=arr.filter(s=>s.pausado);
+  // embaralha só os ativos (Fisher-Yates); pausados continuam ao final, como já é a regra
+  for(let i=ativos.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [ativos[i],ativos[j]]=[ativos[j],ativos[i]]; }
+  ms().sequencias=ativos.concat(pausados);
   salvarDadosEAtualizarTudo();
 }
 
