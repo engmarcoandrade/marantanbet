@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#0D1117">
-<title>Método Marantan v38.1</title>
+<title>Método Marantan v38.2</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox=%270 0 48 48%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Crect x=%271.5%27 y=%271.5%27 width=%2745%27 height=%2745%27 rx=%2711%27 fill=%27%23161B22%27 stroke=%27%2330363D%27 stroke-width=%271.5%27/%3E%3Cpath d=%27M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3Cpath d=%27M30.5 9.5 L37.5 9 L36.8 16%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -461,6 +461,27 @@ tbody tr:last-child td { border-bottom:none; }
 
 
 
+<div id="modal-igualar-apostas" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-body">
+      <div class="m-title" style="color:var(--accent);">⚖️ Igualar apostas dos lotes</div>
+      <p style="font-size:11px;color:var(--muted);margin:6px 0 12px;line-height:1.5;">Redistribui o valor total das apostas entre os lotes ativos. O risco acumulado de cada lote <b>não muda</b> — só a aposta atual. Como quer distribuir?</p>
+      <div id="igualar-preview" style="font-size:11px;color:var(--muted);font-family:var(--mono);background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px;margin-bottom:12px;"></div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <button onclick="aplicarIgualarApostas('IGUAL')" style="padding:10px;background:var(--accent-dim);border:1px solid var(--accent-border);color:var(--accent);border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;text-align:left;">
+          ➗ Igualitário<br><span style="font-size:10px;color:var(--muted);font-weight:400;">Todos apostam o mesmo valor (total ÷ nº de lotes).</span>
+        </button>
+        <button onclick="aplicarIgualarApostas('INVERSO')" style="padding:10px;background:var(--surface2);border:1px solid var(--bar-amber);color:var(--bar-amber);border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;text-align:left;">
+          📉 Proporcional inverso às odds<br><span style="font-size:10px;color:var(--muted);font-weight:400;">Odd menor (mais provável) recebe aposta maior; odd maior recebe menor.</span>
+        </button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="fecharModal('modal-igualar-apostas')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
 <div id="modal-escolher-lotes" class="modal-overlay">
   <div class="modal-box">
     <div class="modal-body">
@@ -555,7 +576,7 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v38.1</span></div>
+      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v38.2</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
@@ -2687,6 +2708,38 @@ function resetarLoteIndividual(index){
   salvarDadosEAtualizarTudo();
 }
 
+function abrirIgualarApostas(){
+  const ativos=(ms().sequencias||[]).filter(s=>s.status!=='FINISHED' && !s.pausado);
+  if(ativos.length<2){ alert('É preciso ter pelo menos 2 lotes ativos (não finalizados e não pausados) para igualar as apostas.'); return; }
+  const totalApostas=ativos.reduce((a,s)=>a+(parseFloat(s.apostaAtual)||0),0);
+  const prev=document.getElementById('igualar-preview');
+  if(prev){
+    const media=totalApostas/ativos.length;
+    prev.innerHTML=`Lotes ativos: <b>${ativos.length}</b><br>Total apostado hoje: <b>${fmt(totalApostas)}</b><br>No modo igualitário, cada um ficaria em <b>${fmt(media)}</b>.`;
+  }
+  document.getElementById('modal-igualar-apostas').style.display='flex';
+}
+
+function aplicarIgualarApostas(modo){
+  const ativos=(ms().sequencias||[]).filter(s=>s.status!=='FINISHED' && !s.pausado);
+  if(ativos.length<2){ fecharModal('modal-igualar-apostas'); return; }
+  const totalApostas=ativos.reduce((a,s)=>a+(parseFloat(s.apostaAtual)||0),0);
+  if(totalApostas<=0){ fecharModal('modal-igualar-apostas'); return; }
+
+  if(modo==='IGUAL'){
+    const media=totalApostas/ativos.length;
+    ativos.forEach(s=>{ s.apostaAtual=sniperArredondarAposta(media); });
+  } else if(modo==='INVERSO'){
+    // Peso proporcional a 1/odd: odd menor → peso maior → aposta maior. Soma dos pesos normaliza.
+    const pesos=ativos.map(s=>1/(oddDoLote(s)||2));
+    const somaPesos=pesos.reduce((a,b)=>a+b,0);
+    ativos.forEach((s,idx)=>{ s.apostaAtual=sniperArredondarAposta(totalApostas*(pesos[idx]/somaPesos)); });
+  }
+  // O risco acumulado (perdasAcumuladas) NÃO é alterado — só a aposta atual.
+  fecharModal('modal-igualar-apostas');
+  dispararAnimacaoToastLotes(()=>{ salvarDadosEAtualizarTudo(); });
+}
+
 function distributingRiscoLoteCritico(indexAlvo){
   if(indexAlvo<0||indexAlvo>=ms().sequencias.length) return;
   const lc=ms().sequencias[indexAlvo];
@@ -2862,7 +2915,7 @@ function renderLinhas(){
       <td><div style="display:flex;gap:3px;">
         <button class="tbl-btn-win" onclick="registrarApostaIndividual(${i},'WIN',false)">Vit</button>
         <button class="tbl-btn-loss" onclick="registrarApostaIndividual(${i},'LOSS',false)">Der</button>
-        <button class="tbl-btn-eq" onclick="distributingRiscoLoteCritico(${i})">⚖️</button>
+        <button class="tbl-btn-eq" onclick="abrirIgualarApostas()">⚖️</button>
         <button class="tbl-btn-reset" onclick="resetarLoteIndividual(${i})" title="Resetar este lote (aposta e perdas ao inicial)">🛡️</button>
         <button class="tbl-btn-del" onclick="removerLote(${i})" title="Remover este lote">✕</button>
       </div></td>
