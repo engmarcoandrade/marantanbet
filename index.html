@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#0D1117">
-<title>Método Marantan v38.2</title>
+<title>Método Marantan v38.4</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox=%270 0 48 48%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Crect x=%271.5%27 y=%271.5%27 width=%2745%27 height=%2745%27 rx=%2711%27 fill=%27%23161B22%27 stroke=%27%2330363D%27 stroke-width=%271.5%27/%3E%3Cpath d=%27M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3Cpath d=%27M30.5 9.5 L37.5 9 L36.8 16%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -387,6 +387,17 @@ tbody tr:last-child td { border-bottom:none; }
 </style>
 </head>
 <body>
+<div id="tela-bloqueio" style="position:fixed;inset:0;z-index:99999;background:var(--bg,#0D1117);display:none;align-items:center;justify-content:center;flex-direction:column;padding:20px;">
+  <div style="background:var(--surface,#161B22);border:1px solid var(--border,#30363D);border-radius:12px;padding:28px;max-width:340px;width:100%;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.5);">
+    <div style="font-size:32px;margin-bottom:8px;">🔒</div>
+    <div style="font-family:var(--sans);font-weight:800;font-size:16px;color:var(--text,#E6EDF3);margin-bottom:4px;">Método Marantan</div>
+    <div style="font-size:12px;color:var(--muted,#8B949E);margin-bottom:16px;">Digite a senha para acessar</div>
+    <input id="input-senha-bloqueio" type="password" inputmode="numeric" placeholder="Senha" onkeydown="if(event.key==='Enter')verificarSenhaBloqueio()" style="width:100%;background:var(--surface2,#0D1117);border:1px solid var(--border,#30363D);color:var(--text,#E6EDF3);font-family:var(--mono);font-size:16px;text-align:center;padding:11px;border-radius:8px;margin-bottom:10px;outline:none;letter-spacing:3px;">
+    <div id="erro-senha-bloqueio" style="font-size:11px;color:var(--loss,#F85149);min-height:15px;margin-bottom:8px;"></div>
+    <button onclick="verificarSenhaBloqueio()" style="width:100%;background:var(--accent,#2F81F7);border:none;color:#fff;font-weight:700;font-size:14px;padding:11px;border-radius:8px;cursor:pointer;">Entrar</button>
+  </div>
+</div>
+
 
 <!-- MODAIS -->
 <div id="modal-meta" class="modal-overlay">
@@ -460,6 +471,19 @@ tbody tr:last-child td { border-bottom:none; }
 
 
 
+
+<div id="modal-dia-fechado" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-body">
+      <div class="m-title" style="color:var(--win);">📅 Dia encerrado</div>
+      <div id="modal-dia-fechado-msg" style="font-size:13px;line-height:1.6;color:var(--text);margin-top:8px;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="dispensarResumoDiaFechado()">Agora não</button>
+      <button class="btn-confirm" onclick="moverLucroDiaFechadoParaBanco()">🏦 Mover para o Banco</button>
+    </div>
+  </div>
+</div>
 
 <div id="modal-igualar-apostas" class="modal-overlay">
   <div class="modal-box">
@@ -576,7 +600,7 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v38.2</span></div>
+      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v38.4</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
@@ -903,6 +927,18 @@ tbody tr:last-child td { border-bottom:none; }
 
     <button class="btn-save" onclick="salvarConfiguracoes()">💾 Salvar e Recriar Grade</button>
 
+    <!-- SEGURANÇA / SENHA -->
+    <div class="cfg-section" style="margin-top:14px;">
+      <div class="cfg-title" style="color:var(--muted);">🔒 Senha de acesso</div>
+      <p style="font-size:11px;color:var(--muted);line-height:1.5;margin:4px 0 10px;">A senha é pedida toda vez que o app abre e fica sincronizada na nuvem (vale em todos os dispositivos). Padrão: <b>123</b>.</p>
+      <div style="display:flex;flex-direction:column;gap:8px;max-width:320px;">
+        <input id="cfg-senha-atual" type="password" placeholder="Senha atual" class="cfg-input" style="letter-spacing:2px;">
+        <input id="cfg-senha-nova" type="password" placeholder="Nova senha" class="cfg-input" style="letter-spacing:2px;">
+        <button onclick="alterarSenhaApp()" style="padding:9px;background:var(--accent);border:none;border-radius:var(--radius-sm);color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--sans);">🔑 Alterar senha</button>
+        <div id="cfg-senha-status" style="font-size:11px;min-height:15px;font-weight:600;"></div>
+      </div>
+    </div>
+
     <!-- 5. INTEGRAÇÃO -->
     <div class="cfg-section" style="margin-top:14px;">
       <div class="cfg-title" style="color:var(--muted);">🔗 Integração Google Sheets</div>
@@ -987,6 +1023,11 @@ tbody tr:last-child td { border-bottom:none; }
   <div id="historico" class="tab-content">
 
     <div class="progress-card" style="margin-bottom:10px;">
+      <div class="progress-header"><span>📅 Fechamento por dia</span></div>
+      <div id="lista-dias-fechados" style="margin-top:8px;"></div>
+    </div>
+
+    <div class="progress-card" style="margin-bottom:10px;">
       <div class="progress-header">
         <span>🎯 Tenho vantagem, ou tive sorte?</span>
       </div>
@@ -1057,7 +1098,7 @@ const DEFAULT_MODO = {
   anotacoesPorLetra:{"A":"","B":"","C":"","D":"","E":"","F":""},
   letrasBloqueadasRodada:{},
   modoPosWin:"BLINDAR", modoDistribuicao:"PROPORCIONAL", marantanLancamentosRodada:{},
-  sequencias:[], historico:[], vitoriasRodadaVoltarInicial:0,
+  sequencias:[], historico:[], historicoDias:[], senhaApp:"123", vitoriasRodadaVoltarInicial:0,
   maxGales:4, stopLotePercent:5.0,
   modoProgressao:"RECUPERACAO", incrFixoPercent:10.0, gatilhoIncremento:"SEMPRE", vistaOperacao:"cards",
   metaPorLetra:{"A":1.0,"B":1.0,"C":1.0,"D":1.0,"E":1.0,"F":1.0}, metaGlobalPercent:1.0, lucroLetraEtapa:{}, letrasMetaCumprida:{},
@@ -1204,6 +1245,8 @@ function aplicarBlindagemDeVariaveis(){
   if(!m.modoPosWin) m.modoPosWin="BLINDAR";
   if(!m.modoDistribuicao) m.modoDistribuicao="PROPORCIONAL";
   if(!m.dataInicioCiclo) m.dataInicioCiclo=hojeISO;
+  if(!Array.isArray(m.historicoDias)) m.historicoDias=[];
+  if(m.senhaApp===undefined||m.senhaApp===null||m.senhaApp==="") m.senhaApp="123";
   if(!m.historico) m.historico=[];
   if(!m.aleatoriedade) m.aleatoriedade=6;
   if(!m.sequencias) m.sequencias=[];
@@ -1332,17 +1375,63 @@ async function inicializarApp(){
       const motivo=window.__ultimoErroSheets||'Causa desconhecida.';
       alert('⚠️ Não foi possível conectar ao Google Sheets.\n\nMotivo: '+motivo+'\n\nVerifique a URL na aba Config e use "Testar conexão".');
     }
+    mostrarBloqueio(); // pede a senha após carregar o estado (com a senha sincronizada)
   } else {
     // Sem URL configurada — tela vazia aguardando configuração
     state = JSON.parse(JSON.stringify(DEFAULT_STATE));
     aplicarBlindagemDeVariaveis();
     preencherCamposConfig(); ajustarCamposDeOddsMenu(true); atualizarPainelUI(true);
     atualizarStatusSheets('err');
+    mostrarBloqueio();
   }
   calcularSomaCapitalGeralUI();
 }
 
 // beforeunload removido — save só acontece após cada ação, nunca ao fechar
+// ── BLOQUEIO POR SENHA ──
+let __appDesbloqueado=false;
+function mostrarBloqueio(){
+  const tela=document.getElementById('tela-bloqueio');
+  if(!tela) return;
+  tela.style.display='flex';
+  const inp=document.getElementById('input-senha-bloqueio');
+  if(inp){ inp.value=''; setTimeout(()=>inp.focus(),100); }
+  const err=document.getElementById('erro-senha-bloqueio'); if(err) err.innerText='';
+}
+function verificarSenhaBloqueio(){
+  const inp=document.getElementById('input-senha-bloqueio');
+  const err=document.getElementById('erro-senha-bloqueio');
+  const senhaCorreta=(ms().senhaApp!==undefined&&ms().senhaApp!==null&&ms().senhaApp!=='')?String(ms().senhaApp):'123';
+  if(inp && String(inp.value)===senhaCorreta){
+    __appDesbloqueado=true;
+    const tela=document.getElementById('tela-bloqueio'); if(tela) tela.style.display='none';
+  } else {
+    if(err) err.innerText='Senha incorreta. Tente novamente.';
+    if(inp){ inp.value=''; inp.focus(); }
+  }
+}
+// Troca de senha (Config)
+function alterarSenhaApp(){
+  const atual=document.getElementById('cfg-senha-atual');
+  const nova=document.getElementById('cfg-senha-nova');
+  const status=document.getElementById('cfg-senha-status');
+  const senhaCorreta=(ms().senhaApp!==undefined&&ms().senhaApp!==null&&ms().senhaApp!=='')?String(ms().senhaApp):'123';
+  if(!atual||!nova) return;
+  if(String(atual.value)!==senhaCorreta){
+    if(status){ status.style.color='var(--loss)'; status.innerText='✖ Senha atual incorreta.'; }
+    return;
+  }
+  const novaVal=String(nova.value).trim();
+  if(novaVal.length<1){
+    if(status){ status.style.color='var(--loss)'; status.innerText='✖ A nova senha não pode ser vazia.'; }
+    return;
+  }
+  ms().senhaApp=novaVal;
+  salvarDadosEAtualizarTudo();
+  if(status){ status.style.color='var(--win)'; status.innerText='✔ Senha alterada e sincronizada.'; }
+  atual.value=''; nova.value='';
+}
+
 // ── SAÍDA RÁPIDA (PÂNICO) ──
 function saidaRapida(){
   try{ salvarNaNuvem(true); }catch(e){}
@@ -1794,6 +1883,11 @@ function marcarInicioDoDia(){
   // Base para a barra "Avanço do Dia": o lucro do dia acumula todas as etapas concluídas no dia.
   const totalAgora=saldoTotalAtual();
   if(ms().dataDiaCorrente!==hojeISO){
+    // ── FECHAMENTO AUTOMÁTICO DO DIA ANTERIOR ──
+    // Se havia um dia em curso (base marcada) e ele é de data anterior, consolida o resultado.
+    if(ms().dataDiaCorrente && ms().saldoInicioDia!==undefined){
+      fecharDiaAnterior(ms().dataDiaCorrente, parseFloat(ms().saldoInicioDia)||0, totalAgora);
+    }
     ms().dataDiaCorrente=hojeISO;
     ms().saldoInicioDia=totalAgora;
     ms().metaDiaSinalizada=false;
@@ -1811,6 +1905,60 @@ function marcarInicioDoDia(){
     // teto realista: 3x a meta do dia. Passou disso (pra cima ou pra baixo) = base de outro dia.
     if(Math.abs(lucroDiaPct) > metaPct*3){ ms().saldoInicioDia=totalAgora; }
   }
+}
+
+function fecharDiaAnterior(dataDia, saldoIni, saldoFim){
+  const lucro=saldoFim-saldoIni;
+  const pct=saldoIni>0?(lucro/saldoIni)*100:0;
+  if(!Array.isArray(ms().historicoDias)) ms().historicoDias=[];
+  // Evita duplicar o mesmo dia (ex.: reabrir o app várias vezes)
+  if(ms().historicoDias.some(d=>d.data===dataDia)) return;
+  ms().historicoDias.push({
+    data:dataDia,
+    saldoIni:saldoIni,
+    saldoFim:saldoFim,
+    lucro:lucro,
+    pct:pct,
+    fechadoEm:new Date().toISOString()
+  });
+  // Guarda o lucro do dia fechado para oferecer a retirada ao Banco (1 clique).
+  if(lucro>0.005){ ms().__lucroDiaFechadoPendente=lucro; ms().__dataDiaFechado=dataDia; }
+}
+
+// Mostra o resumo do dia que fechou, com botão de 1 clique para mover ao Banco.
+function mostrarResumoDiaFechado(){
+  const lucro=ms().__lucroDiaFechadoPendente||0;
+  const data=ms().__dataDiaFechado||'';
+  if(lucro<=0.005) return; // só oferece retirada se houve lucro
+  const modal=document.getElementById('modal-dia-fechado');
+  const msg=document.getElementById('modal-dia-fechado-msg');
+  if(!modal||!msg) return;
+  const dataBR=data?data.split('-').reverse().join('/'):'';
+  msg.innerHTML=`O dia <b>${dataBR}</b> foi encerrado e registrado no histórico. 📅<br><br>`+
+    `<div style="background:var(--surface2);border:1px solid var(--win-border);border-radius:var(--radius-sm);padding:10px;margin:4px 0;">`+
+    `<div style="display:flex;justify-content:space-between;font-size:13px;"><span style="color:var(--muted);">Lucro do dia</span><b style="color:var(--win);">${fmt(lucro)}</b></div>`+
+    `</div>`+
+    `Deseja mover esse lucro para o <b>Banco</b> (reserva protegida)? O valor sai da plataforma em operação e fica guardado.`;
+  document.getElementById('modal-dia-fechado').style.display='flex';
+}
+
+function moverLucroDiaFechadoParaBanco(){
+  const lucro=ms().__lucroDiaFechadoPendente||0;
+  if(lucro>0.005){
+    state.bancaAtual-=lucro;
+    state.bancoCapital=(parseFloat(state.bancoCapital)||0)+lucro;
+    ms().saldoInicioDia=saldoTotalAtual(); // base do novo dia coerente após mover
+    if(!ms().retiradasBanco) ms().retiradasBanco=[];
+    ms().retiradasBanco.push({d:new Date().toISOString(), valor:lucro, origem:'fechamento-dia'});
+  }
+  ms().__lucroDiaFechadoPendente=0; ms().__dataDiaFechado=null;
+  fecharModal('modal-dia-fechado');
+  salvarDadosEAtualizarTudo();
+}
+
+function dispensarResumoDiaFechado(){
+  ms().__lucroDiaFechadoPendente=0; ms().__dataDiaFechado=null;
+  fecharModal('modal-dia-fechado');
 }
 
 function verificarMetaDiaria(){
@@ -3445,7 +3593,32 @@ function alternarOrdenacaoHistorico(){
   }
   renderHistorico();
 }
+function renderDiasFechados(){
+  const box=document.getElementById('lista-dias-fechados'); if(!box) return;
+  const dias=(ms().historicoDias||[]).slice().sort((a,b)=>b.data.localeCompare(a.data)); // mais recente primeiro
+  if(dias.length===0){
+    box.innerHTML='<div style="font-size:11px;color:var(--muted);padding:4px 0;">Nenhum dia fechado ainda. O primeiro fechamento acontece quando você abrir o app num novo dia.</div>';
+    return;
+  }
+  let html='';
+  dias.forEach(d=>{
+    const dataBR=d.data.split('-').reverse().join('/');
+    const positivo=d.lucro>=0;
+    const cor=positivo?'var(--win)':'var(--loss)';
+    const sinal=positivo?'▲':'▼';
+    html+=`<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--surface);border:1px solid var(--border);border-left:4px solid ${cor};border-radius:6px;padding:7px 10px;margin-bottom:4px;">
+      <span style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);">${dataBR}</span>
+      <span style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:11px;color:var(--muted);font-family:var(--mono);">${fmt(d.saldoIni)} → ${fmt(d.saldoFim)}</span>
+        <span style="font-size:12px;font-weight:800;color:${cor};font-family:var(--mono);">${sinal} ${fmt(d.lucro)} (${d.pct>=0?'+':''}${d.pct.toFixed(1)}%)</span>
+      </span>
+    </div>`;
+  });
+  box.innerHTML=html;
+}
+
 function renderHistorico(){
+  renderDiasFechados();
   const container=document.getElementById('hist-list-container'); if(!container) return;
   if(!ms().historico||ms().historico.length===0){ container.innerHTML='<div style="padding:24px;text-align:center;color:var(--muted);font-size:13px;">Nenhuma etapa concluída ainda.</div>'; return; }
   let html='';
@@ -3642,7 +3815,7 @@ function atualizarPainelUI(forcarGrafico=false){
   const bdL=document.getElementById('prog-dia-bar');
   if(bdL){ bdL.style.width=Math.min(100,pctDia)+'%'; bdL.style.background=lucroDiaLote<0?'var(--bar-loss)':'var(--bar-win)'; }
   const bdV=document.getElementById('prog-dia-val');
-  if(bdV) bdV.innerText=(pctMetaDia>0?pctDia.toFixed(1)+'%':'—');
+  if(bdV) bdV.innerText=(pctMetaDia>0?(pctDia>100?"✔ meta batida ("+pctDia.toFixed(0)+"%)":pctDia.toFixed(1)+"%"):"—");
 
   // Restaura estado recolhido/expandido do painel
   const wrapInfo=document.getElementById('wrap-info-lotes');
@@ -3673,6 +3846,7 @@ function atualizarPainelUI(forcarGrafico=false){
   const pctEtapaModal=lucroNecessario>0?(lucroEtapa/lucroNecessario)*100:0;
   if(pctEtapaModal>=100&&!sinalizadoMeta){ sinalizadoMeta=true; document.getElementById('modal-meta').style.display='flex'; }
   marcarInicioDoDia();
+  setTimeout(mostrarResumoDiaFechado, 400); // oferece a retirada do dia que fechou
   processarFechamentoDiario();
   verificarMetaDiaria();
   if(capitalGlobal<=stopVal&&!sinalizadoStop){ sinalizadoStop=true; ms().stopTravado=true; document.getElementById('modal-stop').style.display='flex'; }
