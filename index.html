@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#0D1117">
-<title>Método Marantan v38.4</title>
+<title>Método Marantan v38.5</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox=%270 0 48 48%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Crect x=%271.5%27 y=%271.5%27 width=%2745%27 height=%2745%27 rx=%2711%27 fill=%27%23161B22%27 stroke=%27%2330363D%27 stroke-width=%271.5%27/%3E%3Cpath d=%27M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3Cpath d=%27M30.5 9.5 L37.5 9 L36.8 16%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -485,6 +485,26 @@ tbody tr:last-child td { border-bottom:none; }
   </div>
 </div>
 
+<div id="modal-reset-lote" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-body">
+      <div class="m-title" style="color:var(--bar-amber);">↺ Resetar lote</div>
+      <div id="modal-reset-lote-msg" style="font-size:12px;line-height:1.6;color:var(--text);margin:8px 0 14px;"></div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <button onclick="confirmarResetLote(true)" style="padding:10px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;text-align:left;">
+          🧹 Resetar e limpar o acompanhamento<br><span style="font-size:10px;color:var(--muted);font-weight:400;">Zera as caixinhas dos Últimos 30 e o contador V/D. Começa do zero.</span>
+        </button>
+        <button onclick="confirmarResetLote(false)" style="padding:10px;background:var(--accent-dim);border:1px solid var(--accent-border);color:var(--accent);border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;text-align:left;">
+          📊 Resetar e MANTER o acompanhamento<br><span style="font-size:10px;color:var(--muted);font-weight:400;">Preserva as caixinhas e o V/D para você continuar lendo o comportamento do lote.</span>
+        </button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="fecharModal('modal-reset-lote')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
 <div id="modal-igualar-apostas" class="modal-overlay">
   <div class="modal-box">
     <div class="modal-body">
@@ -600,7 +620,7 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v38.4</span></div>
+      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v38.5</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
@@ -2824,17 +2844,28 @@ function mudarMercadoLote(index,valor){
   salvarDadosEAtualizarTudo();
 }
 
+let _resetLoteIndex=null;
 function resetarLoteIndividual(index){
   const seq=ms().sequencias[index]; if(!seq) return;
+  _resetLoteIndex=index;
   const risco=parseFloat(seq.perdasAcumuladas)||0;
-  const l=seq.letraRandomica;
-  const msg=`Resetar o lote #${seq.id} (letra ${l})?\n\n`+
-    (risco>0.005
-      ? `⚠️ Este lote tem ${fmt(risco)} de risco acumulado. Ao resetar, você ASSUME essa perda — ela não é recuperada, apenas para de ser perseguida.\n\nA aposta volta ao valor inicial, as perdas zeram, a sequência de gales recomeça e o histórico de marcações (Últimos) é limpo.`
-      : `A aposta volta ao valor inicial, a sequência recomeça e o histórico de marcações (Últimos) é limpo. (Este lote não tem risco acumulado no momento.)`);
-  if(!confirm(msg)) return;
+  const box=document.getElementById('modal-reset-lote-msg');
+  if(box){
+    box.innerHTML=`Lote <b>#${String(seq.id).padStart(3,'0')}</b> · ${labelMercado(seq.mercado||seq.letraRandomica)}<br><br>`+
+      (risco>0.005
+        ? `<span style="color:var(--loss);font-weight:700;">⚠️ Este lote tem ${fmt(risco)} de risco acumulado.</span> Ao resetar, você <b>assume essa perda</b> — ela não é recuperada, apenas para de ser perseguida.<br><br>A aposta volta ao valor inicial, as perdas zeram e a sequência de gales recomeça.<br><br><b>O que fazer com o acompanhamento de vitórias e derrotas?</b>`
+        : `A aposta volta ao valor inicial e a sequência recomeça. (Este lote não tem risco acumulado no momento.)<br><br><b>O que fazer com o acompanhamento de vitórias e derrotas?</b>`);
+  }
+  document.getElementById('modal-reset-lote').style.display='flex';
+}
 
-  const oddL=oddPorLetra(l);
+function confirmarResetLote(limparAcompanhamento){
+  const index=_resetLoteIndex;
+  fecharModal('modal-reset-lote');
+  if(index===null) return;
+  const seq=ms().sequencias[index]; if(!seq) return;
+  _resetLoteIndex=null;
+  const risco=parseFloat(seq.perdasAcumuladas)||0;
   const assumido=risco;
   // Reset TOTAL do lote: aposta base, perdas zeradas, gales reiniciados, status volta a ativo.
   seq.status='PENDING';
@@ -2843,9 +2874,12 @@ function resetarLoteIndividual(index){
   seq.streakLoss=0;
   seq.lucroEtapa=0;
   seq.metaAvisada=false;
-  seq.ultimos=[];         // zera a caixa de marcação de vitórias/derrotas (Últimos)
-  seq.winsEtapa=0;        // zera contadores V/D da etapa para o lote
-  seq.lossesEtapa=0;
+  // O acompanhamento (Últimos + contador V/D) só é limpo se o usuário escolheu.
+  if(limparAcompanhamento){
+    seq.ultimos=[];       // zera a caixa de marcação de vitórias/derrotas (Últimos)
+    seq.winsEtapa=0;      // zera contadores V/D da etapa para o lote
+    seq.lossesEtapa=0;
+  }
 
   if(assumido>0.005){
     ms().perdasAssumidasTotal=(ms().perdasAssumidasTotal||0)+assumido;
