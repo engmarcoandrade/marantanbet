@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#0D1117">
-<title>Método Marantan v38.5</title>
+<title>Método Marantan v39.1</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox=%270 0 48 48%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Crect x=%271.5%27 y=%271.5%27 width=%2745%27 height=%2745%27 rx=%2711%27 fill=%27%23161B22%27 stroke=%27%2330363D%27 stroke-width=%271.5%27/%3E%3Cpath d=%27M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3Cpath d=%27M30.5 9.5 L37.5 9 L36.8 16%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -455,35 +455,6 @@ tbody tr:last-child td { border-bottom:none; }
 
 
 <!-- MODAL AVISO RISCO GALES -->
-<div id="modal-reabrir" class="modal-overlay">
-  <div class="modal-box">
-    <div class="modal-body">
-      <div class="m-title">🔓 Reabrir Letra</div>
-      <p id="modal-reabrir-msg" style="font-size:12px; color:var(--text); line-height:1.6; margin-top:8px;"></p>
-    </div>
-    <div class="modal-footer">
-      <button class="btn-cancel" onclick="fecharModal('modal-reabrir'); letraParaReabrir=null;">Manter protegida</button>
-      <button class="btn-confirm" onclick="confirmarReabertura()">Reabrir mesmo assim</button>
-    </div>
-  </div>
-</div>
-
-
-
-
-
-<div id="modal-dia-fechado" class="modal-overlay">
-  <div class="modal-box">
-    <div class="modal-body">
-      <div class="m-title" style="color:var(--win);">📅 Dia encerrado</div>
-      <div id="modal-dia-fechado-msg" style="font-size:13px;line-height:1.6;color:var(--text);margin-top:8px;"></div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn-cancel" onclick="dispensarResumoDiaFechado()">Agora não</button>
-      <button class="btn-confirm" onclick="moverLucroDiaFechadoParaBanco()">🏦 Mover para o Banco</button>
-    </div>
-  </div>
-</div>
 
 <div id="modal-reset-lote" class="modal-overlay">
   <div class="modal-box">
@@ -561,20 +532,6 @@ tbody tr:last-child td { border-bottom:none; }
   </div>
 </div>
 
-<div id="modal-meta-dia" class="modal-overlay">
-  <div class="modal-box">
-    <div class="modal-body" style="text-align:center;">
-      <div style="font-size:40px; margin-bottom:8px;">🏆</div>
-      <div class="m-title" style="color:var(--win);">Meta do Dia Batida!</div>
-      <p id="modal-meta-dia-msg" style="font-size:13px; color:var(--text); margin-top:8px; line-height:1.6;"></p>
-    </div>
-    <div class="modal-footer" style="flex-direction:column; gap:8px;">
-      <button class="btn-confirm" style="background:var(--win); width:100%;" onclick="retirarLucroDiaParaBanco()">🏦 Retirar lucro para o Banco</button>
-      <button class="btn-cancel" style="width:100%;" onclick="fecharModal('modal-meta-dia')">Agora não</button>
-    </div>
-  </div>
-</div>
-
 <div id="modal-meta-letra" class="modal-overlay">
   <div class="modal-box">
     <div class="modal-body" style="text-align:center;">
@@ -620,7 +577,7 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v38.5</span></div>
+      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v39.1</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
@@ -690,17 +647,17 @@ tbody tr:last-child td { border-bottom:none; }
 
     <div class="progress-card">
       <div class="progress-header">
-        <span>Progresso do Dia</span>
+        <span>Progresso da Etapa</span>
         <b id="progresso-porcentagem-real">0%</b>
       </div>
       <div class="progress-track"><div class="progress-fill" id="progresso-bar"></div></div>
       <div style="margin-top:10px; display:flex; flex-direction:column; gap:5px;">
         <div style="display:flex; justify-content:space-between; font-size:12px; border-bottom:1px solid var(--border2); padding-bottom:5px;">
-          <span style="color:var(--muted);">Início do dia</span>
+          <span style="color:var(--muted);">Início da etapa</span>
           <span style="font-family:var(--mono); font-weight:700;" id="progresso-inicial">R$ 0,00</span>
         </div>
         <div style="display:flex; justify-content:space-between; font-size:12px; border-bottom:1px solid var(--border2); padding-bottom:5px;">
-          <span style="color:var(--win);">Meta do dia</span>
+          <span style="color:var(--win);">Meta da etapa</span>
           <span style="font-family:var(--mono); font-weight:700; color:var(--win);" id="progresso-meta-fixa-dinamica">R$ 0,00</span>
         </div>
         <div style="display:flex; justify-content:space-between; font-size:12px; border-bottom:1px solid var(--border2); padding-bottom:5px;">
@@ -782,15 +739,8 @@ tbody tr:last-child td { border-bottom:none; }
         <button id="btn-recolher-info" class="hdr-btn" onclick="toggleInfoLotes()" style="font-size:11px;">▲ Recolher painel</button>
       </div>
       <div id="wrap-info-lotes">
-        <div class="prog-lote-card">
-          <div class="prog-lote-linha">
-            <span class="prog-lote-lbl">📅 Avanço do Dia</span>
-            <span class="prog-lote-val" id="prog-dia-val">0%</span>
-          </div>
-          <div class="prog-lote-track"><div class="prog-lote-fill" id="prog-dia-bar" style="background:var(--bar-win);"></div></div>
-        </div>
         <div class="info-bar" style="margin-bottom:8px; flex-wrap:wrap; gap:6px;">
-          <div class="info-item accent">📅 Hoje</div>
+          <div class="info-item accent">Etapa <b id="lbl-etapa-num-lt">#1</b></div>
           <div class="info-item">Início: <b id="lbl-valor-inicial-lt">R$0,00</b></div>
           <div class="info-item" style="cursor:pointer;" onclick="editarSaldoReal()" title="Toque para ajustar ao saldo real da casa">Atual: <b id="lbl-valor-atual-lt">R$0,00</b> <span style="font-size:9px;opacity:.7;">✏️</span></div>
           <div class="info-item win">Meta: <b id="lbl-meta-lt">R$0,00</b></div>
@@ -930,8 +880,6 @@ tbody tr:last-child td { border-bottom:none; }
       </div>
       <p style="font-size:10px;color:var(--muted);line-height:1.5;margin:-4px 0 10px;">Ao atingir o teto de gales ou o stop por lote, a perda é <b>assumida</b> e o lote volta à aposta base — limitando o dano das sequências longas em vez de persegui-las até quebrar a banca.</p>
       <div class="form-row2">
-        <div class="form-group"><label class="cfg-label">Meta Diária (%)</label><input type="number" id="cfg-meta-diaria" class="cfg-input" step="0.1" value="1.0" placeholder="% ao dia"></div>
-        <div class="form-group"><label class="cfg-label">Dias de Acomp.</label><input type="number" id="cfg-dias-acomp" class="cfg-input" value="30" placeholder="Qtd. dias"></div>
       </div>
     </div>
 
@@ -1005,33 +953,10 @@ tbody tr:last-child td { border-bottom:none; }
   <!-- ABA: GRÁFICO -->
   <div id="grafico" class="tab-content">
 
-    <!-- Indicadores de variação vs previsto -->
-    <div id="grafico-indicadores" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; margin-bottom:10px;">
-      <div class="kpi-card">
-        <div class="kpi-label">Previsto Hoje</div>
-        <div class="kpi-val" style="font-size:13px;" id="graf-previsto-hoje">R$ 0,00</div>
-        <div class="kpi-sub" id="graf-previsto-hoje-pct"></div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Realizado</div>
-        <div class="kpi-val" style="font-size:13px;" id="graf-realizado">R$ 0,00</div>
-        <div class="kpi-sub" id="graf-realizado-pct"></div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Variação</div>
-        <div class="kpi-val" style="font-size:13px;" id="graf-variacao">R$ 0,00</div>
-        <div class="kpi-sub" id="graf-variacao-pct"></div>
-      </div>
-    </div>
-
     <div class="chart-card">
       <div class="chart-header">
-        <span class="chart-title">Previsto × Realizado</span>
+        <span class="chart-title">Evolução por Etapa</span>
         <div class="chart-controls">
-          <div class="toggle-group">
-            <button id="btn-chart-date" class="toggle-btn active" onclick="setGraficoMode('DATA')">Por Data</button>
-            <button id="btn-chart-etapa" class="toggle-btn" onclick="setGraficoMode('ETAPA')">Por Etapa</button>
-          </div>
           <input type="number" id="input-etapas" class="chart-num-input" value="30" onchange="renderizarGrafico()">
         </div>
       </div>
@@ -1041,11 +966,6 @@ tbody tr:last-child td { border-bottom:none; }
 
   <!-- ABA: HISTÓRICO -->
   <div id="historico" class="tab-content">
-
-    <div class="progress-card" style="margin-bottom:10px;">
-      <div class="progress-header"><span>📅 Fechamento por dia</span></div>
-      <div id="lista-dias-fechados" style="margin-top:8px;"></div>
-    </div>
 
     <div class="progress-card" style="margin-bottom:10px;">
       <div class="progress-header">
@@ -1068,29 +988,32 @@ tbody tr:last-child td { border-bottom:none; }
       <div id="estatisticas-rodape" style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:6px; margin-top:8px; padding-top:8px; border-top:1px solid var(--border2); font-size:11px; color:var(--muted);"></div>
       <p style="font-size:10px;color:var(--muted);line-height:1.5;margin-top:8px;">O "teórico" usa a probabilidade implícita da odd (1/odd) — que é <b>otimista</b>, pois inclui a margem da casa; a probabilidade real de vitória é menor. Se o observado acompanhar o teórico, os resultados se comportam como aleatórios e independentes: não há padrão explorável, e sequências longas continuarão aparecendo.</p>
     </div>
-    <div style="display:flex; gap:6px; margin-bottom:10px;">
-      <button id="btn-hist-etapa" class="filter-btn active" onclick="mudarVisaoHistorico('etapa')" style="flex:1;">📶 Por Etapa</button>
-      <button id="btn-hist-dia" class="filter-btn" onclick="mudarVisaoHistorico('dia')" style="flex:1;">📅 Por Dia</button>
+
+    <!-- ESTATÍSTICA POR ETAPA -->
+    <div class="progress-card" style="margin-bottom:10px;">
+      <div class="progress-header"><span>📊 Estatística por Etapa</span></div>
+      <div id="estat-etapa-body" style="margin-top:8px;"></div>
     </div>
 
-    <div id="hist-visao-etapa">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-        <span style="font-size:12px; font-weight:700; color:var(--muted);">Etapas concluídas</span>
-        <button id="btn-sort-hist" onclick="alternarOrdenacaoHistorico()" style="background:var(--surface); border:1px solid var(--border); color:var(--text); padding:5px 10px; border-radius:var(--radius-sm); font-size:11px; font-weight:700; cursor:pointer; font-family:var(--sans);">📅 Cronológica</button>
+    <!-- PROJEÇÃO GEOMÉTRICA DE ETAPAS -->
+    <div class="progress-card" style="margin-bottom:10px;">
+      <div class="progress-header">
+        <span>📈 Projeção da Meta por Etapa</span>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="font-size:10px;color:var(--muted);">próximas</span>
+          <input type="number" id="input-proj-etapas" class="chart-num-input" value="5" min="1" max="20" style="width:48px;" onchange="renderProjecaoEtapas()">
+        </div>
       </div>
-      <div class="hist-list" id="hist-list-container">
-        <div style="padding:24px;text-align:center;color:var(--muted);font-size:13px;">Nenhuma etapa concluída ainda.</div>
-      </div>
+      <p style="font-size:10px;color:var(--muted);line-height:1.5;margin:4px 0 8px;">Com meta fixa por etapa, o valor em R$ cresce sozinho a cada etapa — é a mesma % aplicada sobre uma base cada vez maior. Aqui embaixo, as próximas etapas projetadas e o quanto seu capital teria crescido no total.</p>
+      <div id="projecao-etapas-body"></div>
     </div>
 
-    <div id="hist-visao-dia" style="display:none;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-        <span style="font-size:12px; font-weight:700; color:var(--muted);">Fechamento diário (saldo ao fim de cada dia)</span>
-      </div>
-      <div class="hist-list" id="hist-dia-container">
-        <div style="padding:24px;text-align:center;color:var(--muted);font-size:13px;">Nenhum fechamento diário ainda. O primeiro será registrado quando o dia virar.</div>
-      </div>
-      <p style="font-size:10px;color:var(--muted);line-height:1.5;margin-top:8px;">O fechamento diário é automático: ao abrir o app num novo dia, o saldo do(s) dia(s) anterior(es) é registrado. Nenhum dia se perde, mesmo que o app fique dias fechado.</p>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+      <span style="font-size:12px; font-weight:700; color:var(--muted);">Etapas concluídas</span>
+      <button id="btn-sort-hist" onclick="alternarOrdenacaoHistorico()" style="background:var(--surface); border:1px solid var(--border); color:var(--text); padding:5px 10px; border-radius:var(--radius-sm); font-size:11px; font-weight:700; cursor:pointer; font-family:var(--sans);">📅 Cronológica</button>
+    </div>
+    <div class="hist-list" id="hist-list-container">
+      <div style="padding:24px;text-align:center;color:var(--muted);font-size:13px;">Nenhuma etapa concluída ainda.</div>
     </div>
   </div>
 
@@ -1112,13 +1035,13 @@ const SHEETS_URLS_FALLBACK = [];
 
 const DEFAULT_MODO = {
   etapaAtual:1,
-  metaPercent:5.0, stopLossPercent:15.0, apostaBasePercent:1.0, metaDiaria:1.0, diasAcomp:30, loteQtd:500, aleatoriedade:6,
-  dataInicioCiclo:hojeISO, chartMode:"DATA",
+  metaPercent:5.0, stopLossPercent:15.0, apostaBasePercent:1.0, loteQtd:500, aleatoriedade:6,
+  dataInicioCiclo:hojeISO, chartMode:"ETAPA",
   oddsPorLetra:{"A":1.80,"B":1.80,"C":1.80,"D":1.80,"E":1.80,"F":1.80},
   anotacoesPorLetra:{"A":"","B":"","C":"","D":"","E":"","F":""},
   letrasBloqueadasRodada:{},
   modoPosWin:"BLINDAR", modoDistribuicao:"PROPORCIONAL", marantanLancamentosRodada:{},
-  sequencias:[], historico:[], historicoDias:[], senhaApp:"123", vitoriasRodadaVoltarInicial:0,
+  sequencias:[], historico:[], senhaApp:"123", vitoriasRodadaVoltarInicial:0,
   maxGales:4, stopLotePercent:5.0,
   modoProgressao:"RECUPERACAO", incrFixoPercent:10.0, gatilhoIncremento:"SEMPRE", vistaOperacao:"cards",
   metaPorLetra:{"A":1.0,"B":1.0,"C":1.0,"D":1.0,"E":1.0,"F":1.0}, metaGlobalPercent:1.0, lucroLetraEtapa:{}, letrasMetaCumprida:{},
@@ -1265,7 +1188,6 @@ function aplicarBlindagemDeVariaveis(){
   if(!m.modoPosWin) m.modoPosWin="BLINDAR";
   if(!m.modoDistribuicao) m.modoDistribuicao="PROPORCIONAL";
   if(!m.dataInicioCiclo) m.dataInicioCiclo=hojeISO;
-  if(!Array.isArray(m.historicoDias)) m.historicoDias=[];
   if(m.senhaApp===undefined||m.senhaApp===null||m.senhaApp==="") m.senhaApp="123";
   if(!m.historico) m.historico=[];
   if(!m.aleatoriedade) m.aleatoriedade=6;
@@ -1276,17 +1198,14 @@ function aplicarBlindagemDeVariaveis(){
   if(m.vitoriasRodadaVoltarInicial===undefined) m.vitoriasRodadaVoltarInicial=0;
   if(m.loteQtd===undefined) m.loteQtd=500;
   if(m.apostaBasePercent===undefined) m.apostaBasePercent=1.0;
-  if(m.metaDiaria===undefined) m.metaDiaria=1.0;
-  if(m.diasAcomp===undefined) m.diasAcomp=30;
   if(m.maxGales===undefined) m.maxGales=4;
   if(m.stopLotePercent===undefined) m.stopLotePercent=5.0;
   if(!m.modoProgressao) m.modoProgressao="RECUPERACAO";
   if(m.incrFixoPercent===undefined) m.incrFixoPercent=10.0;
   if(!m.gatilhoIncremento) m.gatilhoIncremento="SEMPRE";
   // Conserta base do dia legada: se foi marcada em outro dia, zera para remarcar hoje (bug do "917%").
-  if(m.dataDiaCorrente!==hojeISO){ delete m.saldoInicioDia; m.metaDiaSinalizada=false; }
   if(!m.vistaOperacao) m.vistaOperacao="cards";
-  if(!m.chartMode) m.chartMode="DATA";
+  m.chartMode="ETAPA"; // controle por dia removido — sempre etapa
   if(!m.metaPorLetra) m.metaPorLetra={"A":1.0,"B":1.0,"C":1.0,"D":1.0,"E":1.0,"F":1.0};
   if(m.metaGlobalPercent===undefined) m.metaGlobalPercent=1.0;
   if(!m.lucroLetraEtapa) m.lucroLetraEtapa={};
@@ -1501,7 +1420,6 @@ function getValorApostaBasePorCod(cod){ const capIni=state.bancaInicioEtapa+(par
 // Meta agora é GLOBAL (um % para todos os lotes)
 function metaGlobalPct(){ const v=parseFloat(ms().metaGlobalPercent); return isNaN(v)?1.0:v; }
 function getValorApostaBase(odd){ return getLucroDesejadoBase()/((odd||2)-1); }
-function obterTodasLetrasConfiguradas(){ const n=Math.min(ms().aleatoriedade||6,26); const az="ABCDEFGHIJKLMNOPQRSTUVWXYZ"; let l=[]; for(let i=0;i<n;i++) l.push(az[i]); return l; }
 // Mercados distintos presentes nos lotes atuais (nova arquitetura)
 function mercadosAtivosDosLotes(){ const set=[]; (ms().sequencias||[]).forEach(sq=>{ const k=sq.mercado||sq.letraRandomica; if(k&&set.indexOf(k)<0) set.push(k); }); return set; }
 function calcularSomaCapitalGeralUI(){ const b=parseFloat(document.getElementById('cfg-banco-capital').value)||0; const c=parseFloat(document.getElementById('cfg-banca-capital').value)||0; document.getElementById('cfg-banca-total-disabled').value=(b+c).toFixed(2); }
@@ -1540,11 +1458,6 @@ function confirmarEncerramentoRodadaReal(){
   salvarDadosEAtualizarTudo();
 }
 
-function toggleLockChaveSeletora(letra,el){
-  if(!ms().letrasBloqueadasRodada) ms().letrasBloqueadasRodada={};
-  ms().letrasBloqueadasRodada[letra]=el.checked;
-  salvarDadosEAtualizarTudo();
-}
 
 function ajustarCamposDeOddsMenu(usarState=false){ /* removido: odds agora vêm da tabela de mercados */ }
 
@@ -1560,7 +1473,6 @@ function excluirRegistroEtapaHistorico(index){ if(confirm("🗑 Excluir esta eta
   state.resultadosReaisGrafico=pts; gerarEstruturaLotesIniciais(); salvarDadosEAtualizarTudo();
 } }
 function alterarDataInicioCicloUI(){ ms().dataInicioCiclo=document.getElementById('cfg-data-inicio').value; salvarDadosEAtualizarTudo(); }
-function setGraficoMode(modo){ ms().chartMode=modo; document.querySelectorAll('.toggle-group button').forEach(b=>b.classList.remove('active')); if(modo==='DATA') document.getElementById('btn-chart-date').classList.add('active'); else document.getElementById('btn-chart-etapa').classList.add('active'); renderizarGrafico(); }
 
 function salvarConfiguracoes(){
   // Compartilhado
@@ -1578,8 +1490,6 @@ function salvarConfiguracoes(){
   ms().modoProgressao=document.getElementById('cfg-modo-progressao').value;
   ms().incrFixoPercent=parseFloat(document.getElementById('cfg-incr-fixo').value)||10.0;
   const gi=document.getElementById('cfg-gatilho-incr'); if(gi) ms().gatilhoIncremento=gi.value;
-  ms().metaDiaria=parseFloat(document.getElementById('cfg-meta-diaria').value)||1.0;
-  ms().diasAcomp=parseInt(document.getElementById('cfg-dias-acomp').value)||30;
   const mg=document.getElementById('cfg-meta-global'); if(mg){ const v=parseFloat(mg.value); ms().metaGlobalPercent=isNaN(v)?1.0:v; }
   // Recalcula a aposta base dos lotes existentes (a base pode ter mudado), sem apagar lotes.
   (ms().sequencias||[]).forEach(sq=>{ if(sq.status==='PENDING'&&(parseFloat(sq.perdasAcumuladas)||0)<0.005){ sq.apostaAtual=sniperArredondarAposta(getValorApostaBaseLote(sq)); } });
@@ -1755,62 +1665,8 @@ function processarWinSeq(seq,odd){
   lotesAvisadosRisco.delete(`op_${seq.id}`);
 }
 
-let letraParaReabrir=null;
 
-function reabrirLetra(l){
-  letraParaReabrir=l;
-  const lucro=(ms().lucroLetraEtapa&&ms().lucroLetraEtapa[l])||0;
-  const metaPct=metaGlobalPct();
-  const lotes=ms().sequencias.filter(s=>s.letraRandomica===l).length;
-  const msg=document.getElementById('modal-reabrir-msg');
-  if(msg) msg.innerHTML=`Você está prestes a <b>reabrir a letra ${l}</b>, que já cumpriu a missão.<br><br>
-    Lucro travado nesta etapa: <b style="color:var(--win);">${fmt(lucro)}</b> (meta era ${metaPct}%)<br>
-    Lotes que voltarão a operar: <b>${lotes}</b><br>
-    Aposta de reabertura: <b style="color:var(--accent);">${fmt(getValorApostaBasePorCod(l))}</b> <span style="font-size:11px;color:var(--muted);">(volta à base, risco zerado)</span><br><br>
-    <b style="color:var(--bar-amber);">⚠️ O lucro desta letra deixa de estar protegido.</b> A partir daqui ele volta a ficar exposto ao risco, e o resultado acumulado pode ser reduzido ou revertido pelas próximas apostas.<br><br>
-    <span style="font-size:11px;color:var(--muted);">Lembre-se: uma letra que bateu a meta não é uma letra "quente" — a próxima aposta nela tem exatamente a mesma expectativa de antes.</span>`;
-  document.getElementById('modal-reabrir').style.display='flex';
-}
 
-function confirmarReabertura(){
-  const l=letraParaReabrir; if(!l) return;
-
-  // Reabre os lotes da letra em ESTADO DE ORIGEM: aposta volta à base, risco acumulado zerado,
-  // sequência de gales reiniciada. Reabrir é recomeçar do zero — não retomar de onde parou.
-  // (Também no modo PERCENTUAL: o composto reinicia, senão a reabertura herdaria uma aposta inflada.)
-  const oddL=oddPorLetra(l);
-  // Reabrir reseta TODOS os lotes da letra ao estado de origem — não só os blindados (FINISHED).
-  // No modo Resetar, os lotes de uma letra que bateu a meta seguem PENDING; antes eles eram
-  // ignorados aqui e a aposta não voltava à base. Agora qualquer lote da letra recomeça do zero.
-  ms().sequencias.forEach(s=>{
-    if(s.letraRandomica===l){
-      s.status='PENDING';
-      s.apostaAtual=sniperArredondarAposta(getValorApostaBaseLote(s));
-      s.perdasAcumuladas=0;
-      s.streakLoss=0;
-      s.lucroEtapa=0;
-      s.metaAvisada=false;
-    }
-  });
-
-  // Novo desafio: a barra de progresso zera e a letra persegue a meta do zero.
-  // O lucro já obtido é preservado num acumulador separado (lucroLetraArquivado) —
-  // o dinheiro é real e já está na banca; apenas sai do contador visível da letra
-  // para a barra poder recomeçar. O Σ letras continua batendo com o lucro da etapa
-  // porque soma o arquivado + o contador atual.
-  if(ms().letrasMetaCumprida) delete ms().letrasMetaCumprida[l];
-  if(!ms().lucroLetraArquivado) ms().lucroLetraArquivado={};
-  ms().lucroLetraArquivado[l]=(ms().lucroLetraArquivado[l]||0)+((ms().lucroLetraEtapa&&ms().lucroLetraEtapa[l])||0);
-  if(ms().lucroLetraEtapa) ms().lucroLetraEtapa[l]=0;
-
-  // Registra a reabertura (rastreabilidade)
-  if(!ms().reaberturas) ms().reaberturas=[];
-  ms().reaberturas.push({d:new Date().toISOString(), l:l, lucroNoMomento:(ms().lucroLetraEtapa&&ms().lucroLetraEtapa[l])||0});
-
-  letraParaReabrir=null;
-  fecharModal('modal-reabrir');
-  salvarDadosEAtualizarTudo();
-}
 
 function editarSaldoReal(){
   const atual=state.bancaAtual;
@@ -1828,195 +1684,18 @@ function editarSaldoReal(){
   salvarDadosEAtualizarTudo();
 }
 
-// Verifica a meta DIÁRIA: se o lucro de hoje (plataforma) atingiu metaDiaria%, avisa e orienta a retirada.
-// ── FECHAMENTO DIÁRIO AUTOMÁTICO ──
-// Registra o saldo ao fim de cada dia. Como o app só roda quando aberto, o fechamento
-// acontece na primeira abertura de um novo dia: grava o último saldo conhecido para o(s)
-// dia(s) que passaram. À prova de app fechado — preenche lacunas.
-function processarFechamentoDiario(){
-  if(!ms().registroDiario) ms().registroDiario=[];
-  const hoje=hojeISO;
-  let ultimo=ms().ultimoDiaRegistrado||"";
-  // Primeira vez de todas: apenas marca hoje como dia corrente, sem registrar (não há "fim de dia" ainda)
-  if(!ultimo){ ms().ultimoDiaRegistrado=hoje; return; }
-  if(ultimo===hoje) return; // mesmo dia, nada a fechar
-  // Fecha todos os dias entre o último registrado e hoje (exclusive), com o saldo atual conhecido
-  const saldoFim=state.bancaAtual+(parseFloat(state.bancoCapital)||0);
-  let d=new Date(ultimo+'T00:00:00');
-  const alvo=new Date(hoje+'T00:00:00');
-  let guard=0;
-  while(d<alvo && guard<400){
-    const iso=d.toISOString().split('T')[0];
-    // evita duplicar
-    if(!ms().registroDiario.some(r=>r.dia===iso)){
-      ms().registroDiario.push({dia:iso, saldo:saldoFim});
-    }
-    d.setDate(d.getDate()+1); guard++;
-  }
-  ms().ultimoDiaRegistrado=hoje;
-  if(ms().registroDiario.length>1000) ms().registroDiario.splice(0,ms().registroDiario.length-1000);
-}
 
-function mudarVisaoHistorico(v){
-  const be=document.getElementById('btn-hist-etapa'), bd=document.getElementById('btn-hist-dia');
-  const ve=document.getElementById('hist-visao-etapa'), vd=document.getElementById('hist-visao-dia');
-  const dia=(v==='dia');
-  if(be) be.classList.toggle('active',!dia);
-  if(bd) bd.classList.toggle('active',dia);
-  if(ve) ve.style.display=dia?'none':'block';
-  if(vd) vd.style.display=dia?'block':'none';
-  if(dia) renderHistoricoDiario();
-}
 
-function renderHistoricoDiario(){
-  const c=document.getElementById('hist-dia-container'); if(!c) return;
-  const reg=(ms().registroDiario||[]).slice().sort((a,b)=>b.dia.localeCompare(a.dia));
-  if(reg.length===0){
-    c.innerHTML='<div style="padding:24px;text-align:center;color:var(--muted);font-size:13px;">Nenhum fechamento diário ainda. O primeiro será registrado quando o dia virar.</div>';
-    return;
-  }
-  let html='';
-  reg.forEach((r,i)=>{
-    const prox=reg[i+1]; // dia anterior (lista está desc)
-    let varTxt='', varCor='var(--muted)';
-    if(prox){
-      const dif=r.saldo-prox.saldo;
-      if(Math.abs(dif)>=0.005){ varCor=dif>0?'var(--win)':'var(--loss)'; varTxt=(dif>0?'▲ ':'▼ ')+fmt(Math.abs(dif)); }
-      else varTxt='— estável';
-    }
-    const dataFmt=new Date(r.dia+'T00:00:00').toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'2-digit',year:'2-digit'});
-    html+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:var(--radius-sm);margin-bottom:6px;">
-      <div>
-        <div style="font-size:12px;font-weight:700;color:var(--text);font-family:var(--sans);">${dataFmt}</div>
-        <div style="font-size:10px;color:${varCor};font-family:var(--mono);font-weight:700;margin-top:2px;">${varTxt||'primeiro registro'}</div>
-      </div>
-      <div style="font-family:var(--mono);font-size:15px;font-weight:800;color:var(--text);">${fmt(r.saldo)}</div>
-    </div>`;
-  });
-  c.innerHTML=html;
-}
 
 function saldoTotalAtual(){ return state.bancaAtual+(parseFloat(state.bancoCapital)||0); }
 
-function marcarInicioDoDia(){
-  // Marca o saldo TOTAL (plataforma + banco) no começo de cada novo dia — SEMPRE.
-  // Base para a barra "Avanço do Dia": o lucro do dia acumula todas as etapas concluídas no dia.
-  const totalAgora=saldoTotalAtual();
-  if(ms().dataDiaCorrente!==hojeISO){
-    // ── FECHAMENTO AUTOMÁTICO DO DIA ANTERIOR ──
-    // Se havia um dia em curso (base marcada) e ele é de data anterior, consolida o resultado.
-    if(ms().dataDiaCorrente && ms().saldoInicioDia!==undefined){
-      fecharDiaAnterior(ms().dataDiaCorrente, parseFloat(ms().saldoInicioDia)||0, totalAgora);
-    }
-    ms().dataDiaCorrente=hojeISO;
-    ms().saldoInicioDia=totalAgora;
-    ms().metaDiaSinalizada=false;
-  }
-  if(ms().saldoInicioDia===undefined) ms().saldoInicioDia=totalAgora;
-  // Sanidade contra base de DIA ANTERIOR (a causa do bug do "917%"): se o lucro do dia calculado
-  // sobre a base guardada supera, em módulo, um múltiplo alto da meta diária, a base quase certamente
-  // é de outro dia (lucro de vários dias somado). Nesse caso, remarca a base para o saldo de agora.
-  const base=parseFloat(ms().saldoInicioDia)||0;
-  const metaPct=parseFloat(ms().metaDiaria)||0;
-  if(base<=0){
-    ms().saldoInicioDia=totalAgora;
-  } else if(metaPct>0){
-    const lucroDiaPct=((totalAgora-base)/base)*100; // variação % do dia
-    // teto realista: 3x a meta do dia. Passou disso (pra cima ou pra baixo) = base de outro dia.
-    if(Math.abs(lucroDiaPct) > metaPct*3){ ms().saldoInicioDia=totalAgora; }
-  }
-}
 
-function fecharDiaAnterior(dataDia, saldoIni, saldoFim){
-  const lucro=saldoFim-saldoIni;
-  const pct=saldoIni>0?(lucro/saldoIni)*100:0;
-  if(!Array.isArray(ms().historicoDias)) ms().historicoDias=[];
-  // Evita duplicar o mesmo dia (ex.: reabrir o app várias vezes)
-  if(ms().historicoDias.some(d=>d.data===dataDia)) return;
-  ms().historicoDias.push({
-    data:dataDia,
-    saldoIni:saldoIni,
-    saldoFim:saldoFim,
-    lucro:lucro,
-    pct:pct,
-    fechadoEm:new Date().toISOString()
-  });
-  // Guarda o lucro do dia fechado para oferecer a retirada ao Banco (1 clique).
-  if(lucro>0.005){ ms().__lucroDiaFechadoPendente=lucro; ms().__dataDiaFechado=dataDia; }
-}
 
 // Mostra o resumo do dia que fechou, com botão de 1 clique para mover ao Banco.
-function mostrarResumoDiaFechado(){
-  const lucro=ms().__lucroDiaFechadoPendente||0;
-  const data=ms().__dataDiaFechado||'';
-  if(lucro<=0.005) return; // só oferece retirada se houve lucro
-  const modal=document.getElementById('modal-dia-fechado');
-  const msg=document.getElementById('modal-dia-fechado-msg');
-  if(!modal||!msg) return;
-  const dataBR=data?data.split('-').reverse().join('/'):'';
-  msg.innerHTML=`O dia <b>${dataBR}</b> foi encerrado e registrado no histórico. 📅<br><br>`+
-    `<div style="background:var(--surface2);border:1px solid var(--win-border);border-radius:var(--radius-sm);padding:10px;margin:4px 0;">`+
-    `<div style="display:flex;justify-content:space-between;font-size:13px;"><span style="color:var(--muted);">Lucro do dia</span><b style="color:var(--win);">${fmt(lucro)}</b></div>`+
-    `</div>`+
-    `Deseja mover esse lucro para o <b>Banco</b> (reserva protegida)? O valor sai da plataforma em operação e fica guardado.`;
-  document.getElementById('modal-dia-fechado').style.display='flex';
-}
 
-function moverLucroDiaFechadoParaBanco(){
-  const lucro=ms().__lucroDiaFechadoPendente||0;
-  if(lucro>0.005){
-    state.bancaAtual-=lucro;
-    state.bancoCapital=(parseFloat(state.bancoCapital)||0)+lucro;
-    ms().saldoInicioDia=saldoTotalAtual(); // base do novo dia coerente após mover
-    if(!ms().retiradasBanco) ms().retiradasBanco=[];
-    ms().retiradasBanco.push({d:new Date().toISOString(), valor:lucro, origem:'fechamento-dia'});
-  }
-  ms().__lucroDiaFechadoPendente=0; ms().__dataDiaFechado=null;
-  fecharModal('modal-dia-fechado');
-  salvarDadosEAtualizarTudo();
-}
 
-function dispensarResumoDiaFechado(){
-  ms().__lucroDiaFechadoPendente=0; ms().__dataDiaFechado=null;
-  fecharModal('modal-dia-fechado');
-}
 
-function verificarMetaDiaria(){
-  const pctMeta=parseFloat(ms().metaDiaria)||0;
-  if(pctMeta<=0) return;
-  if(ms().metaDiaSinalizada) return; // avisa uma vez por dia
-  const base=(ms().saldoInicioDia!==undefined)?ms().saldoInicioDia:saldoTotalAtual();
-  const alvo=base*(pctMeta/100);
-  const lucroDia=saldoTotalAtual()-base;
-  if(lucroDia>=alvo && alvo>0){
-    ms().metaDiaSinalizada=true;
-    const msg=document.getElementById('modal-meta-dia-msg');
-    if(msg) msg.innerHTML=`Você bateu <b>${pctMeta}%</b> no dia de hoje! 🎯<br><br>`+
-      `<div style="background:var(--surface2);border:1px solid var(--win-border);border-radius:var(--radius-sm);padding:10px;margin:4px 0;">`+
-      `<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span style="color:var(--muted);">Lucro do dia</span><b style="color:var(--win);">${fmt(lucroDia)}</b></div>`+
-      `<div style="display:flex;justify-content:space-between;font-size:12px;"><span style="color:var(--muted);">Sugestão de retirada</span><b>${fmt(lucroDia)}</b></div>`+
-      `</div>`+
-      `Considere <b>retirar este lucro da plataforma e guardar no Banco</b>. Proteger o ganho do dia é o que separa a operação disciplinada da que devolve tudo tentando ganhar mais.<br><br>`+
-      `<span style="font-size:11px;color:var(--muted);">Ao retirar, o valor sai da plataforma em operação e vai para a reserva. Você pode parar por hoje com o resultado garantido.</span>`;
-    document.getElementById('modal-meta-dia').style.display='flex';
-    ms().__lucroDiaPendente=lucroDia;
-  }
-}
 
-function retirarLucroDiaParaBanco(){
-  const lucro=ms().__lucroDiaPendente||0;
-  if(lucro>0.005){
-    // Move da plataforma para o banco: plataforma diminui, banco aumenta, capital total intacto.
-    state.bancaAtual-=lucro;
-    state.bancoCapital=(parseFloat(state.bancoCapital)||0)+lucro;
-    // O total não muda ao mover plataforma→banco; mantém a base coerente para não reavisar.
-    ms().saldoInicioDia=saldoTotalAtual();
-    if(!ms().retiradasBanco) ms().retiradasBanco=[];
-    ms().retiradasBanco.push({d:new Date().toISOString(), valor:lucro});
-  }
-  fecharModal('modal-meta-dia');
-  salvarDadosEAtualizarTudo();
-}
 
 function verificarMetaLote(seq){
   if(!seq) return false;
@@ -2100,8 +1779,8 @@ function processarPerdaSeq(seq,odd){
     lotesAvisadosRisco.add(chaveAviso);
     const msg=document.getElementById('modal-risco-gales-msg');
     if(msg){
-      const letra=seq.letraRandomica||'?';
-      msg.innerHTML=`O lote <b>#${seq.id}</b> (Letra <b>${letra}</b>) atingiu <b>${seq.streakLoss} derrotas consecutivas</b>.<br>O teto configurado é <b>${maxG} gales</b> — você está em <b>${Math.round((seq.streakLoss/maxG)*100)}%</b> do limite.<br><br>Avalie se deseja continuar ou assumir a perda manualmente.`;
+      const mktLabel=labelMercado(seq.mercado||seq.letraRandomica||'?');
+      msg.innerHTML=`O lote <b>#${seq.id}</b> (${mktLabel}) atingiu <b>${seq.streakLoss} derrotas consecutivas</b>.<br>O teto configurado é <b>${maxG} gales</b> — você está em <b>${Math.round((seq.streakLoss/maxG)*100)}%</b> do limite.<br><br>Avalie se deseja continuar ou assumir a perda manualmente.`;
     }
     document.getElementById('modal-risco-gales').style.display='flex';
   }
@@ -2125,31 +1804,10 @@ function registrarApostaIndividual(index,resultado,emMassa=false){
   else{ const r=processarPerdaSeq(seq,odd); if(r.assumida) infoAssumida=r; }
   if(!emMassa){
     if(ms().marantanLancamentosRodada) ms().marantanLancamentosRodada[l]=resultado;
-    renderCards(); atualizarPainelUI(false);
+    atualizarPainelUI(false);
     if(infoAssumida) alert('⛔ Lote #'+seq.id+' atingiu o '+infoAssumida.motivo+'.\nPerda de '+fmt(infoAssumida.valor)+' assumida. O lote voltou à aposta base — não persiga esse valor.');
     dispararAnimacaoToastLotes(()=>{ salvarDadosEAtualizarTudo(); });
   }
-}
-
-function executarAcaoEmMassaCard(letraAlvo,resultado){
-  if(verificarTravaStop()) return;
-  const lu=letraAlvo.toUpperCase(); let ok=false; let vits=0; let assumidas=0; let valAssumido=0;
-  const odd=oddPorLetra(lu);
-  if(ms().sequencias.some(s=>s.letraRandomica===lu&&s.status!=='FINISHED')) registrarEventoLetra(lu,resultado);
-  ms().sequencias.forEach(seq=>{
-    if(seq.letraRandomica===lu&&seq.status!=='FINISHED'){
-      if(resultado==='WIN'){ processarWinSeq(seq,odd); vits++; }
-      else{ const r=processarPerdaSeq(seq,odd); if(r.assumida){ assumidas++; valAssumido+=r.valor; } }
-      ok=true;
-    }
-  });
-  if(!ok) return;
-  if(resultado==='WIN') ms().vitoriasRodadaVoltarInicial+=vits;
-  if(ms().marantanLancamentosRodada) ms().marantanLancamentosRodada[lu]=resultado;
-  // Atualizar UI imediatamente — não esperar o toast
-  renderCards(); atualizarPainelUI(false);
-  if(assumidas>0) alert('⛔ '+assumidas+' lote(s) de ['+lu+'] atingiram o limite de progressão.\nPerda total de '+fmt(valAssumido)+' assumida e progressão zerada nesses lotes.');
-  dispararAnimacaoToastLotes(()=>{ salvarDadosEAtualizarTudo(); });
 }
 
 function renderUltimos10(arr){
@@ -2833,6 +2491,9 @@ function mudarMercadoLote(index,valor){
   seq.mercado=valor;
   seq.letraRandomica=valor;   // mantém o agrupamento estatístico coerente com o mercado
   seq.status='PENDING';
+  // Limpa a bandeira de "meta já cumprida" do mercado NOVO — senão este lote (agora PENDING)
+  // ficaria escondido do filtro "Pendentes" por uma meta que não é dele.
+  if(ms().letrasMetaCumprida) delete ms().letrasMetaCumprida[valor];
   seq.perdasAcumuladas=0;
   seq.streakLoss=0;
   seq.lucroEtapa=0;
@@ -2874,6 +2535,10 @@ function confirmarResetLote(limparAcompanhamento){
   seq.streakLoss=0;
   seq.lucroEtapa=0;
   seq.metaAvisada=false;
+  // Limpa a bandeira de "meta já cumprida" do mercado deste lote — senão, mesmo voltando a
+  // PENDING, ele ficaria escondido do filtro "Pendentes" por uma meta que ele já deixou de valer.
+  const mktDoLote=seq.mercado||seq.letraRandomica;
+  if(ms().letrasMetaCumprida) delete ms().letrasMetaCumprida[mktDoLote];
   // O acompanhamento (Últimos + contador V/D) só é limpo se o usuário escolheu.
   if(limparAcompanhamento){
     seq.ultimos=[];       // zera a caixa de marcação de vitórias/derrotas (Últimos)
@@ -2948,7 +2613,6 @@ function alterarFiltroExibicao(tipo){
   document.querySelectorAll('.filter-exib').forEach(b=>b.classList.remove('active'));
   const btn=document.getElementById('btn-filter-'+tipo); if(btn) btn.classList.add('active');
   renderLinhas();
-  renderCards();
 }
 
 function alterarOrdemLotes(ordem){
@@ -3117,145 +2781,6 @@ function renderRodapeSomaLetras(){
   el.innerHTML=`Σ letras = <b style="color:${cor};">${fmt(soma)}</b> <span style="opacity:.7;">(lucro em apostas da etapa)</span>`;
 }
 
-function renderCards(){
-  const container=document.getElementById('container-letras-linhas'); if(!container) return;
-  const az="ABCDEFGHIJKLMNOPQRSTUVWXYZ"; let html=''; let letrasVisiveis=0;
-  for(let i=0;i<Math.min(ms().aleatoriedade,26);i++){
-    const l=az[i];
-    const lanc=ms().marantanLancamentosRodada?(ms().marantanLancamentosRodada[l]||""):"";
-    const nota=ms().anotacoesPorLetra[l]||"";
-    const isFixed=ms().letrasBloqueadasRodada&&ms().letrasBloqueadasRodada[l];
-    const lotesAtivos=ms().sequencias.filter(s=>s.letraRandomica===l&&s.status!=='FINISHED').length;
-    const totalAposta=ms().sequencias.filter(s=>s.letraRandomica===l&&s.status!=='FINISHED').reduce((a,c)=>a+c.apostaAtual,0);
-    const temPerda=ms().sequencias.some(s=>s.letraRandomica===l&&s.status!=='FINISHED'&&s.perdasAcumuladas>0);
-    const totalPerda=ms().sequencias.filter(s=>s.letraRandomica===l&&s.status!=='FINISHED').reduce((a,c)=>a+c.perdasAcumuladas,0);
-    const allFinished=lotesAtivos===0;
-    const totalWinsLetra=ms().sequencias.filter(s=>s.letraRandomica===l).reduce((a,c)=>a+c.winsEtapa,0);
-    const totalLossLetra=ms().sequencias.filter(s=>s.letraRandomica===l).reduce((a,c)=>a+c.lossesEtapa,0);
-    const metaCumpridaL=!!(ms().letrasMetaCumprida&&ms().letrasMetaCumprida[l]);
-
-    // ── FILTRO (mesma regra da grade de lotes) ──
-    // Pendentes: oculta letras finalizadas (todos os lotes blindados) ou com a missão cumprida.
-    // Com Perda: mostra só letras que carregam risco acumulado.
-    if(filtroAtualExibicao==='pending' && (allFinished||metaCumpridaL)) continue;
-    if(filtroAtualExibicao==='loss' && !temPerda) continue;
-    letrasVisiveis++;
-
-    let cardCls='letra-card';
-    if(isFixed) cardCls+=' is-locked';
-    else if(allFinished) cardCls+=' is-finished';
-    else if(temPerda) cardCls+=' has-loss';
-    // 'is-done' = MISSÃO CUMPRIDA (letra finalizada), não "já lancei nesta rodada".
-    // Lançar V/D numa rodada NÃO muda mais a aparência de fundo do card — a letra segue ativa.
-    if(allFinished&&!isFixed) cardCls+=' is-done';
-    // Marca discreta de "já lancei nesta rodada" (sem esmaecer, sem mudar fundo)
-    if(lanc!==''&&!allFinished) cardCls+=' lancado-rodada';
-
-    let badgeCls='letra-badge';
-    if(isFixed) badgeCls+=' locked';
-    else if(allFinished) badgeCls+=' ok';
-    else if(temPerda) badgeCls+=' loss';
-
-    let pillHtml='';
-    if(isFixed) pillHtml=`<span class="card-pill pill-locked">📌 FIXO</span>`;
-    else if(allFinished) pillHtml=`<span class="card-pill pill-ok">🔒 BLINDADA</span>`;
-    else if(lanc==='WIN') pillHtml=`<span class="card-pill pill-win-done">▲ VIT</span>`;
-    else if(lanc==='LOSS') pillHtml=`<span class="card-pill pill-loss-done">▼ RED</span>`;
-    else pillHtml=`<span class="card-pill pill-neutral">${lotesAtivos}L ATIVOS</span>`;
-
-    const amountCls=allFinished?'card-amount ok':'card-amount';
-    const amountTxt=allFinished?'🔒 Finalizado':fmt(totalAposta);
-    const metaNota=nota?`<span style="color:var(--muted);">${nota}</span> `:''; const metaTxt=metaNota+(temPerda?`<span class="risk">↓${fmt(totalPerda)}</span>`:`<span>${lotesAtivos}L</span>`);
-    const lockCls=isFixed?'ll-lock locked':'ll-lock';
-    const checked=isFixed?'checked':'';
-
-    // ── Barra de progresso da meta da letra ──
-    let metaBarHtml='';
-    const metaPctL=metaGlobalPct();
-    if(metaPctL>0){
-      const bancoMB=parseFloat(state.bancoCapital)||0;
-      const alvoL=(state.bancaInicioEtapa+bancoMB)*(metaPctL/100);
-      const lucroL=(ms().lucroLetraEtapa&&ms().lucroLetraEtapa[l])||0;
-      const progL=alvoL>0?Math.max(0,Math.min(100,(lucroL/alvoL)*100)):0;
-      const cumprida=(ms().letrasMetaCumprida&&ms().letrasMetaCumprida[l])||progL>=100;
-      const corBarra=cumprida?'var(--win)':(lucroL<0?'var(--loss)':'var(--bar-amber)');
-      const lblDireita=cumprida?'🎯 100%':(lucroL<0?fmt(lucroL):Math.round(progL)+'%');
-      const corLbl=cumprida?'var(--win)':(lucroL<0?'var(--loss)':'var(--text)');
-      metaBarHtml=`<div style="margin-top:2px;">
-        <div style="display:flex;justify-content:space-between;font-size:9px;font-family:var(--mono);color:var(--text);margin-bottom:2px;">
-          <span>Meta ${metaPctL}% (${fmt(alvoL)})</span>
-          <span style="color:${corLbl};font-weight:700;">${lblDireita}</span>
-        </div>
-        <div style="height:4px;background:var(--surface2);border:1px solid var(--border);border-radius:99px;overflow:hidden;">
-          <div style="height:100%;width:${progL}%;background:${corBarra};border-radius:99px;transition:width .3s;"></div>
-        </div>
-      </div>`;
-    }
-
-    if((ms().vistaOperacao||'cards')==='linhas'){
-      // ── Vista em LINHAS: mesma informação e mesmos botões, layout horizontal compacto ──
-      html+=`<div class="${cardCls} linha">
-        <div class="${badgeCls} lr-badge">${l}</div>
-        <div class="lr-pill">${pillHtml}</div>
-        <div class="lr-nota" title="${(ms().anotacoesPorLetra&&ms().anotacoesPorLetra[l]||'').replace(/"/g,'&quot;')}">${ms().anotacoesPorLetra&&ms().anotacoesPorLetra[l]?ms().anotacoesPorLetra[l]:'<span style=\'color:var(--muted);\'>—</span>'}</div>
-        <div class="lr-amount ${allFinished?'ok':''}">${amountTxt}</div>
-        <div class="lr-meta">${metaBarHtml||'<span style="color:var(--muted);font-size:10px;">— sem meta —</span>'}</div>
-        <div class="lr-counters">
-          <span style="color:var(--win);font-weight:700;">▲${totalWinsLetra}</span>
-          <span style="color:var(--muted);"> · </span>
-          <span style="color:var(--loss);font-weight:700;">▼${totalLossLetra}</span>
-        </div>
-        <div class="card-btns">
-          ${(allFinished||metaCumpridaL)
-            ? `<button class="btn-reabrir" onclick="reabrirLetra('${l}')" style="flex:1;">🔓 Reabrir</button>`
-            : `<button class="btn-win" onclick="executarAcaoEmMassaCard('${l}','WIN')">V</button>
-          <button class="btn-loss" onclick="executarAcaoEmMassaCard('${l}','LOSS')">D</button>`}
-        </div>
-        <label class="switch lr-lock" title="📌 Fixar letra na rodada"><input type="checkbox" ${checked} onchange="toggleLockChaveSeletora('${l}',this)"><span class="slider"></span></label>
-      </div>`;
-    } else {
-      html+=`<div class="${cardCls}">
-      <div class="card-top"><div class="${badgeCls}">${l}</div>${pillHtml}</div>
-      <div class="${amountCls}">${amountTxt}</div>
-      <div class="card-meta">${metaTxt}</div>
-      ${metaBarHtml}
-      <div style="font-size:10px; font-family:var(--mono); margin-top:1px;">
-        <span style="color:var(--win);font-weight:700;">A=${totalWinsLetra}</span>
-        <span style="color:var(--muted);"> · </span>
-        <span style="color:var(--loss);font-weight:700;">E=${totalLossLetra}</span>
-      </div>
-      ${(allFinished||metaCumpridaL)
-        ? `<button class="btn-reabrir" onclick="reabrirLetra('${l}')">🔓 Reabrir letra</button>`
-        : `<div class="card-btns">
-        <button class="btn-win" onclick="executarAcaoEmMassaCard('${l}','WIN')">V</button>
-        <button class="btn-loss" onclick="executarAcaoEmMassaCard('${l}','LOSS')">D</button>
-      </div>`}
-      <div class="lock-row">
-        <span class="lock-label">📌 Fixar</span>
-        <label class="switch"><input type="checkbox" ${checked} onchange="toggleLockChaveSeletora('${l}',this)"><span class="slider"></span></label>
-      </div>
-    </div>`;
-    }
-  }
-  const ehLinhas=(ms().vistaOperacao||'cards')==='linhas';
-  if(letrasVisiveis===0){
-    const txt=filtroAtualExibicao==='pending'
-      ? '🎯 Todas as letras cumpriram a missão nesta etapa.'
-      : (filtroAtualExibicao==='loss' ? '✅ Nenhuma letra com risco acumulado.' : 'Nenhuma letra para exibir.');
-    container.classList.remove('list-view');
-    container.innerHTML=`<div style="grid-column:1/-1; padding:22px; text-align:center; color:var(--text); font-size:13px; background:var(--surface); border:1px solid var(--border); border-radius:8px;">${txt}</div>`;
-    const bV=document.getElementById('btn-vista-operacao');
-    if(bV) bV.innerText=ehLinhas?'🔲 Ver em cards':'☰ Ver em linhas';
-    return;
-  }
-  if(ehLinhas){
-    html='<div class="linhas-header"><span>LET</span><span>STATUS</span><span>NOTA</span><span class="h-amount">APOSTA</span><span>PROGRESSO DA META</span><span class="h-count">A / E</span><span class="h-count">LANÇAR</span><span class="h-lock">📌</span></div>'+html;
-  }
-  container.classList.toggle('list-view',ehLinhas);
-  const btnV=document.getElementById('btn-vista-operacao');
-  if(btnV) btnV.innerText=(ms().vistaOperacao||'cards')==='linhas'?'🔲 Ver em cards':'☰ Ver em linhas';
-  container.innerHTML=html;
-}
 
 function preencherCamposConfig(){ if(typeof aplicarVisibilidadeAbas==="function") aplicarVisibilidadeAbas(); if(typeof renderEditorMercados==="function") renderEditorMercados();
   document.getElementById('cfg-banco-capital').value=(state.bancoCapital||0).toFixed(2);
@@ -3273,8 +2798,6 @@ function preencherCamposConfig(){ if(typeof aplicarVisibilidadeAbas==="function"
   document.getElementById('cfg-modo-progressao').value=ms().modoProgressao||"RECUPERACAO";
   document.getElementById('cfg-incr-fixo').value=ms().incrFixoPercent||10.0;
   atualizarVisibilidadeIncremento();
-  document.getElementById('cfg-meta-diaria').value=ms().metaDiaria||1.0;
-  document.getElementById('cfg-dias-acomp').value=ms().diasAcomp||30;
   document.getElementById('cfg-sheets-url').value=state.sheetsUrl||"";
   calcularSomaCapitalGeralUI();
 }
@@ -3307,73 +2830,9 @@ function alternarModoPosWin(){ ms().modoPosWin=ms().modoPosWin==="BLINDAR"?"RESE
 function atualizarBotaoModoUI(){ aplicarNomesModos(); const btn=document.getElementById('btn-toggle-modo-pos-win'); if(!btn) return; btn.className="btn-modo "+(ms().modoPosWin==="BLINDAR"?"blindar":"resetar"); btn.innerText=ms().modoPosWin==="BLINDAR"?"🔒 Pós-Win: Blindar":"🔄 Pós-Win: Resetar"; }
 function atualizarLayoutContadoresPorModo(){ const r=document.getElementById('wrapper-contador-resetar'); if(!r) return; if(ms().modoPosWin==="BLINDAR"){ r.style.display='none'; }else{ r.style.display='block'; const lv=document.getElementById('lbl-vitorias-resetar-contador'); if(lv) lv.innerText=ms().vitoriasRodadaVoltarInicial; } }
 
-function calcularPrevistoNaData(dataStr){
-  if(!dataStr) return null;
-  const banco=parseFloat(state.bancoCapital)||0;
-  const totalInicial=state.bancaInicial+banco;
-  const metaDiaria=(ms().metaDiaria||1.0)/100;
-  const baseDate=new Date(ms().dataInicioCiclo+'T00:00:00');
-  const hDate=new Date(dataStr+'T00:00:00');
-  const diffDias=Math.max(0,Math.floor((hDate-baseDate)/(1000*60*60*24)));
-  return totalInicial*Math.pow(1+metaDiaria, diffDias);
-}
 
 // ── PAINEL DE EXPOSIÇÃO REAL ──
-function simularSobrevivenciaLetra(l){
-  const ativos=ms().sequencias.filter(s=>s.letraRandomica===l&&s.status!=='FINISHED');
-  if(ativos.length===0) return null;
-  const odd=oddPorLetra(l);
-  const base=getValorApostaBasePorCod(l);
-  let sim=ativos.map(s=>({acc:s.perdasAcumuladas, stake:sniperArredondarAposta(s.apostaAtual)}));
-  let banca=state.bancaAtual+(parseFloat(state.bancoCapital)||0); // global: banco é reserva do mesmo dinheiro
-  let rodadas=0;
-  const proxima=sim.reduce((a,c)=>a+c.stake,0);
-  for(let i=0;i<21;i++){
-    const total=sim.reduce((a,c)=>a+c.stake,0);
-    if(total>banca) break;
-    banca-=total; rodadas++;
-    sim.forEach(s=>{ s.acc+=s.stake; s.stake=ms().modoProgressao==="PERCENTUAL"?s.stake*(1+((ms().incrFixoPercent||10)/100)):(s.acc+getLucroDesejadoBase())/(odd-1); });
-  }
-  return {
-    rodadas, proxima,
-    lotes:ativos.length,
-    risco:ativos.reduce((a,c)=>a+c.perdasAcumuladas,0),
-    maiorStreak:ativos.reduce((a,c)=>Math.max(a,c.streakLoss||0),0)
-  };
-}
 
-function renderExposicao(){
-  const body=document.getElementById('exposicao-body'); if(!body) return;
-  const letras=obterTodasLetrasConfiguradas();
-  let html=''; let riscoTotal=0; let proximaTotal=0;
-  letras.forEach(l=>{
-    const sim=simularSobrevivenciaLetra(l);
-    const odd=oddPorLetra(l);
-    if(!sim){
-      html+=`<div class="preview-row"><span><b style="font-family:var(--mono);">[${l}]</b> @${odd.toFixed(2)} · finalizada</span><span style="color:var(--muted);font-size:11px;">—</span></div>`;
-      return;
-    }
-    riscoTotal+=sim.risco; proximaTotal+=sim.proxima;
-    const agTxt=sim.rodadas>=21?'20+':String(sim.rodadas);
-    const agCor=sim.rodadas<=3?'var(--loss)':(sim.rodadas<=6?'var(--bar-amber)':'var(--win)');
-    html+=`<div class="preview-row" style="gap:6px;">
-      <span style="flex:1;min-width:0;"><b style="font-family:var(--mono);">[${l}]</b> @${odd.toFixed(2)} · ${sim.lotes}L${sim.risco>0?` · <span style="color:var(--loss);">↓${fmt(sim.risco)}</span>`:''}${sim.maiorStreak>0?` · seq ${sim.maiorStreak}`:''}</span>
-      <span style="font-family:var(--mono);font-size:11px;white-space:nowrap;">próx ${fmt(sim.proxima)}</span>
-      <span style="font-family:var(--mono);font-size:11px;font-weight:700;color:${agCor};white-space:nowrap;">aguenta ${agTxt}</span>
-    </div>`;
-  });
-  body.innerHTML=html;
-  const tot=document.getElementById('exp-total-risco');
-  if(tot){ tot.innerText=fmt(riscoTotal); tot.style.color=riscoTotal>0?'var(--loss)':'var(--win)'; }
-  const rod=document.getElementById('exposicao-rodape');
-  if(rod){
-    const capitalGlobal=state.bancaAtual+(parseFloat(state.bancoCapital)||0);
-    const pctRisco=capitalGlobal>0?(riscoTotal/capitalGlobal)*100:0;
-    rod.innerHTML=`<span>Risco acumulado: <b style="color:${pctRisco>10?'var(--loss)':'var(--text)'};font-family:var(--mono);">${pctRisco.toFixed(1)}%</b> do capital</span>
-      <span>Próx. rodada (todas): <b style="font-family:var(--mono);">${fmt(proximaTotal)}</b></span>
-      <span>Perdas assumidas: <b style="color:var(--loss);font-family:var(--mono);">${fmt(ms().perdasAssumidasTotal||0)}</b> (${ms().assumidasCount||0}x)</span>`;
-  }
-}
 
 // ── ESTATÍSTICA DE SEQUÊNCIAS ──
 // ════════════════════════════════════════════════════════════════
@@ -3627,32 +3086,120 @@ function alternarOrdenacaoHistorico(){
   }
   renderHistorico();
 }
-function renderDiasFechados(){
-  const box=document.getElementById('lista-dias-fechados'); if(!box) return;
-  const dias=(ms().historicoDias||[]).slice().sort((a,b)=>b.data.localeCompare(a.data)); // mais recente primeiro
-  if(dias.length===0){
-    box.innerHTML='<div style="font-size:11px;color:var(--muted);padding:4px 0;">Nenhum dia fechado ainda. O primeiro fechamento acontece quando você abrir o app num novo dia.</div>';
-    return;
-  }
+
+// ── PROJEÇÃO GEOMÉTRICA DE ETAPAS ──
+// Mostra etapas passadas concluídas (do histórico) e projeta as próximas N,
+// aplicando o mesmo % de meta sobre uma base que cresce a cada etapa (juro composto).
+function renderProjecaoEtapas(){
+  const box=document.getElementById('projecao-etapas-body'); if(!box) return;
+  const metaPct=parseFloat(ms().metaPercent)||0;
+  const capitalInicialCiclo=state.bancaInicial+(parseFloat(state.bancoCapital)||0);
+  const baseAtual=state.bancaInicioEtapa+(parseFloat(state.bancoCapital)||0);
+  const nFuturas=Math.max(1,Math.min(20,parseInt(document.getElementById('input-proj-etapas').value)||5));
+
   let html='';
-  dias.forEach(d=>{
-    const dataBR=d.data.split('-').reverse().join('/');
-    const positivo=d.lucro>=0;
-    const cor=positivo?'var(--win)':'var(--loss)';
-    const sinal=positivo?'▲':'▼';
-    html+=`<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--surface);border:1px solid var(--border);border-left:4px solid ${cor};border-radius:6px;padding:7px 10px;margin-bottom:4px;">
-      <span style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);">${dataBR}</span>
-      <span style="display:flex;align-items:center;gap:10px;">
-        <span style="font-size:11px;color:var(--muted);font-family:var(--mono);">${fmt(d.saldoIni)} → ${fmt(d.saldoFim)}</span>
-        <span style="font-size:12px;font-weight:800;color:${cor};font-family:var(--mono);">${sinal} ${fmt(d.lucro)} (${d.pct>=0?'+':''}${d.pct.toFixed(1)}%)</span>
-      </span>
+  // Cabeçalho da tabela
+  html+=`<div style="display:grid;grid-template-columns:50px 1fr 1fr 1fr;gap:4px;font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase;padding:0 4px 4px;border-bottom:1px solid var(--border2);margin-bottom:4px;">
+    <span>Etapa</span><span style="text-align:right;">Base</span><span style="text-align:right;">Meta</span><span style="text-align:right;">Cresc. acum.</span>
+  </div>`;
+
+  // Últimas etapas concluídas (até 3, para contexto, mais recentes primeiro)
+  const hist=(ms().historico||[]).slice(-3);
+  hist.forEach(h=>{
+    const cresc=capitalInicialCiclo>0?(((h.bancaPos||h.totalPos||0)/capitalInicialCiclo)-1)*100:0;
+    html+=`<div style="display:grid;grid-template-columns:50px 1fr 1fr 1fr;gap:4px;font-size:11px;padding:4px;background:var(--surface);border-radius:4px;margin-bottom:2px;">
+      <span style="font-weight:700;color:var(--win);">#${h.etapa} ✔</span>
+      <span style="text-align:right;font-family:var(--mono);color:var(--muted);">—</span>
+      <span style="text-align:right;font-family:var(--mono);">${fmt(h.bancaPos||h.totalPos||0)}</span>
+      <span style="text-align:right;font-family:var(--mono);font-weight:700;color:var(--win);">+${cresc.toFixed(1)}%</span>
     </div>`;
   });
+
+  // Etapa atual (em andamento)
+  const metaAtual=baseAtual*(1+metaPct/100);
+  const crescAtual=capitalInicialCiclo>0?((metaAtual/capitalInicialCiclo)-1)*100:0;
+  html+=`<div style="display:grid;grid-template-columns:50px 1fr 1fr 1fr;gap:4px;font-size:11px;padding:4px;background:var(--accent-dim);border:1px solid var(--accent-border);border-radius:4px;margin-bottom:2px;">
+    <span style="font-weight:800;color:var(--accent);">#${ms().etapaAtual} ▶</span>
+    <span style="text-align:right;font-family:var(--mono);">${fmt(baseAtual)}</span>
+    <span style="text-align:right;font-family:var(--mono);font-weight:700;">${fmt(metaAtual)}</span>
+    <span style="text-align:right;font-family:var(--mono);font-weight:700;color:var(--accent);">${crescAtual>=0?'+':''}${crescAtual.toFixed(1)}%</span>
+  </div>`;
+
+  // Próximas N etapas projetadas (geométrico: cada uma parte da meta da anterior)
+  let baseProj=metaAtual;
+  for(let i=1;i<=nFuturas;i++){
+    const metaProj=baseProj*(1+metaPct/100);
+    const crescProj=capitalInicialCiclo>0?((metaProj/capitalInicialCiclo)-1)*100:0;
+    html+=`<div style="display:grid;grid-template-columns:50px 1fr 1fr 1fr;gap:4px;font-size:11px;padding:4px;color:var(--muted);margin-bottom:2px;">
+      <span>#${ms().etapaAtual+i}</span>
+      <span style="text-align:right;font-family:var(--mono);">${fmt(baseProj)}</span>
+      <span style="text-align:right;font-family:var(--mono);">${fmt(metaProj)}</span>
+      <span style="text-align:right;font-family:var(--mono);">${crescProj>=0?'+':''}${crescProj.toFixed(1)}%</span>
+    </div>`;
+    baseProj=metaProj;
+  }
+  box.innerHTML=html;
+}
+
+// ── ESTATÍSTICA POR ETAPA ──
+function renderEstatisticaEtapas(){
+  const box=document.getElementById('estat-etapa-body'); if(!box) return;
+  const hist=ms().historico||[];
+  if(hist.length===0){
+    box.innerHTML='<span style="font-size:11px;color:var(--muted);">Ainda sem etapas concluídas. As estatísticas aparecem aqui conforme você for concluindo etapas.</span>';
+    return;
+  }
+  const total=hist.length;
+  const positivas=hist.filter(h=>h.lucro>=0).length;
+  const negativas=total-positivas;
+  const metaBatida=hist.filter(h=>(h.pct||0)>=100).length;
+  // Etapas por dia: agrupa por dataCalendario
+  const porDia={};
+  hist.forEach(h=>{ const d=h.dataCalendario||'—'; porDia[d]=(porDia[d]||0)+1; });
+  const diasDistintos=Object.keys(porDia).length;
+  const mediaPorDia=diasDistintos>0?(total/diasDistintos):0;
+  const melhorDia=Object.entries(porDia).reduce((a,b)=>b[1]>a[1]?b:a, ['—',0]);
+  // Sequência atual (streak) de etapas positivas ou negativas seguidas, olhando do fim para o começo
+  let streak=0; let streakPositiva=null;
+  for(let i=hist.length-1;i>=0;i--){
+    const pos=hist[i].lucro>=0;
+    if(streakPositiva===null){ streakPositiva=pos; streak=1; }
+    else if(pos===streakPositiva){ streak++; }
+    else break;
+  }
+
+  const html=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:8px;">
+      <div style="font-size:9px;color:var(--muted);text-transform:uppercase;font-weight:700;">Etapas concluídas</div>
+      <div style="font-size:16px;font-weight:800;font-family:var(--mono);">${total}</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:8px;">
+      <div style="font-size:9px;color:var(--muted);text-transform:uppercase;font-weight:700;">Meta batida</div>
+      <div style="font-size:16px;font-weight:800;font-family:var(--mono);color:var(--win);">${metaBatida}/${total} <span style="font-size:11px;color:var(--muted);">(${((metaBatida/total)*100).toFixed(0)}%)</span></div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:8px;">
+      <div style="font-size:9px;color:var(--muted);text-transform:uppercase;font-weight:700;">Positivas × Negativas</div>
+      <div style="font-size:16px;font-weight:800;font-family:var(--mono);"><span style="color:var(--win);">${positivas}</span> × <span style="color:var(--loss);">${negativas}</span></div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:8px;">
+      <div style="font-size:9px;color:var(--muted);text-transform:uppercase;font-weight:700;">Média de etapas/dia</div>
+      <div style="font-size:16px;font-weight:800;font-family:var(--mono);">${mediaPorDia.toFixed(1)}</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:8px;">
+      <div style="font-size:9px;color:var(--muted);text-transform:uppercase;font-weight:700;">Melhor dia</div>
+      <div style="font-size:14px;font-weight:800;font-family:var(--mono);">${melhorDia[1]} etapa${melhorDia[1]===1?'':'s'} <span style="font-size:10px;color:var(--muted);">(${melhorDia[0]!=='—'?melhorDia[0].split('-').reverse().join('/'):'—'})</span></div>
+    </div>
+    <div style="background:var(--surface);border:1px solid ${streakPositiva?'var(--win-border)':'var(--loss-border)'};border-radius:6px;padding:8px;">
+      <div style="font-size:9px;color:var(--muted);text-transform:uppercase;font-weight:700;">Sequência atual</div>
+      <div style="font-size:14px;font-weight:800;font-family:var(--mono);color:${streakPositiva?'var(--win)':'var(--loss)'};">${streak} ${streakPositiva?'▲ positiva(s)':'▼ negativa(s)'}</div>
+    </div>
+  </div>`;
   box.innerHTML=html;
 }
 
 function renderHistorico(){
-  renderDiasFechados();
+  renderEstatisticaEtapas();
+  renderProjecaoEtapas();
   const container=document.getElementById('hist-list-container'); if(!container) return;
   if(!ms().historico||ms().historico.length===0){ container.innerHTML='<div style="padding:24px;text-align:center;color:var(--muted);font-size:13px;">Nenhuma etapa concluída ainda.</div>'; return; }
   let html='';
@@ -3664,18 +3211,12 @@ function renderHistorico(){
   itens.forEach(({h,idx})=>{
     const cor=h.lucro>=0?'var(--win)':'var(--loss)';
     const totalReal=h.totalPos||h.bancaPos||0;
-    const previsto=calcularPrevistoNaData(h.dataCalendario);
-    const varVal=previsto?totalReal-previsto:null;
-    const varPct=previsto?(varVal/previsto)*100:null;
-    const varCor=varVal>=0?'var(--win)':'var(--loss)';
     html+=`<div class="hist-row">
       <div class="hist-left" style="flex:1;">
         <div class="hist-etapa">Etapa #${h.etapa} · ${h.dataCalendario||''}</div>
         <div class="hist-date">${h.data||''}</div>
         <div style="display:flex; gap:8px; margin-top:4px; flex-wrap:wrap;">
           <span style="font-size:10px; color:var(--muted);">Total: <b style="font-family:var(--mono); color:var(--text);">${fmt(totalReal)}</b></span>
-          ${previsto?`<span style="font-size:10px; color:var(--muted);">Prev: <b style="font-family:var(--mono); color:var(--win);">${fmt(previsto)}</b></span>`:''}
-          ${varVal!==null?`<span style="font-size:10px; color:${varCor}; font-weight:700;">${varVal>=0?'+':''}${fmt(varVal)} (${varPct>=0?'+':''}${varPct.toFixed(1)}%)</span>`:''}
         </div>
       </div>
       <div class="hist-right" style="text-align:right; flex-shrink:0;">
@@ -3688,41 +3229,7 @@ function renderHistorico(){
   container.innerHTML=html;
 }
 
-function calcularProjetadoDiario(){
-  const banco=parseFloat(state.bancoCapital)||0;
-  const totalInicial=state.bancaInicial+banco;
-  const metaDiaria=(ms().metaDiaria||1.0)/100;
-  const diasTotal=ms().diasAcomp||30;
-  const baseDate=new Date(ms().dataInicioCiclo+'T00:00:00');
-  let pts=[totalInicial]; let labels=[baseDate.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})];
-  for(let d=1;d<=diasTotal;d++){
-    pts.push(pts[pts.length-1]*(1+metaDiaria));
-    let dt=new Date(baseDate); dt.setDate(dt.getDate()+d);
-    labels.push(dt.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}));
-  }
-  return {pts, labels, baseDate, metaDiaria};
-}
 
-function atualizarIndicadoresGrafico(){
-  const banco=parseFloat(state.bancoCapital)||0;
-  const totalAtual=state.bancaAtual+banco;
-  const {pts, baseDate, metaDiaria}=calcularProjetadoDiario();
-  const hoje=new Date(); hoje.setHours(0,0,0,0);
-  const diffMs=hoje-baseDate; const diffDias=Math.max(0,Math.floor(diffMs/(1000*60*60*24)));
-  const idxPrev=Math.min(diffDias, pts.length-1);
-  const previsto=pts[idxPrev];
-  const variacao=totalAtual-previsto;
-  const variacaoPct=(variacao/previsto)*100;
-  const el=(id,v)=>{ const e=document.getElementById(id); if(e) e.innerText=v; };
-  el('graf-previsto-hoje',fmt(previsto));
-  el('graf-previsto-hoje-pct','Dia '+diffDias+' do ciclo');
-  el('graf-realizado',fmt(totalAtual));
-  el('graf-realizado-pct','Capital atual');
-  const varEl=document.getElementById('graf-variacao');
-  const varPctEl=document.getElementById('graf-variacao-pct');
-  if(varEl){ varEl.innerText=(variacao>=0?'+':'')+fmt(variacao); varEl.style.color=variacao>=0?'var(--win)':'var(--loss)'; }
-  if(varPctEl){ varPctEl.innerText=(variacaoPct>=0?'+':'')+variacaoPct.toFixed(2)+'% vs previsto'; varPctEl.style.color=variacaoPct>=0?'var(--win)':'var(--loss)'; }
-}
 
 function renderizarGrafico(){
   const canvas=document.getElementById('meuGrafico'); if(!canvas) return;
@@ -3731,63 +3238,24 @@ function renderizarGrafico(){
   const banco=parseFloat(state.bancoCapital)||0;
   const totalInicial=state.bancaInicial+banco;
 
-  if(ms().chartMode==='ETAPA'){
-    // Por Etapa — apenas realizado
-    const max=parseInt(document.getElementById('input-etapas').value)||30;
-    let pts=[...state.resultadosReaisGrafico];
-    let labels=pts.map((_,i)=>i===0?'Início':'E'+i);
-    // Linha de meta por etapa
-    let metaPts=[totalInicial];
-    const fc=1+(ms().metaPercent/100);
-    for(let i=1;i<Math.max(pts.length,max);i++) metaPts.push(metaPts[i-1]*fc);
-    while(pts.length<max){ pts.push(null); labels.push('E'+pts.length); }
-    if(chartInstance) chartInstance.destroy();
-    chartInstance=new Chart(ctx,{
-      type:'line',
-      data:{ labels:labels, datasets:[
-        { label:'Realizado', data:pts, borderColor:'#2D7FF9', borderWidth:2, pointRadius:pts.map(p=>p!==null?3:0), pointBackgroundColor:'#2D7FF9', fill:false, tension:0.15, spanGaps:false },
-        { label:'Meta por Etapa', data:metaPts.slice(0,labels.length), borderColor:'#3FB950', borderWidth:1, borderDash:[4,4], pointRadius:0, fill:false, tension:0.1 }
-      ]},
-      options:{ responsive:true, maintainAspectRatio:true, plugins:{ legend:{ labels:{ color:textColor, font:{size:11} } } }, scales:{ x:{ ticks:{ color:textColor, maxTicksLimit:10, font:{size:10} }, grid:{ color:gridColor } }, y:{ ticks:{ color:textColor, font:{size:10}, callback:(v)=>'R$'+v.toLocaleString('pt-BR',{maximumFractionDigits:0}) }, grid:{ color:gridColor } } } }
-    });
-
-  } else {
-    // Por Data — Previsto x Realizado
-    const {pts:prevPts, labels:prevLabels}=calcularProjetadoDiario();
-    // Mapear realizados por data
-    const baseDate=new Date(ms().dataInicioCiclo+'T00:00:00');
-    let realPts=new Array(prevLabels.length).fill(null);
-    realPts[0]=totalInicial; // ponto inicial
-    state.resultadosReaisGrafico.forEach((val,i)=>{
-      if(i===0) return; // pula o inicial
-      // Usar data do histórico se disponível
-      const h=ms().historico[i-1];
-      if(h&&h.dataCalendario){
-        const hDate=new Date(h.dataCalendario+'T00:00:00');
-        const diff=Math.floor((hDate-baseDate)/(1000*60*60*24));
-        if(diff>=0&&diff<realPts.length) realPts[diff]=h.totalPos||val;
-      } else {
-        if(i<realPts.length) realPts[i]=val;
-      }
-    });
-    // Preencher gaps com o valor anterior (carry forward)
-    for(let i=1;i<realPts.length;i++){
-      if(realPts[i]===null&&realPts[i-1]!==null) realPts[i]=realPts[i-1];
-    }
-    // Cortar realPts no último valor real
-    const ultimoReal=state.resultadosReaisGrafico.length;
-    for(let i=ultimoReal;i<realPts.length;i++) realPts[i]=null;
-    if(chartInstance) chartInstance.destroy();
-    chartInstance=new Chart(ctx,{
-      type:'line',
-      data:{ labels:prevLabels, datasets:[
-        { label:'Previsto', data:prevPts, borderColor:'#3FB950', borderWidth:1.5, borderDash:[5,4], pointRadius:0, fill:false, tension:0.1 },
-        { label:'Realizado', data:realPts, borderColor:'#2D7FF9', borderWidth:2.5, pointRadius:realPts.map(p=>p!==null?3:0), pointBackgroundColor:'#2D7FF9', fill:false, tension:0.15, spanGaps:false }
-      ]},
-      options:{ responsive:true, maintainAspectRatio:true, plugins:{ legend:{ labels:{ color:textColor, font:{size:11} } } }, scales:{ x:{ ticks:{ color:textColor, maxTicksLimit:10, font:{size:10} }, grid:{ color:gridColor } }, y:{ ticks:{ color:textColor, font:{size:10}, callback:(v)=>'R$'+v.toLocaleString('pt-BR',{maximumFractionDigits:0}) }, grid:{ color:gridColor } } } }
-    });
-  }
-  atualizarIndicadoresGrafico();
+  // Evolução por Etapa — realizado x meta por etapa
+  const max=parseInt(document.getElementById('input-etapas').value)||30;
+  let pts=[...state.resultadosReaisGrafico];
+  let labels=pts.map((_,i)=>i===0?'Início':'E'+i);
+  // Linha de meta por etapa
+  let metaPts=[totalInicial];
+  const fc=1+(ms().metaPercent/100);
+  for(let i=1;i<Math.max(pts.length,max);i++) metaPts.push(metaPts[i-1]*fc);
+  while(pts.length<max){ pts.push(null); labels.push('E'+pts.length); }
+  if(chartInstance) chartInstance.destroy();
+  chartInstance=new Chart(ctx,{
+    type:'line',
+    data:{ labels:labels, datasets:[
+      { label:'Realizado', data:pts, borderColor:'#2D7FF9', borderWidth:2, pointRadius:pts.map(p=>p!==null?3:0), pointBackgroundColor:'#2D7FF9', fill:false, tension:0.15, spanGaps:false },
+      { label:'Meta por Etapa', data:metaPts.slice(0,labels.length), borderColor:'#3FB950', borderWidth:1, borderDash:[4,4], pointRadius:0, fill:false, tension:0.1 }
+    ]},
+    options:{ responsive:true, maintainAspectRatio:true, plugins:{ legend:{ labels:{ color:textColor, font:{size:11} } } }, scales:{ x:{ ticks:{ color:textColor, maxTicksLimit:10, font:{size:10} }, grid:{ color:gridColor } }, y:{ ticks:{ color:textColor, font:{size:10}, callback:(v)=>'R$'+v.toLocaleString('pt-BR',{maximumFractionDigits:0}) }, grid:{ color:gridColor } } } }
+  });
 }
 
 function atualizarPainelUI(forcarGrafico=false){
@@ -3824,33 +3292,17 @@ function atualizarPainelUI(forcarGrafico=false){
   const faltaOp=Math.max(0,metaVal-(state.bancaAtual+banco));
   const faltaEl=document.getElementById('lbl-falta-op');
   if(faltaEl){ faltaEl.innerText=fmt(faltaOp); faltaEl.style.color=faltaOp<=0?'var(--win)':'var(--accent)'; }
-  // Espelho na aba Lotes
-  // Info-bar da aba Operação: referência é o DIA (coerente com a barra "Avanço do Dia" logo acima)
-  const _baseDiaInfo=(ms().saldoInicioDia!==undefined)?ms().saldoInicioDia:saldoTotalAtual();
-  const _metaDiaPctInfo=parseFloat(ms().metaDiaria)||0;
-  const _metaDiaValInfo=_baseDiaInfo*(1+_metaDiaPctInfo/100);
-  const _atualInfo=saldoTotalAtual();
-  const _faltaDiaInfo=Math.max(0,_metaDiaValInfo-_atualInfo);
-  el('lbl-valor-inicial-lt',fmt(_baseDiaInfo));
-  el('lbl-valor-atual-lt',fmt(_atualInfo));
-  el('lbl-meta-lt',_metaDiaPctInfo>0?fmt(_metaDiaValInfo):'—');
+  // Espelho na aba Lotes — referência é a ETAPA (mesma base da aba Painel)
+  el('lbl-etapa-num-lt','#'+ms().etapaAtual);
+  el('lbl-valor-inicial-lt',fmt(baseEtapa));
+  el('lbl-valor-atual-lt',fmt(state.bancaAtual+(parseFloat(state.bancoCapital)||0)));
+  el('lbl-meta-lt',fmt(metaVal));
   const faltaElLt=document.getElementById('lbl-falta-lt');
-  if(faltaElLt){ faltaElLt.innerText=_metaDiaPctInfo>0?fmt(_faltaDiaInfo):'—'; faltaElLt.style.color=_faltaDiaInfo<=0?'var(--win)':'var(--accent)'; }
+  if(faltaElLt){ faltaElLt.innerText=fmt(faltaOp); faltaElLt.style.color=faltaOp<=0?'var(--win)':'var(--accent)'; }
 
   // ── Barras de progresso da aba Lotes ──
   // Etapa: mesmo cálculo do progresso da etapa (lucro / lucro necessário)
   const pctEtapaLote=lucroNecessario>0?Math.max(0,(lucroEtapa/lucroNecessario)*100):0;
-  // Dia: lucro do dia / meta diária (usa saldoInicioDia marcado pelo verificarMetaDiaria)
-  const pctMetaDia=parseFloat(ms().metaDiaria)||0;
-  const baseDia=(ms().saldoInicioDia!==undefined)?ms().saldoInicioDia:saldoTotalAtual();
-  const alvoDia=baseDia*(pctMetaDia/100);
-  const lucroDiaLote=saldoTotalAtual()-baseDia;
-  const pctDia=alvoDia>0?Math.max(0,(lucroDiaLote/alvoDia)*100):0;
-  const bdL=document.getElementById('prog-dia-bar');
-  if(bdL){ bdL.style.width=Math.min(100,pctDia)+'%'; bdL.style.background=lucroDiaLote<0?'var(--bar-loss)':'var(--bar-win)'; }
-  const bdV=document.getElementById('prog-dia-val');
-  if(bdV) bdV.innerText=(pctMetaDia>0?(pctDia>100?"✔ meta batida ("+pctDia.toFixed(0)+"%)":pctDia.toFixed(1)+"%"):"—");
-
   // Restaura estado recolhido/expandido do painel
   const wrapInfo=document.getElementById('wrap-info-lotes');
   const btnRec=document.getElementById('btn-recolher-info');
@@ -3861,34 +3313,30 @@ function atualizarPainelUI(forcarGrafico=false){
   // Label do modo no chip de etapa
   const chip=document.getElementById('hdr-etapa'); if(chip) chip.parentElement.title='OPERAÇÃO';
 
-  // Card do Painel: PROGRESSO DO DIA (base do dia, meta diária, lucro acumulado do dia)
-  const baseDiaCard=(ms().saldoInicioDia!==undefined)?ms().saldoInicioDia:saldoTotalAtual();
-  const metaDiaPctCard=parseFloat(ms().metaDiaria)||0;
-  const alvoDiaCard=baseDiaCard*(metaDiaPctCard/100);
-  const lucroDiaCard=saldoTotalAtual()-baseDiaCard;
-  el('progresso-inicial',fmt(baseDiaCard));
-  el('progresso-meta-fixa-dinamica',metaDiaPctCard>0?fmt(baseDiaCard+alvoDiaCard):'—');
-  el('progresso-lucro-necessario',metaDiaPctCard>0?fmt(alvoDiaCard):'—');
+  // Card do Painel: PROGRESSO DA ETAPA (base da etapa, meta da etapa, lucro acumulado na etapa)
+  const baseEtapaCard=state.bancaInicioEtapa+(parseFloat(state.bancoCapital)||0);
+  const metaEtapaPctCard=parseFloat(ms().metaPercent)||0;
+  const alvoEtapaCard=baseEtapaCard*(metaEtapaPctCard/100);
+  const lucroEtapaCard=saldoTotalAtual()-baseEtapaCard;
+  el('progresso-inicial',fmt(baseEtapaCard));
+  el('progresso-meta-fixa-dinamica',metaEtapaPctCard>0?fmt(baseEtapaCard+alvoEtapaCard):'—');
+  el('progresso-lucro-necessario',metaEtapaPctCard>0?fmt(alvoEtapaCard):'—');
   const lucroAlcEl=document.getElementById('progresso-lucro-alcancado');
-  if(lucroAlcEl){ lucroAlcEl.innerText=fmt(lucroDiaCard); lucroAlcEl.style.color=lucroDiaCard>=0?'var(--accent)':'var(--loss)'; }
-  let pct=alvoDiaCard>0?(lucroDiaCard/alvoDiaCard)*100:0;
+  if(lucroAlcEl){ lucroAlcEl.innerText=fmt(lucroEtapaCard); lucroAlcEl.style.color=lucroEtapaCard>=0?'var(--accent)':'var(--loss)'; }
+  let pct=alvoEtapaCard>0?(lucroEtapaCard/alvoEtapaCard)*100:0;
   if(pct<0) pct=0;
-  el('progresso-porcentagem-real',metaDiaPctCard>0?pct.toFixed(1)+'%':'—');
-  const bar=document.getElementById('progresso-bar'); if(bar){ bar.style.width=Math.min(100,pct)+'%'; bar.style.background=lucroDiaCard<0?'var(--bar-loss)':''; }
+  el('progresso-porcentagem-real',metaEtapaPctCard>0?pct.toFixed(1)+'%':'—');
+  const bar=document.getElementById('progresso-bar'); if(bar){ bar.style.width=Math.min(100,pct)+'%'; bar.style.background=lucroEtapaCard<0?'var(--bar-loss)':''; }
 
   // O modal de meta da ETAPA usa o progresso da etapa (não o do dia mostrado no card).
   const pctEtapaModal=lucroNecessario>0?(lucroEtapa/lucroNecessario)*100:0;
   if(pctEtapaModal>=100&&!sinalizadoMeta){ sinalizadoMeta=true; document.getElementById('modal-meta').style.display='flex'; }
-  marcarInicioDoDia();
-  setTimeout(mostrarResumoDiaFechado, 400); // oferece a retirada do dia que fechou
-  processarFechamentoDiario();
-  verificarMetaDiaria();
   if(capitalGlobal<=stopVal&&!sinalizadoStop){ sinalizadoStop=true; ms().stopTravado=true; document.getElementById('modal-stop').style.display='flex'; }
 
   const banner=document.getElementById('banner-stop');
   if(banner) banner.style.display=ms().stopTravado?'block':'none';
 
-  aplicarVisibilidadeAbas(); renderLinhas(); renderCards(); renderRodapeSomaLetras(); renderHistorico(); renderEstatisticas(); renderPainelVantagem(); atualizarBotaoModoUI(); atualizarLayoutContadoresPorModo();
+  aplicarVisibilidadeAbas(); renderLinhas(); renderRodapeSomaLetras(); renderHistorico(); renderEstatisticas(); renderPainelVantagem(); atualizarBotaoModoUI(); atualizarLayoutContadoresPorModo();
   if(document.getElementById('grafico')&&document.getElementById('grafico').classList.contains('active')) renderizarGrafico();
 }
 </script>
