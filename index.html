@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#0D1117">
-<title>Método Marantan v39.1</title>
+<title>Método Marantan v39.2</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox=%270 0 48 48%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Crect x=%271.5%27 y=%271.5%27 width=%2745%27 height=%2745%27 rx=%2711%27 fill=%27%23161B22%27 stroke=%27%2330363D%27 stroke-width=%271.5%27/%3E%3Cpath d=%27M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3Cpath d=%27M30.5 9.5 L37.5 9 L36.8 16%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -577,7 +577,7 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v39.1</span></div>
+      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v39.2</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
@@ -739,6 +739,13 @@ tbody tr:last-child td { border-bottom:none; }
         <button id="btn-recolher-info" class="hdr-btn" onclick="toggleInfoLotes()" style="font-size:11px;">▲ Recolher painel</button>
       </div>
       <div id="wrap-info-lotes">
+        <div class="prog-lote-card">
+          <div class="prog-lote-linha">
+            <span class="prog-lote-lbl">📶 Avanço da Etapa</span>
+            <span class="prog-lote-val" id="prog-etapa-val">0%</span>
+          </div>
+          <div class="prog-lote-track"><div class="prog-lote-fill" id="prog-etapa-bar" style="background:var(--bar-win);"></div></div>
+        </div>
         <div class="info-bar" style="margin-bottom:8px; flex-wrap:wrap; gap:6px;">
           <div class="info-item accent">Etapa <b id="lbl-etapa-num-lt">#1</b></div>
           <div class="info-item">Início: <b id="lbl-valor-inicial-lt">R$0,00</b></div>
@@ -3299,6 +3306,12 @@ function atualizarPainelUI(forcarGrafico=false){
   el('lbl-meta-lt',fmt(metaVal));
   const faltaElLt=document.getElementById('lbl-falta-lt');
   if(faltaElLt){ faltaElLt.innerText=fmt(faltaOp); faltaElLt.style.color=faltaOp<=0?'var(--win)':'var(--accent)'; }
+  // Barra horizontal "Avanço da Etapa" (Operação) — mesma base do card do Painel
+  const pctEtapaBar=lucroNecessario>0?Math.max(0,(lucroEtapa/lucroNecessario)*100):0;
+  const bel=document.getElementById('prog-etapa-bar');
+  if(bel){ bel.style.width=Math.min(100,pctEtapaBar)+'%'; bel.style.background=lucroEtapa<0?'var(--bar-loss)':'var(--bar-win)'; }
+  const bev=document.getElementById('prog-etapa-val');
+  if(bev) bev.innerText=(pctEtapaBar>100?'✔ meta batida ('+pctEtapaBar.toFixed(0)+'%)':pctEtapaBar.toFixed(1)+'%');
 
   // ── Barras de progresso da aba Lotes ──
   // Etapa: mesmo cálculo do progresso da etapa (lucro / lucro necessário)
