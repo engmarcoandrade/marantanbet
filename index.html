@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#0D1117">
-<title>Método Marantan v39.2</title>
+<title>Método Marantan v39.3</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox=%270 0 48 48%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Crect x=%271.5%27 y=%271.5%27 width=%2745%27 height=%2745%27 rx=%2711%27 fill=%27%23161B22%27 stroke=%27%2330363D%27 stroke-width=%271.5%27/%3E%3Cpath d=%27M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3Cpath d=%27M30.5 9.5 L37.5 9 L36.8 16%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -275,6 +275,8 @@ input:checked + .slider:before { transform:translateX(12px); }
 .btn-rotate { background:var(--purple-dim); border-color:var(--purple-border); color:var(--purple); }
 .btn-conclude { background:var(--win-dim); border-color:var(--win-border); color:var(--win); }
 .action-row-3 { grid-template-columns:1fr 1fr 1fr; }
+.action-row-4 { grid-template-columns:1fr 1fr 1fr 1fr; }
+@media (max-width:700px){ .action-row-4 { grid-template-columns:1fr 1fr; } }
 .prog-lote-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:8px 12px; margin-bottom:6px; }
 .prog-lote-linha { display:flex; justify-content:space-between; align-items:center; margin-bottom:5px; }
 .prog-lote-lbl { font-size:11px; font-weight:700; color:var(--text); }
@@ -282,7 +284,7 @@ input:checked + .slider:before { transform:translateX(12px); }
 .prog-lote-track { height:10px; background:var(--surface2); border:1px solid var(--border); border-radius:99px; overflow:hidden; }
 .prog-lote-fill { height:100%; width:0%; border-radius:99px; transition:width .4s ease; }
 
-@media (max-width:480px){ .action-row-3 .btn-action { font-size:11px; padding:11px 4px; } }
+@media (max-width:480px){ .action-row-3 .btn-action, .action-row-4 .btn-action { font-size:11px; padding:11px 4px; } }
 .btn-rotate:active, .btn-conclude:active { opacity:.7; }
 .btn-modo { background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:8px 12px; border-radius:var(--radius-sm); font-size:12px; font-weight:600; cursor:pointer; font-family:var(--sans); display:flex; align-items:center; gap:6px; }
 .btn-modo.blindar { border-left:3px solid var(--win); }
@@ -456,6 +458,26 @@ tbody tr:last-child td { border-bottom:none; }
 
 <!-- MODAL AVISO RISCO GALES -->
 
+<div id="modal-reset-todos" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-body">
+      <div class="m-title" style="color:var(--bar-amber);">🛡️ Resetar TODOS os lotes</div>
+      <div id="modal-reset-todos-msg" style="font-size:12px;line-height:1.6;color:var(--text);margin:8px 0 14px;"></div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <button onclick="confirmarResetTodosLotes(true)" style="padding:10px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;text-align:left;">
+          🧹 Resetar tudo e limpar o acompanhamento<br><span style="font-size:10px;color:var(--muted);font-weight:400;">Zera valores E as caixinhas dos Últimos 30 e o contador V/D de todos.</span>
+        </button>
+        <button onclick="confirmarResetTodosLotes(false)" style="padding:10px;background:var(--accent-dim);border:1px solid var(--accent-border);color:var(--accent);border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;text-align:left;">
+          📊 Resetar só os valores, MANTER o acompanhamento<br><span style="font-size:10px;color:var(--muted);font-weight:400;">Zera apostas/risco/gales, mas preserva as caixinhas e o V/D de todos.</span>
+        </button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="fecharModal('modal-reset-todos')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
 <div id="modal-reset-lote" class="modal-overlay">
   <div class="modal-box">
     <div class="modal-body">
@@ -577,7 +599,7 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v39.2</span></div>
+      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v39.3</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
@@ -727,10 +749,11 @@ tbody tr:last-child td { border-bottom:none; }
 
     <div class="bloco-op" data-bloco="acoes">
       <button class="btn-save" style="margin-bottom:8px;" onclick="abrirModalAddLote()">➕ Adicionar lote</button>
-      <div class="action-row action-row-3" style="margin-bottom:8px;">
+      <div class="action-row action-row-4" style="margin-bottom:8px;">
         <button class="btn-action btn-rotate" onclick="solicitarAberturaJanelaRodada()">🔄 Rotação</button>
         <button class="btn-action btn-conclude" onclick="fecharEtapa()">💾 Concluir Etapa</button>
         <button id="btn-toggle-modo-pos-win" class="btn-action btn-modo blindar" style="justify-content:center;" onclick="alternarModoPosWin()">🔒 Pós-Win: Blindar</button>
+        <button class="btn-action" style="background:var(--surface2); border-color:var(--bar-amber); color:var(--bar-amber);" onclick="abrirResetTodosLotes()">🛡️ Resetar todos</button>
       </div>
     </div>
 
@@ -2509,6 +2532,57 @@ function mudarMercadoLote(index,valor){
   seq.winsEtapa=0;
   seq.lossesEtapa=0;
   seq.apostaAtual=sniperArredondarAposta(getValorApostaBaseLote(seq));
+  salvarDadosEAtualizarTudo();
+}
+
+function abrirResetTodosLotes(){
+  const alvos=(ms().sequencias||[]).filter(s=>!s.pausado);
+  if(alvos.length===0){ alert('Não há lotes ativos para resetar.'); return; }
+  const riscoTotal=alvos.reduce((a,s)=>a+(parseFloat(s.perdasAcumuladas)||0),0);
+  const box=document.getElementById('modal-reset-todos-msg');
+  if(box){
+    const pausados=(ms().sequencias||[]).length-alvos.length;
+    box.innerHTML=`Isto vai resetar <b>${alvos.length} lote${alvos.length===1?'':'s'}</b> de uma vez.`+
+      (pausados>0?` <span style="color:var(--muted);">(${pausados} pausado${pausados===1?'':'s'} não ${pausados===1?'será afetado':'serão afetados'}.)</span>`:'')+
+      `<br><br>`+
+      (riscoTotal>0.005
+        ? `<span style="color:var(--loss);font-weight:700;">⚠️ Risco acumulado total: ${fmt(riscoTotal)}.</span> Ao resetar, você <b>assume essa perda</b> — ela deixa de ser perseguida.<br><br>As apostas voltam à base de cada mercado e as sequências recomeçam.<br><br><b>O que fazer com o acompanhamento de vitórias e derrotas?</b>`
+        : `As apostas voltam à base de cada mercado e as sequências recomeçam. (Nenhum lote tem risco acumulado no momento.)<br><br><b>O que fazer com o acompanhamento de vitórias e derrotas?</b>`);
+  }
+  document.getElementById('modal-reset-todos').style.display='flex';
+}
+
+function confirmarResetTodosLotes(limparAcompanhamento){
+  fecharModal('modal-reset-todos');
+  const alvos=(ms().sequencias||[]).filter(s=>!s.pausado);
+  if(alvos.length===0) return;
+  let assumidoTotal=0, resetados=0;
+  alvos.forEach(seq=>{
+    const risco=parseFloat(seq.perdasAcumuladas)||0;
+    assumidoTotal+=risco;
+    resetados++;
+    // Mesmo reset do individual, aplicado a cada lote
+    seq.status='PENDING';
+    seq.apostaAtual=sniperArredondarAposta(getValorApostaBaseLote(seq));
+    seq.perdasAcumuladas=0;
+    seq.streakLoss=0;
+    seq.lucroEtapa=0;
+    seq.metaAvisada=false;
+    const mkt=seq.mercado||seq.letraRandomica;
+    if(ms().letrasMetaCumprida) delete ms().letrasMetaCumprida[mkt];
+    if(limparAcompanhamento){
+      seq.ultimos=[];
+      seq.winsEtapa=0;
+      seq.lossesEtapa=0;
+    }
+  });
+  // Contabiliza a perda assumida uma única vez, com o total
+  if(assumidoTotal>0.005){
+    ms().perdasAssumidasTotal=(ms().perdasAssumidasTotal||0)+assumidoTotal;
+    ms().assumidasCount=(ms().assumidasCount||0)+1;
+    if(!ms().resetsValores) ms().resetsValores=[];
+    ms().resetsValores.push({d:new Date().toISOString(), assumido:assumidoTotal, lotes:resetados, loteId:'TODOS'});
+  }
   salvarDadosEAtualizarTudo();
 }
 
