@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#0D1117">
-<title>Método Marantan v39.3</title>
+<title>Método Marantan v39.5</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox=%270 0 48 48%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Crect x=%271.5%27 y=%271.5%27 width=%2745%27 height=%2745%27 rx=%2711%27 fill=%27%23161B22%27 stroke=%27%2330363D%27 stroke-width=%271.5%27/%3E%3Cpath d=%27M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3Cpath d=%27M30.5 9.5 L37.5 9 L36.8 16%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -199,7 +199,7 @@ header { background:var(--surface); border-bottom:1px solid var(--border); paddi
 .letra-card.linha .card-btns { margin:0; display:flex; gap:5px; }
 .btn-reabrir { width:100%; background:var(--surface2); border:1px solid var(--accent); color:var(--accent); padding:6px; border-radius:var(--radius-sm); font-size:11px; font-weight:700; cursor:pointer; font-family:var(--sans); }
 .btn-reabrir:hover { background:var(--accent-dim); }
-.t-meta-cell { min-width:70px; vertical-align:middle; }
+.t-meta-cell { min-width:96px; vertical-align:middle; }
 .t-mercado-sel { background:var(--surface2); border:1px solid var(--border); color:var(--text); font-family:var(--mono); font-size:11px; font-weight:700; padding:2px 4px; border-radius:4px; cursor:pointer; max-width:66px; }
 .u10-wrap { display:flex; gap:2px; align-items:center; }
 .u10-box { display:flex; align-items:center; gap:4px; }
@@ -599,7 +599,7 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v39.3</span></div>
+      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v39.5</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
@@ -861,10 +861,9 @@ tbody tr:last-child td { border-bottom:none; }
     <div class="cfg-section">
       <div class="cfg-title accent">🎲 Estrutura de Aposta</div>
       <div class="form-row2">
-        <div class="form-group"><label class="cfg-label">Aposta Base (%)</label><input type="number" id="cfg-aposta-base-pct" class="cfg-input" step="0.001" value="1.0"></div>
         <div class="form-group"><label class="cfg-label">Meta por Lote (%)</label><input type="number" id="cfg-meta-global" class="cfg-input" step="0.1" min="0" value="1.0"></div>
       </div>
-      <p style="font-size:10px;color:var(--muted);line-height:1.5;margin:-4px 0 10px;">A <b>meta por lote</b> vale para todos os lotes. Os lotes são criados na aba Operação (botão ➕ Adicionar lote), cada um com seu mercado — e a odd vem do mercado (tabela abaixo).</p>
+      <p style="font-size:10px;color:var(--muted);line-height:1.5;margin:-4px 0 10px;">A <b>meta por lote</b> vale para todos os lotes: é o lucro que cada lote precisa fazer na etapa para cumprir a missão (e disparar o aviso).<br>A <b>aposta base</b> é definida por mercado, na tabela de mercados abaixo (coluna <b>Base%</b>) — junto com a odd de cada um.</p>
       <div class="form-row2">
         <div class="form-group">
           <label class="cfg-label">⚙️ Modo de Progressão</label>
@@ -1065,7 +1064,7 @@ const SHEETS_URLS_FALLBACK = [];
 
 const DEFAULT_MODO = {
   etapaAtual:1,
-  metaPercent:5.0, stopLossPercent:15.0, apostaBasePercent:1.0, loteQtd:500, aleatoriedade:6,
+  metaPercent:5.0, stopLossPercent:15.0, loteQtd:500, aleatoriedade:6,
   dataInicioCiclo:hojeISO, chartMode:"ETAPA",
   oddsPorLetra:{"A":1.80,"B":1.80,"C":1.80,"D":1.80,"E":1.80,"F":1.80},
   anotacoesPorLetra:{"A":"","B":"","C":"","D":"","E":"","F":""},
@@ -1206,7 +1205,7 @@ function aplicarBlindagemDeVariaveis(){
   // Defaults de todos os campos operacionais, agora direto em state
   const m=state;
   if(!Array.isArray(m.mercadosCustom)||m.mercadosCustom.length===0) m.mercadosCustom=JSON.parse(JSON.stringify(MERCADOS_PADRAO));
-    else m.mercadosCustom.forEach(x=>{ if(x.odd===undefined||x.odd===null||x.odd==='') x.odd=2.00; if(x.basePct===undefined||x.basePct===null||x.basePct==='') x.basePct=(parseFloat(m.apostaBasePercent)||1.0); });
+    else m.mercadosCustom.forEach(x=>{ if(x.odd===undefined||x.odd===null||x.odd==='') x.odd=2.00; if(x.basePct===undefined||x.basePct===null||x.basePct==='') x.basePct=1.0; });
     if(Array.isArray(m.sequencias)) m.sequencias.forEach(sq=>{ if(!sq.ultimos) sq.ultimos=[]; if(!sq.mercado) sq.mercado=m.mercadosCustom[0].cod; if(sq.lucroEtapa===undefined) sq.lucroEtapa=0; if(sq.metaAvisada===undefined) sq.metaAvisada=false; if(sq.pausado===undefined) sq.pausado=false; });
   if(!Array.isArray(m.ordemBlocosOperacao)) m.ordemBlocosOperacao=['tabela','acoes','painel','placar'];
   else { m.ordemBlocosOperacao=m.ordemBlocosOperacao.map(b=>b==='notas'?'placar':b); }
@@ -1227,7 +1226,6 @@ function aplicarBlindagemDeVariaveis(){
   if(m.stopLossPercent===undefined) m.stopLossPercent=15.0;
   if(m.vitoriasRodadaVoltarInicial===undefined) m.vitoriasRodadaVoltarInicial=0;
   if(m.loteQtd===undefined) m.loteQtd=500;
-  if(m.apostaBasePercent===undefined) m.apostaBasePercent=1.0;
   if(m.maxGales===undefined) m.maxGales=4;
   if(m.stopLotePercent===undefined) m.stopLotePercent=5.0;
   if(!m.modoProgressao) m.modoProgressao="RECUPERACAO";
@@ -1442,14 +1440,12 @@ function openTab(tabId){
 
 // Base FIXA por etapa: calculada sobre o capital global (plataforma + banco) do INÍCIO da etapa.
 // Só é recalculada ao concluir etapa / salvar config / ajustar banca (quando bancaInicioEtapa muda).
-function getLucroDesejadoBase(){ const capitalInicioEtapa=state.bancaInicioEtapa+(parseFloat(state.bancoCapital)||0); return capitalInicioEtapa*(ms().apostaBasePercent/100); }
 // Versões POR LOTE: o lucro desejado usa a aposta base (%) do MERCADO daquele lote.
 function getLucroDesejadoBaseLote(seq){ const capitalInicioEtapa=state.bancaInicioEtapa+(parseFloat(state.bancoCapital)||0); return capitalInicioEtapa*(basePctDoLote(seq)/100); }
 function getValorApostaBaseLote(seq){ const odd=oddDoLote(seq); return getLucroDesejadoBaseLote(seq)/((odd||2)-1); }
 function getValorApostaBasePorCod(cod){ const capIni=state.bancaInicioEtapa+(parseFloat(state.bancoCapital)||0); const odd=oddDoMercado(cod); return (capIni*(basePctDoMercado(cod)/100))/((odd||2)-1); }
 // Meta agora é GLOBAL (um % para todos os lotes)
 function metaGlobalPct(){ const v=parseFloat(ms().metaGlobalPercent); return isNaN(v)?1.0:v; }
-function getValorApostaBase(odd){ return getLucroDesejadoBase()/((odd||2)-1); }
 // Mercados distintos presentes nos lotes atuais (nova arquitetura)
 function mercadosAtivosDosLotes(){ const set=[]; (ms().sequencias||[]).forEach(sq=>{ const k=sq.mercado||sq.letraRandomica; if(k&&set.indexOf(k)<0) set.push(k); }); return set; }
 function calcularSomaCapitalGeralUI(){ const b=parseFloat(document.getElementById('cfg-banco-capital').value)||0; const c=parseFloat(document.getElementById('cfg-banca-capital').value)||0; document.getElementById('cfg-banca-total-disabled').value=(b+c).toFixed(2); }
@@ -1514,7 +1510,6 @@ function salvarConfiguracoes(){
   ms().stopLossPercent=parseFloat(document.getElementById('cfg-stoploss').value);
   ms().maxGales=parseInt(document.getElementById('cfg-max-gales').value)||4;
   ms().stopLotePercent=parseFloat(document.getElementById('cfg-stop-lote').value)||5.0;
-  ms().apostaBasePercent=parseFloat(document.getElementById('cfg-aposta-base-pct').value);
   const clote=document.getElementById('cfg-lote'); if(clote) ms().loteQtd=parseInt(clote.value)||500;
   ms().modoDistribuicao=document.getElementById('cfg-modo-distribuicao').value;
   ms().modoProgressao=document.getElementById('cfg-modo-progressao').value;
@@ -1567,9 +1562,11 @@ const MERCADOS_PADRAO=[
 // Retorna a lista de mercados vigente (do estado, ou o padrão)
 function getMercados(){ const m=ms().mercadosCustom; return (Array.isArray(m)&&m.length>0)?m : MERCADOS_PADRAO; }
 function labelMercado(cod){ const m=getMercados().find(x=>x.cod===cod); return m?(m.cod+" · "+m.nome):cod; }
-// Aposta base (%) de um mercado. Se não definida, usa a global (apostaBasePercent) como fallback.
-function basePctDoMercado(cod){ const m=getMercados().find(x=>x.cod===cod); const v=m&&m.basePct!==undefined?parseFloat(m.basePct):NaN; return isNaN(v)?(parseFloat(ms().apostaBasePercent)||1.0):v; }
-function basePctDoLote(seq){ if(!seq) return parseFloat(ms().apostaBasePercent)||1.0; return basePctDoMercado(seq.mercado||(getMercados()[0]?getMercados()[0].cod:'V1')); }
+// Aposta base (%) de um mercado — definida na tabela de mercados (coluna Base%).
+// BASE_PCT_PADRAO é só a rede de segurança para um mercado sem valor definido.
+const BASE_PCT_PADRAO=1.0;
+function basePctDoMercado(cod){ const m=getMercados().find(x=>x.cod===cod); const v=m&&m.basePct!==undefined?parseFloat(m.basePct):NaN; return isNaN(v)?BASE_PCT_PADRAO:v; }
+function basePctDoLote(seq){ if(!seq) return BASE_PCT_PADRAO; return basePctDoMercado(seq.mercado||(getMercados()[0]?getMercados()[0].cod:'V1')); }
 function oddDoMercado(cod){ const m=getMercados().find(x=>x.cod===cod); return m&&m.odd?parseFloat(m.odd):2.00; }
 // Odd de um lote = odd do mercado dele (a odd deixou de ser "por letra")
 function oddDoLote(seq){ if(!seq) return 2.00; return oddDoMercado(seq.mercado||(getMercados()[0]?getMercados()[0].cod:'V1')); }
@@ -1682,7 +1679,6 @@ function processarWinSeq(seq,odd){
     seq.apostaAtual=sniperArredondarAposta(getValorApostaBaseLote(seq));
   }
   // Verifica a meta agregada do mercado (para estatística) e a meta do LOTE (para blindagem individual)
-  verificarMetaLetra(lw);
   const loteBateuMeta=verificarMetaLote(seq);
   if(ms().modoPosWin==="BLINDAR"){
     const temMeta=metaGlobalPct()>0;
@@ -1748,28 +1744,6 @@ function verificarMetaLote(seq){
   return false;
 }
 
-function verificarMetaLetra(l){
-  if(!ms().letrasMetaCumprida) ms().letrasMetaCumprida={};
-  if(ms().letrasMetaCumprida[l]) return; // avisa uma única vez por etapa
-  const metaPct=metaGlobalPct();
-  if(metaPct<=0) return; // meta 0 = desativada para essa letra
-  const banco=parseFloat(state.bancoCapital)||0;
-  const baseCapital=state.bancaInicioEtapa+banco;
-  const alvo=baseCapital*(metaPct/100);
-  const lucro=(ms().lucroLetraEtapa&&ms().lucroLetraEtapa[l])||0;
-  if(lucro>=alvo){
-    ms().letrasMetaCumprida[l]=true;
-    // Missão da letra cumprida: blinda TODOS os lotes ativos dessa letra (não só o que venceu),
-    // desde que o modo pós-vitória seja BLINDAR. Assim a letra sai de "Pendentes" por inteiro.
-    let blindados=0;
-    if(ms().modoPosWin==="BLINDAR"){
-      ms().sequencias.forEach(s=>{ if(s.letraRandomica===l&&s.status!=='FINISHED'){ s.status='FINISHED'; blindados++; } });
-    }
-    const msg=document.getElementById('modal-meta-letra-msg');
-    if(msg) msg.innerHTML=`A letra <b>${l}</b> cumpriu a missão! 🎯<br><br>Lucro líquido acumulado na etapa: <b style="color:var(--win);">${fmt(lucro)}</b><br>Meta configurada: <b>${metaPct.toFixed(2)}%</b> sobre o capital do início da etapa (${fmt(alvo)}).<br><br>${blindados>0?`<b>${blindados} lote(s)</b> dessa letra foram <b>🔒 blindados</b> — a letra sai de "Pendentes".`:'Modo <b>Resetar</b> ativo: os lotes seguem operando. Blinde manualmente se quiser proteger o resultado.'}`;
-    const modal=document.getElementById('modal-meta-letra'); if(modal) modal.style.display='flex';
-  }
-}
 
 function processarPerdaSeq(seq,odd){
   seq.lossesEtapa++;
@@ -2819,8 +2793,11 @@ function renderLinhas(){
         const fill=negativo
           ? `<div style="height:100%;width:8%;background:var(--bar-loss);border-radius:99px;"></div>`
           : `<div style="height:100%;width:${prog}%;background:${cor};border-radius:99px;transition:width .3s;"></div>`;
-        return `<div style="min-width:66px;">
-          <div style="display:flex;justify-content:flex-end;font-size:9px;font-family:var(--mono);font-weight:700;color:${corTexto};margin-bottom:2px;">${lbl}</div>
+        return `<div style="min-width:92px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;font-size:9px;font-family:var(--mono);font-weight:700;margin-bottom:2px;">
+            <span style="color:var(--muted);" title="Meta configurada por lote">🎯 ${mp.toFixed(mp % 1 === 0 ? 0 : 2)}%</span>
+            <span style="color:${corTexto};">${lbl}</span>
+          </div>
           <div style="height:11px;background:var(--surface2);border:1px solid ${negativo?'var(--bar-loss)':'var(--border)'};border-radius:99px;overflow:hidden;">
             ${fill}
           </div>
@@ -2870,7 +2847,6 @@ function preencherCamposConfig(){ if(typeof aplicarVisibilidadeAbas==="function"
   document.getElementById('cfg-stoploss').value=ms().stopLossPercent;
   document.getElementById('cfg-max-gales').value=ms().maxGales||4;
   document.getElementById('cfg-stop-lote').value=ms().stopLotePercent||5.0;
-  document.getElementById('cfg-aposta-base-pct').value=ms().apostaBasePercent;
   const clote2=document.getElementById('cfg-lote'); if(clote2) clote2.value=ms().loteQtd||500;
   const mg=document.getElementById('cfg-meta-global'); if(mg) mg.value=metaGlobalPct();
   document.getElementById('cfg-data-inicio').value=ms().dataInicioCiclo||hojeISO;
