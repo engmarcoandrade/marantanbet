@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#0D1117">
-<title>Método Marantan v39.5</title>
+<title>Método Marantan v40.1</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox=%270 0 48 48%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Crect x=%271.5%27 y=%271.5%27 width=%2745%27 height=%2745%27 rx=%2711%27 fill=%27%23161B22%27 stroke=%27%2330363D%27 stroke-width=%271.5%27/%3E%3Cpath d=%27M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3Cpath d=%27M30.5 9.5 L37.5 9 L36.8 16%27 fill=%27none%27 stroke=%27%232D7FF9%27 stroke-width=%273.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -458,6 +458,18 @@ tbody tr:last-child td { border-bottom:none; }
 
 <!-- MODAL AVISO RISCO GALES -->
 
+<div id="modal-abertura-etapa" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-body">
+      <div class="m-title" style="color:var(--accent);">📶 Situação da Etapa <span id="abertura-etapa-num"></span></div>
+      <div id="abertura-etapa-corpo" style="margin-top:10px;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-confirm" onclick="fecharModal('modal-abertura-etapa')">Vamos lá</button>
+    </div>
+  </div>
+</div>
+
 <div id="modal-reset-todos" class="modal-overlay">
   <div class="modal-box">
     <div class="modal-body">
@@ -543,6 +555,9 @@ tbody tr:last-child td { border-bottom:none; }
       <div class="m-title" style="color:var(--accent);">➕ Adicionar Lote</div>
       <p style="font-size:12px;color:var(--text);margin:8px 0 4px;">Mercado do lote:</p>
       <select id="sel-add-lote-mercado" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:9px;border-radius:var(--radius-sm);font-size:13px;font-family:var(--sans);"></select>
+      <p style="font-size:12px;color:var(--text);margin:12px 0 4px;">Bloco (grupo de lotes):</p>
+      <select id="sel-add-lote-bloco" onchange="onMudarBlocoAddLote()" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:9px;border-radius:var(--radius-sm);font-size:13px;font-family:var(--sans);"></select>
+      <input type="text" id="inp-add-lote-bloco-novo" placeholder="Nome do novo bloco" style="display:none;width:100%;margin-top:6px;background:var(--surface2);border:1px solid var(--accent);color:var(--text);padding:9px;border-radius:var(--radius-sm);font-size:13px;font-family:var(--sans);">
       <p style="font-size:12px;color:var(--text);margin:12px 0 4px;">Quantidade:</p>
       <input type="number" id="inp-add-lote-qtd" value="1" min="1" max="200" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:9px;border-radius:var(--radius-sm);font-size:13px;font-family:var(--mono);">
       <p style="font-size:10px;color:var(--muted);margin-top:8px;line-height:1.5;">A odd é a do mercado (definida na Config). Você pode ter vários lotes do mesmo mercado.</p>
@@ -599,7 +614,7 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v39.5</span></div>
+      <div class="app-logo">MARAN<span>TAN</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v40.1</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
@@ -927,6 +942,13 @@ tbody tr:last-child td { border-bottom:none; }
     <!-- SEGURANÇA / SENHA -->
     <div class="cfg-section" style="margin-top:14px;">
       <div class="cfg-title" style="color:var(--muted);">🔒 Senha de acesso</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px;margin-bottom:10px;">
+        <div>
+          <div id="lbl-senha-estado" style="font-size:12px;font-weight:700;color:var(--text);">Pedir senha ao abrir</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px;">Desligue se não quiser digitar a senha toda vez.</div>
+        </div>
+        <button id="btn-toggle-senha" onclick="alternarSenhaAtiva()" style="padding:8px 14px;border-radius:var(--radius-sm);font-size:12px;font-weight:800;cursor:pointer;font-family:var(--sans);white-space:nowrap;border:1px solid var(--border);background:var(--surface);color:var(--text);">—</button>
+      </div>
       <p style="font-size:11px;color:var(--muted);line-height:1.5;margin:4px 0 10px;">A senha é pedida toda vez que o app abre e fica sincronizada na nuvem (vale em todos os dispositivos). Padrão: <b>123</b>.</p>
       <div style="display:flex;flex-direction:column;gap:8px;max-width:320px;">
         <input id="cfg-senha-atual" type="password" placeholder="Senha atual" class="cfg-input" style="letter-spacing:2px;">
@@ -1055,8 +1077,20 @@ const hojeISO = new Date().toISOString().split('T')[0];
 
 function alternarTema(){
   const isLight = document.body.classList.toggle('light-mode');
-  document.getElementById('btn-tema').innerText = isLight ? '☀️' : '🌙';
-  document.querySelector('meta[name="theme-color"]').setAttribute('content', isLight ? '#F6F8FA' : '#0D1117');
+  aplicarVisualTema(isLight);
+  try{ localStorage.setItem('marantanTema', isLight?'claro':'escuro'); }catch(e){}
+}
+function aplicarVisualTema(isLight){
+  const b=document.getElementById('btn-tema'); if(b) b.innerText = isLight ? '☀️' : '🌙';
+  const mt=document.querySelector('meta[name="theme-color"]'); if(mt) mt.setAttribute('content', isLight ? '#F6F8FA' : '#0D1117');
+}
+// Aplica o tema salvo assim que possível. Padrão: CLARO (modo diurno).
+function inicializarTema(){
+  let pref='claro';
+  try{ const p=localStorage.getItem('marantanTema'); if(p==='escuro'||p==='claro') pref=p; }catch(e){}
+  const isLight=(pref==='claro');
+  document.body.classList.toggle('light-mode', isLight);
+  aplicarVisualTema(isLight);
 }
 let SHEETS_URL_MEMORIA = "https://script.google.com/macros/s/AKfycbwPoTDB8EaJ_di4urj_p6vZ_A-BRWxDf4MrupMgJa38vV-VN_eTQIVNQLQ8F5a2-g-k8Q/exec";
 // URLs de implantações anteriores — tentadas como fallback se a principal falhar
@@ -1070,7 +1104,7 @@ const DEFAULT_MODO = {
   anotacoesPorLetra:{"A":"","B":"","C":"","D":"","E":"","F":""},
   letrasBloqueadasRodada:{},
   modoPosWin:"BLINDAR", modoDistribuicao:"PROPORCIONAL", marantanLancamentosRodada:{},
-  sequencias:[], historico:[], senhaApp:"123", vitoriasRodadaVoltarInicial:0,
+  sequencias:[], historico:[], blocosLotes:[], senhaApp:"123", senhaAtiva:true, vitoriasRodadaVoltarInicial:0,
   maxGales:4, stopLotePercent:5.0,
   modoProgressao:"RECUPERACAO", incrFixoPercent:10.0, gatilhoIncremento:"SEMPRE", vistaOperacao:"cards",
   metaPorLetra:{"A":1.0,"B":1.0,"C":1.0,"D":1.0,"E":1.0,"F":1.0}, metaGlobalPercent:1.0, lucroLetraEtapa:{}, letrasMetaCumprida:{},
@@ -1218,6 +1252,13 @@ function aplicarBlindagemDeVariaveis(){
   if(!m.modoDistribuicao) m.modoDistribuicao="PROPORCIONAL";
   if(!m.dataInicioCiclo) m.dataInicioCiclo=hojeISO;
   if(m.senhaApp===undefined||m.senhaApp===null||m.senhaApp==="") m.senhaApp="123";
+  if(m.senhaAtiva===undefined) m.senhaAtiva=true;
+  // Blocos de lotes: todo lote pertence a um bloco. Lotes antigos vão para o bloco "Geral".
+  if(!Array.isArray(m.blocosLotes)) m.blocosLotes=[];
+  if(m.blocosLotes.length===0) m.blocosLotes=[{id:'geral', nome:'Geral', recolhido:false}];
+  (m.sequencias||[]).forEach(sq=>{
+    if(!sq.blocoId || !m.blocosLotes.some(b=>b.id===sq.blocoId)) sq.blocoId=m.blocosLotes[0].id;
+  });
   if(!m.historico) m.historico=[];
   if(!m.aleatoriedade) m.aleatoriedade=6;
   if(!m.sequencias) m.sequencias=[];
@@ -1319,8 +1360,15 @@ async function carregarDaNuvem(){
 }
 
 document.addEventListener('DOMContentLoaded',()=>{
-  // Fonte de verdade única: Google Sheets — limpar qualquer cache antigo
-  try { localStorage.clear(); } catch(e) {}
+  // Fonte de verdade única: Google Sheets — limpar cache antigo, PRESERVANDO preferências locais do dispositivo
+  try {
+    const temaPref=localStorage.getItem('marantanTema');
+    const placarBkp=localStorage.getItem('marantanPlacarOdds');
+    localStorage.clear();
+    if(temaPref) localStorage.setItem('marantanTema', temaPref);
+    if(placarBkp) localStorage.setItem('marantanPlacarOdds', placarBkp);
+  } catch(e) {}
+  inicializarTema();   // aplica o tema antes de desenhar (padrão: diurno)
   inicializarApp();
 });
 
@@ -1343,6 +1391,7 @@ async function inicializarApp(){
       alert('⚠️ Não foi possível conectar ao Google Sheets.\n\nMotivo: '+motivo+'\n\nVerifique a URL na aba Config e use "Testar conexão".');
     }
     mostrarBloqueio(); // pede a senha após carregar o estado (com a senha sincronizada)
+    agendarResumoAbertura();
   } else {
     // Sem URL configurada — tela vazia aguardando configuração
     state = JSON.parse(JSON.stringify(DEFAULT_STATE));
@@ -1350,6 +1399,7 @@ async function inicializarApp(){
     preencherCamposConfig(); ajustarCamposDeOddsMenu(true); atualizarPainelUI(true);
     atualizarStatusSheets('err');
     mostrarBloqueio();
+    agendarResumoAbertura();
   }
   calcularSomaCapitalGeralUI();
 }
@@ -1358,6 +1408,8 @@ async function inicializarApp(){
 // ── BLOQUEIO POR SENHA ──
 let __appDesbloqueado=false;
 function mostrarBloqueio(){
+  // Interruptor da Config: se a senha estiver desligada, entra direto.
+  if(ms().senhaAtiva===false){ __appDesbloqueado=true; const t=document.getElementById('tela-bloqueio'); if(t) t.style.display='none'; return; }
   const tela=document.getElementById('tela-bloqueio');
   if(!tela) return;
   tela.style.display='flex';
@@ -1377,6 +1429,88 @@ function verificarSenhaBloqueio(){
     if(inp){ inp.value=''; inp.focus(); }
   }
 }
+// Aguarda o desbloqueio (se houver senha) antes de mostrar o resumo de abertura
+function agendarResumoAbertura(){
+  let tentativas=0;
+  const tenta=()=>{
+    tentativas++;
+    if(__appDesbloqueado){ mostrarResumoAberturaEtapa(); return; }
+    if(tentativas<600) setTimeout(tenta,500); // espera o usuário digitar a senha
+  };
+  setTimeout(tenta,500);
+}
+
+// Popup de abertura: resumo dos números da etapa em andamento
+function mostrarResumoAberturaEtapa(){
+  const banco=parseFloat(state.bancoCapital)||0;
+  const base=state.bancaInicioEtapa+banco;
+  const atual=state.bancaAtual+banco;
+  const metaPct=parseFloat(ms().metaPercent)||0;
+  const metaVal=base*(1+metaPct/100);
+  const lucroNecessario=base*(metaPct/100);
+  const lucroAtual=atual-base;
+  const faltaValor=Math.max(0,metaVal-atual);
+  const faltaPct=lucroNecessario>0?Math.max(0,100-((lucroAtual/lucroNecessario)*100)):0;
+  const progresso=lucroNecessario>0?(lucroAtual/lucroNecessario)*100:0;
+  const bateu=faltaValor<=0.005;
+
+  const numEl=document.getElementById('abertura-etapa-num'); if(numEl) numEl.innerText='#'+ms().etapaAtual;
+  const corpo=document.getElementById('abertura-etapa-corpo'); if(!corpo) return;
+
+  const corLucro=lucroAtual>=0?'var(--win)':'var(--loss)';
+  const linha=(rot,val,cor,forte)=>`<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border2);">
+      <span style="font-size:12px;color:var(--muted);">${rot}</span>
+      <b style="font-family:var(--mono);font-size:${forte?'15px':'13px'};color:${cor||'var(--text)'};">${val}</b>
+    </div>`;
+
+  let html='';
+  html+=linha('Valor inicial da etapa', fmt(base));
+  html+=linha('Valor atual', fmt(atual), corLucro, true);
+  html+=linha('Meta da etapa ('+metaPct+'%)', fmt(metaVal), 'var(--win)');
+  if(bateu){
+    html+=`<div style="margin-top:10px;background:var(--surface2);border:1px solid var(--win);border-radius:var(--radius-sm);padding:10px;text-align:center;">
+      <div style="font-size:14px;font-weight:800;color:var(--win);">✔ Meta já alcançada</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:3px;">Lucro de ${fmt(lucroAtual)} (${progresso.toFixed(1)}% da meta).</div>
+    </div>`;
+  } else {
+    html+=linha('Falta em valor', fmt(faltaValor), 'var(--accent)', true);
+    html+=linha('Falta da meta', faltaPct.toFixed(1)+'%', 'var(--accent)');
+    // barra de progresso
+    const prog=Math.max(0,Math.min(100,progresso));
+    html+=`<div style="margin-top:10px;">
+      <div style="display:flex;justify-content:space-between;font-size:10px;font-family:var(--mono);font-weight:700;margin-bottom:3px;">
+        <span style="color:var(--muted);">🎯 ${metaPct}%</span>
+        <span style="color:${progresso<0?'var(--loss)':'var(--text)'};">${progresso<0?'▼ ':''}${progresso.toFixed(1)}%</span>
+      </div>
+      <div style="height:12px;background:var(--surface2);border:1px solid ${progresso<0?'var(--bar-loss)':'var(--border)'};border-radius:99px;overflow:hidden;">
+        <div style="height:100%;width:${progresso<0?8:prog}%;background:${progresso<0?'var(--bar-loss)':'var(--bar-win)'};border-radius:99px;"></div>
+      </div>
+    </div>`;
+  }
+  corpo.innerHTML=html;
+  document.getElementById('modal-abertura-etapa').style.display='flex';
+}
+
+// Liga/desliga a exigência de senha ao abrir (sincronizado na nuvem)
+function alternarSenhaAtiva(){
+  const novo = !(ms().senhaAtiva!==false); // inverte o estado atual
+  ms().senhaAtiva = novo;
+  atualizarBotaoSenhaUI();
+  salvarDadosEAtualizarTudo();
+}
+function atualizarBotaoSenhaUI(){
+  const ativo = (ms().senhaAtiva!==false);
+  const btn=document.getElementById('btn-toggle-senha');
+  const lbl=document.getElementById('lbl-senha-estado');
+  if(btn){
+    btn.innerText = ativo ? '🔒 LIGADO' : '🔓 DESLIGADO';
+    btn.style.background = ativo ? 'var(--win-dim, var(--surface))' : 'var(--surface)';
+    btn.style.borderColor = ativo ? 'var(--win)' : 'var(--border)';
+    btn.style.color = ativo ? 'var(--win)' : 'var(--muted)';
+  }
+  if(lbl) lbl.innerText = ativo ? 'Pedir senha ao abrir' : 'Senha desativada';
+}
+
 // Troca de senha (Config)
 function alterarSenhaApp(){
   const atual=document.getElementById('cfg-senha-atual');
@@ -1905,9 +2039,57 @@ function proximoIdLote(){
   let max=0; seqs.forEach(s=>{ if(s.id>max) max=s.id; });
   return max+1;
 }
-function adicionarLote(mercadoCod){
+// ── BLOCOS DE LOTES ──
+function getBlocos(){
+  if(!Array.isArray(ms().blocosLotes) || ms().blocosLotes.length===0){
+    ms().blocosLotes=[{id:'geral', nome:'Geral', recolhido:false}];
+  }
+  return ms().blocosLotes;
+}
+function novoIdBloco(){ return 'b'+Date.now().toString(36)+Math.floor(Math.random()*1000); }
+
+function criarBloco(nome){
+  const n=(nome||'').trim() || ('Bloco '+(getBlocos().length+1));
+  const b={id:novoIdBloco(), nome:n, recolhido:false};
+  getBlocos().push(b);
+  return b;
+}
+
+function alternarRecolherBloco(id){
+  const b=getBlocos().find(x=>x.id===id); if(!b) return;
+  b.recolhido=!b.recolhido;
+  salvarDadosEAtualizarTudo();
+}
+
+function renomearBloco(id){
+  const b=getBlocos().find(x=>x.id===id); if(!b) return;
+  const novo=prompt('Nome do bloco:', b.nome);
+  if(novo===null) return;
+  const nome=novo.trim();
+  if(!nome){ alert('O nome não pode ficar vazio.'); return; }
+  b.nome=nome;
+  salvarDadosEAtualizarTudo();
+}
+
+function excluirBloco(id){
+  const blocos=getBlocos();
+  if(blocos.length<=1){ alert('É preciso ter pelo menos um bloco.'); return; }
+  const b=blocos.find(x=>x.id===id); if(!b) return;
+  const lotesDentro=(ms().sequencias||[]).filter(s=>s.blocoId===id);
+  const destino=blocos.find(x=>x.id!==id);
+  const msg=lotesDentro.length>0
+    ? `Excluir o bloco "${b.nome}"?\n\nOs ${lotesDentro.length} lote(s) dele serão movidos para "${destino.nome}" (nenhum lote é apagado).`
+    : `Excluir o bloco "${b.nome}"?`;
+  if(!confirm(msg)) return;
+  lotesDentro.forEach(s=>{ s.blocoId=destino.id; });
+  ms().blocosLotes=blocos.filter(x=>x.id!==id);
+  salvarDadosEAtualizarTudo();
+}
+
+function adicionarLote(mercadoCod, blocoId){
   if(!ms().sequencias) ms().sequencias=[];
   const cod=mercadoCod || (getMercados()[0]?getMercados()[0].cod:'V1');
+  const bloco=blocoId||getBlocos()[0].id;
   const odd=oddDoMercado(cod);
   const capIni=state.bancaInicioEtapa+(parseFloat(state.bancoCapital)||0);
   const apostaBaseInicial=(capIni*(basePctDoMercado(cod)/100))/((odd||2)-1);
@@ -1917,6 +2099,7 @@ function adicionarLote(mercadoCod){
     streakLoss:0,
     letraRandomica: cod,   // rótulo de agrupamento = o próprio mercado
     mercado: cod,
+    blocoId: bloco,
     winsEtapa:0, lossesEtapa:0,
     perdasAcumuladas:0,
     lucroEtapa:0,
@@ -1933,15 +2116,43 @@ function abrirModalAddLote(){
     getMercados().forEach(m=>{ opts+=`<option value="${m.cod}">${m.cod} · ${m.nome} (@${(parseFloat(m.odd)||2).toFixed(2)})</option>`; });
     sel.innerHTML=opts;
   }
+  const selB=document.getElementById('sel-add-lote-bloco');
+  if(selB){
+    let optsB='';
+    getBlocos().forEach(b=>{ optsB+=`<option value="${b.id}">${b.nome}</option>`; });
+    optsB+='<option value="__novo__">➕ Criar novo bloco…</option>';
+    selB.innerHTML=optsB;
+  }
+  const novoEl=document.getElementById('inp-add-lote-bloco-novo');
+  if(novoEl){ novoEl.style.display='none'; novoEl.value=''; }
   document.getElementById('modal-add-lote').style.display='flex';
+}
+
+function onMudarBlocoAddLote(){
+  const selB=document.getElementById('sel-add-lote-bloco');
+  const novoEl=document.getElementById('inp-add-lote-bloco-novo');
+  if(!selB||!novoEl) return;
+  const criando=(selB.value==='__novo__');
+  novoEl.style.display=criando?'block':'none';
+  if(criando) setTimeout(()=>novoEl.focus(),50);
 }
 function confirmarAddLote(){
   const sel=document.getElementById('sel-add-lote-mercado');
   const qtdEl=document.getElementById('inp-add-lote-qtd');
+  const selB=document.getElementById('sel-add-lote-bloco');
+  const novoEl=document.getElementById('inp-add-lote-bloco-novo');
   const cod=sel?sel.value:null;
   let qtd=qtdEl?parseInt(qtdEl.value):1;
   if(isNaN(qtd)||qtd<1) qtd=1; if(qtd>200) qtd=200;
-  for(let k=0;k<qtd;k++) adicionarLote(cod);
+  // Resolve o bloco: existente ou cria um novo com o nome digitado
+  let blocoId=selB?selB.value:null;
+  if(blocoId==='__novo__'){
+    const nome=(novoEl&&novoEl.value||'').trim();
+    if(!nome){ alert('Digite o nome do novo bloco.'); if(novoEl) novoEl.focus(); return; }
+    blocoId=criarBloco(nome).id;
+  }
+  if(!blocoId) blocoId=getBlocos()[0].id;
+  for(let k=0;k<qtd;k++) adicionarLote(cod, blocoId);
   fecharModal('modal-add-lote');
 }
 function removerLote(index){
@@ -2759,7 +2970,32 @@ function renderLinhas(){
   lista.sort((a,b)=>(a.seq.pausado?1:0)-(b.seq.pausado?1:0));
 
   let html='';
-  lista.forEach(({seq,i})=>{
+  // Agrupa os lotes por BLOCO. Cada bloco vira um cabeçalho recolhível.
+  const blocos=getBlocos();
+  const NCOLS=13; // colunas da tabela (para o colspan do cabeçalho do bloco)
+  blocos.forEach(bloco=>{
+    const doBloco=lista.filter(({seq})=>(seq.blocoId||blocos[0].id)===bloco.id);
+    // Não desenha bloco vazio quando há filtro ativo, para não poluir
+    if(doBloco.length===0 && (filtroAtualExibicao!=='all' || Array.isArray(ms().lotesVisiveis))) return;
+    const recolhido=!!bloco.recolhido;
+    html+=`<tr class="bloco-header-row">
+      <td colspan="${NCOLS}" style="padding:0;">
+        <div style="display:flex;align-items:center;gap:8px;background:var(--surface2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:7px 10px;">
+          <button onclick="alternarRecolherBloco('${bloco.id}')" title="${recolhido?'Expandir':'Recolher'} este bloco" style="background:var(--surface);border:1px solid var(--border);color:var(--text);width:24px;height:24px;border-radius:5px;cursor:pointer;font-size:11px;font-weight:800;padding:0;flex:none;">${recolhido?'▶':'▼'}</button>
+          <span style="font-size:12px;font-weight:800;color:var(--text);">${bloco.nome}</span>
+          <span style="font-size:10px;color:var(--muted);font-family:var(--mono);">(${doBloco.length} lote${doBloco.length===1?'':'s'})</span>
+          <span style="flex:1;"></span>
+          <button onclick="renomearBloco('${bloco.id}')" title="Renomear bloco" style="background:var(--surface);border:1px solid var(--border);color:var(--muted);padding:3px 7px;border-radius:4px;cursor:pointer;font-size:10px;font-weight:700;">✏️</button>
+          <button onclick="excluirBloco('${bloco.id}')" title="Excluir bloco (os lotes vão para outro)" style="background:var(--surface);border:1px solid var(--border);color:var(--muted);padding:3px 7px;border-radius:4px;cursor:pointer;font-size:10px;font-weight:700;">🗑️</button>
+        </div>
+      </td>
+    </tr>`;
+    if(recolhido) return; // recolhido: não desenha as linhas dos lotes
+    if(doBloco.length===0){
+      html+=`<tr><td colspan="${NCOLS}" style="padding:10px;text-align:center;color:var(--muted);font-size:11px;">Nenhum lote neste bloco ainda.</td></tr>`;
+      return;
+    }
+    doBloco.forEach(({seq,i})=>{
     const l=seq.letraRandomica; const odd=oddDoLote(seq);
     const rowCls=(seq.pausado?'row-paused ':'')+(seq.status==='FINISHED'?'row-finished':(seq.perdasAcumuladas>0?'row-loss':''));
     const streak=seq.streakLoss||0;
@@ -2824,6 +3060,7 @@ function renderLinhas(){
         <button class="tbl-btn-del" onclick="removerLote(${i})" title="Remover este lote">✕</button>
       </div></td>
     </tr>`;
+    });
   });
   tbody.innerHTML=html;
 }
@@ -2840,7 +3077,7 @@ function renderRodapeSomaLetras(){
 }
 
 
-function preencherCamposConfig(){ if(typeof aplicarVisibilidadeAbas==="function") aplicarVisibilidadeAbas(); if(typeof renderEditorMercados==="function") renderEditorMercados();
+function preencherCamposConfig(){ if(typeof aplicarVisibilidadeAbas==="function") aplicarVisibilidadeAbas(); if(typeof renderEditorMercados==="function") renderEditorMercados(); if(typeof atualizarBotaoSenhaUI==="function") atualizarBotaoSenhaUI();
   document.getElementById('cfg-banco-capital').value=(state.bancoCapital||0).toFixed(2);
   document.getElementById('cfg-banca-capital').value=state.bancaAtual.toFixed(2);
   document.getElementById('cfg-meta').value=ms().metaPercent;
