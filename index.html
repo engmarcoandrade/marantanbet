@@ -222,6 +222,7 @@ header { background:var(--surface); border-bottom:1px solid var(--border); paddi
 .u10-loss { background:transparent; color:var(--bar-loss); border:2.5px solid var(--bar-loss); border-radius:0; }
 /* Vazio: tracejado neutro, aguardando resultado */
 .u10-empty { background:transparent; border:1.5px dashed var(--border); border-radius:4px; }
+.u10-anulado { background:var(--surface2); color:var(--bar-amber); border:2px dotted var(--bar-amber); border-radius:8px; }
 
 .letra-card.linha .card-btns button { flex:1; padding:6px 0; font-size:12px; }
 .letra-card.linha .lr-lock { justify-self:center; }
@@ -314,6 +315,7 @@ tbody tr:last-child td { border-bottom:none; }
 .lote-badge { background:var(--accent-dim); color:var(--accent); border:1px solid var(--accent-border); font-size:10px; font-weight:700; padding:1px 5px; border-radius:4px; font-family:var(--mono); }
 .tbl-btn-win { background:var(--win-dim); border:1px solid var(--win-border); color:var(--win); padding:2px 6px; border-radius:4px; font-size:9px; font-weight:700; cursor:pointer; }
 .tbl-btn-loss { background:var(--loss-dim); border:1px solid var(--loss-border); color:var(--loss); padding:2px 6px; border-radius:4px; font-size:9px; font-weight:700; cursor:pointer; }
+.tbl-btn-anular { background:var(--surface2); border:1px solid var(--muted); color:var(--muted); padding:2px 6px; border-radius:4px; font-size:9px; font-weight:700; cursor:pointer; }
 .tbl-btn-eq { background:var(--surface2); border:1px solid var(--border); color:var(--muted); padding:2px 5px; border-radius:4px; font-size:9px; font-weight:700; cursor:pointer; }
 .tbl-btn-reset { background:var(--surface2); border:1px solid var(--bar-amber); color:var(--bar-amber); padding:2px 5px; border-radius:4px; font-size:9px; font-weight:700; cursor:pointer; }
 .tbl-btn-del { background:var(--surface2); border:1px solid var(--loss); color:var(--loss); padding:2px 5px; border-radius:4px; font-size:9px; font-weight:700; cursor:pointer; }
@@ -621,7 +623,7 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">CONTROLE <span>FINANCEIRO</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v44.6</span></div>
+      <div class="app-logo">CONTROLE <span>FINANCEIRO</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v44.8</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
@@ -1969,6 +1971,19 @@ function registrarApostaIndividual(index,resultado,emMassa=false){
   }
 }
 
+// Anula o evento: você desistiu da aposta antes do resultado. Não é vitória nem derrota —
+// a aposta, o risco e os gales continuam intocados. Só entra como uma caixinha distinta
+// nos Últimos 30, para você ver visualmente onde anulou, sem contar como resultado.
+function anularApostaLote(index){
+  if(index<0||index>=ms().sequencias.length) return;
+  const seq=ms().sequencias[index]; if(!seq) return;
+  if(!seq.ultimos) seq.ultimos=[];
+  seq.ultimos.push('A');
+  if(seq.ultimos.length>30) seq.ultimos.shift();
+  atualizarPainelUI(false);
+  dispararAnimacaoToastLotes(()=>{ salvarDadosEAtualizarTudo(); });
+}
+
 function renderUltimos10(arr){
   arr=arr||[];
   const ult=arr.slice(-30); // mais recentes à direita
@@ -1977,6 +1992,7 @@ function renderUltimos10(arr){
   ult.forEach((r,idx)=>{
     const n=idx+1;
     if(r===1) quadros+=`<span class="u10 u10-win" title="Vitória (${n}ª)">✓</span>`;
+    else if(r==='A') quadros+=`<span class="u10 u10-anulado" title="Anulada (${n}ª) — não conta como vitória nem derrota">–</span>`;
     else quadros+=`<span class="u10 u10-loss" title="Derrota (${n}ª)">✕</span>`;
   });
   // Completa com caixas VAZIAS até atingir o mínimo de 15 (à direita, aguardando resultados)
@@ -3110,6 +3126,7 @@ function renderLinhas(){
       <td><div style="display:flex;gap:3px;">
         <button class="tbl-btn-win" onclick="registrarApostaIndividual(${i},'WIN',false)">Pos</button>
         <button class="tbl-btn-loss" onclick="registrarApostaIndividual(${i},'LOSS',false)">Neg</button>
+        <button class="tbl-btn-anular" onclick="anularApostaLote(${i})" title="Anular: você desistiu dessa aposta. Não conta como vitória nem derrota — aparece marcada nos Últimos 30, mas não muda a aposta, o risco ou os gales.">🚫</button>
         <button class="tbl-btn-eq" onclick="abrirIgualarApostas()">⚖️</button>
         <button class="tbl-btn-reset" onclick="resetarLoteIndividual(${i})" title="Resetar este lote (aposta e perdas ao inicial)">🛡️</button>
         <button class="tbl-btn-del" onclick="removerLote(${i})" title="Remover este lote">✕</button>
