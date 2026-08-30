@@ -621,7 +621,7 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">CONTROLE <span>FINANCEIRO</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v44.5</span></div>
+      <div class="app-logo">CONTROLE <span>FINANCEIRO</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v44.6</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
@@ -2001,7 +2001,7 @@ function renderEditorMercados(){
   const box=document.getElementById('mercados-editor'); if(!box) return;
   const lista=getMercados();
   // Linha de títulos das colunas — tudo numa fileira só, com rolagem horizontal se necessário
-  let html=`<div style="display:flex;gap:6px;align-items:center;margin-bottom:2px;padding:0 2px;overflow-x:auto;-webkit-overflow-scrolling:touch;">
+  let html=`<div style="display:flex;gap:14px;align-items:center;margin-bottom:2px;padding:0 2px;overflow-x:auto;-webkit-overflow-scrolling:touch;">
       <span style="width:54px;flex:none;font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;">Código</span>
       <span style="width:100px;flex:none;font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;">Nome</span>
       <span style="width:52px;flex:none;font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;text-align:center;">Fator</span>
@@ -2017,7 +2017,7 @@ function renderEditorMercados(){
     const vit=(m.incrVitoria!==false), der=(m.incrDerrota!==false);
     const nenhum=!vit&&!der;
     html+=`<div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:6px;margin-bottom:6px;">
-      <div style="display:flex;gap:6px;align-items:center;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px;">
+      <div style="display:flex;gap:14px;align-items:center;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px;">
         <input type="text" value="${(m.cod||'').replace(/"/g,'&quot;')}" oninput="editarMercadoCampo(${i},'cod',this.value)" placeholder="V1" style="width:54px;flex:none;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:11px;font-weight:700;padding:6px;border-radius:4px;text-transform:uppercase;">
         <input type="text" value="${(m.nome||'').replace(/"/g,'&quot;')}" oninput="editarMercadoCampo(${i},'nome',this.value)" placeholder="Descrição" style="width:100px;flex:none;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:var(--sans);font-size:11px;padding:6px;border-radius:4px;">
         <input type="number" step="0.01" min="1.01" value="${m.odd!==undefined?m.odd:2.00}" oninput="editarMercadoCampo(${i},'odd',this.value)" title="Fator" placeholder="Fator" style="width:52px;flex:none;background:var(--surface2);border:1px solid var(--accent);color:var(--text);font-family:var(--mono);font-size:11px;font-weight:700;padding:6px;border-radius:4px;">
