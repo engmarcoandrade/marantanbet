@@ -614,7 +614,7 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">CONTROLE <span>FINANCEIRO</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v41.2</span></div>
+      <div class="app-logo">CONTROLE <span>FINANCEIRO</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v42.1</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
@@ -881,34 +881,20 @@ tbody tr:last-child td { border-bottom:none; }
       <p style="font-size:10px;color:var(--muted);line-height:1.5;margin:-4px 0 10px;">A <b>meta por lote</b> vale para todos os lotes: é o lucro que cada lote precisa fazer na etapa para cumprir a missão (e disparar o aviso).<br>A <b>aposta base</b> é definida por mercado, na tabela de mercados abaixo (coluna <b>Base%</b>) — junto com a odd de cada um.</p>
       <div class="form-row2">
         <div class="form-group">
-          <label class="cfg-label">⚙️ Modo de Progressão</label>
-          <select id="cfg-modo-progressao" class="cfg-select" onchange="atualizarVisibilidadeIncremento()">
-            <option value="RECUPERACAO">Recuperação (perdas + meta)</option>
-            <option value="PERCENTUAL">Percentual Fixo (composto)</option>
-          </select>
-        </div>
-        <div class="form-group" id="wrap-incr-fixo" style="display:none;">
           <label class="cfg-label">Incremento por Aporte (%)</label>
           <input type="number" id="cfg-incr-fixo" class="cfg-input" step="0.1" value="10" min="0.1">
         </div>
+        <div class="form-group">
+          <label class="cfg-label">Quando aplicar o incremento?</label>
+          <select id="cfg-gatilho-incr" class="cfg-select" onchange="atualizarAvisoGatilhoIncr()">
+            <option value="SEMPRE">A · Sempre (vitória e derrota)</option>
+            <option value="GANHO">B · Só quando GANHAR</option>
+            <option value="PERDA">C · Só quando PERDER ⚠️</option>
+          </select>
+        </div>
       </div>
-      <div class="form-group" id="wrap-gatilho-incr" style="display:none;">
-        <label class="cfg-label">Quando aplicar o incremento?</label>
-        <select id="cfg-gatilho-incr" class="cfg-select" onchange="atualizarAvisoGatilhoIncr()">
-          <option value="SEMPRE">A · Sempre (vitória e derrota)</option>
-          <option value="GANHO">B · Só quando GANHAR</option>
-          <option value="PERDA">C · Só quando PERDER ⚠️</option>
-        </select>
-        <p id="aviso-gatilho-incr" style="font-size:10px;line-height:1.5;margin-top:6px;"></p>
-      </div>
-      <p id="nota-modo-progressao" style="font-size:10px;color:var(--muted);line-height:1.5;margin:-4px 0 10px;display:none;">No modo <b>Percentual Fixo</b>, a aposta é multiplicada pelo incremento após <b>cada resultado (vitória ou derrota)</b> e <b>não volta à base após vitórias</b> nem na virada de rodada. O valor só retorna à base quando o teto de gales ou o stop por lote dispara. <b style="color:var(--loss);">Atenção:</b> o crescimento é composto — a 10%, a aposta dobra a cada ~7 resultados.</p>
-      <div class="form-group">
-        <label class="cfg-label">Modo de Distribuição</label>
-        <select id="cfg-modo-distribuicao" class="cfg-select">
-          <option value="PROPORCIONAL">Proporcional Inverso (por Odds)</option>
-          <option value="LINEAR">Linear Estrito (Igualitário)</option>
-        </select>
-      </div>
+      <p id="aviso-gatilho-incr" style="font-size:10px;line-height:1.5;margin:-4px 0 10px;"></p>
+      <p style="font-size:10px;color:var(--muted);line-height:1.5;margin:-4px 0 10px;">A aposta é multiplicada pelo incremento apenas no resultado escolhido acima — nos demais, o valor não muda. Ela <b>não volta à base após vitórias</b> nem na virada de rodada; só retorna quando o teto de gales ou o stop por lote dispara. <b style="color:var(--loss);">Atenção:</b> o crescimento é composto — a 10%, a aposta dobra a cada ~7 resultados no gatilho ativo.</p>
     </div>
 
     <!-- 3. METAS E LIMITES -->
@@ -1103,10 +1089,10 @@ const DEFAULT_MODO = {
   oddsPorLetra:{"A":1.80,"B":1.80,"C":1.80,"D":1.80,"E":1.80,"F":1.80},
   anotacoesPorLetra:{"A":"","B":"","C":"","D":"","E":"","F":""},
   letrasBloqueadasRodada:{},
-  modoPosWin:"BLINDAR", modoDistribuicao:"PROPORCIONAL", marantanLancamentosRodada:{},
+  modoPosWin:"BLINDAR", modoProgressao:"PERCENTUAL", marantanLancamentosRodada:{},
   sequencias:[], historico:[], blocosLotes:[], senhaApp:"123", senhaAtiva:true, vitoriasRodadaVoltarInicial:0,
   maxGales:4, stopLotePercent:5.0,
-  modoProgressao:"RECUPERACAO", incrFixoPercent:10.0, gatilhoIncremento:"SEMPRE", vistaOperacao:"cards",
+  incrFixoPercent:10.0, gatilhoIncremento:"SEMPRE", vistaOperacao:"cards",
   metaPorLetra:{"A":1.0,"B":1.0,"C":1.0,"D":1.0,"E":1.0,"F":1.0}, metaGlobalPercent:1.0, lucroLetraEtapa:{}, letrasMetaCumprida:{},
   estatSequencias:[], streakPorLetra:{}, registroApostas:[], perdasAssumidasTotal:0, assumidasCount:0, stopTravado:false
 };
@@ -1249,7 +1235,7 @@ function aplicarBlindagemDeVariaveis(){
   if(!m.anotacoesPorLetra) m.anotacoesPorLetra={"A":"","B":"","C":"","D":"","E":"","F":""};
   if(!m.letrasBloqueadasRodada) m.letrasBloqueadasRodada={};
   if(!m.modoPosWin) m.modoPosWin="BLINDAR";
-  if(!m.modoDistribuicao) m.modoDistribuicao="PROPORCIONAL";
+  m.modoProgressao="PERCENTUAL"; // único modelo suportado — força mesmo em estados antigos
   if(!m.dataInicioCiclo) m.dataInicioCiclo=hojeISO;
   if(m.senhaApp===undefined||m.senhaApp===null||m.senhaApp==="") m.senhaApp="123";
   if(m.senhaAtiva===undefined) m.senhaAtiva=true;
@@ -1269,7 +1255,6 @@ function aplicarBlindagemDeVariaveis(){
   if(m.loteQtd===undefined) m.loteQtd=500;
   if(m.maxGales===undefined) m.maxGales=4;
   if(m.stopLotePercent===undefined) m.stopLotePercent=5.0;
-  if(!m.modoProgressao) m.modoProgressao="RECUPERACAO";
   if(m.incrFixoPercent===undefined) m.incrFixoPercent=10.0;
   if(!m.gatilhoIncremento) m.gatilhoIncremento="SEMPRE";
   // Conserta base do dia legada: se foi marcada em outro dia, zera para remarcar hoje (bug do "917%").
@@ -1675,8 +1660,7 @@ function salvarConfiguracoes(){
   ms().maxGales=parseInt(document.getElementById('cfg-max-gales').value)||4;
   ms().stopLotePercent=parseFloat(document.getElementById('cfg-stop-lote').value)||5.0;
   const clote=document.getElementById('cfg-lote'); if(clote) ms().loteQtd=parseInt(clote.value)||500;
-  ms().modoDistribuicao=document.getElementById('cfg-modo-distribuicao').value;
-  ms().modoProgressao=document.getElementById('cfg-modo-progressao').value;
+  ms().modoProgressao='PERCENTUAL'; // único modelo de progressão suportado
   ms().incrFixoPercent=parseFloat(document.getElementById('cfg-incr-fixo').value)||10.0;
   const gi=document.getElementById('cfg-gatilho-incr'); if(gi) ms().gatilhoIncremento=gi.value;
   const mg=document.getElementById('cfg-meta-global'); if(mg){ const v=parseFloat(mg.value); ms().metaGlobalPercent=isNaN(v)?1.0:v; }
@@ -1832,16 +1816,11 @@ function processarWinSeq(seq,odd){
   if(!ms().lucroLetraEtapa) ms().lucroLetraEtapa={};
   ms().lucroLetraEtapa[lw]=(ms().lucroLetraEtapa[lw]||0)+(val*(odd-1));
   seq.lucroEtapa=(seq.lucroEtapa||0)+(val*(odd-1)); // lucro do LOTE individual (para a barra por lote)
-  if(ms().modoProgressao==="PERCENTUAL"){
-    // Percentual Fixo: vitória NÃO volta à base — segue incrementando de forma composta.
-    // O ganho abate o risco acumulado do lote (exposição líquida), mantendo o stop por lote coerente.
-    seq.perdasAcumuladas=Math.max(0, roundedFixo(seq.perdasAcumuladas-(val*(odd-1))));
-    seq.streakLoss=0;
-    seq.apostaAtual=sniperArredondarAposta(seq.apostaAtual*fatorIncremento('WIN'));
-  } else {
-    seq.perdasAcumuladas=0; seq.streakLoss=0;
-    seq.apostaAtual=sniperArredondarAposta(getValorApostaBaseLote(seq));
-  }
+  // Percentual Fixo: vitória NÃO volta à base — segue incrementando de forma composta.
+  // O ganho abate o risco acumulado do lote (exposição líquida), mantendo o stop por lote coerente.
+  seq.perdasAcumuladas=Math.max(0, roundedFixo(seq.perdasAcumuladas-(val*(odd-1))));
+  seq.streakLoss=0;
+  seq.apostaAtual=sniperArredondarAposta(seq.apostaAtual*fatorIncremento('WIN'));
   // Verifica a meta agregada do mercado (para estatística) e a meta do LOTE (para blindagem individual)
   const loteBateuMeta=verificarMetaLote(seq);
   if(ms().modoPosWin==="BLINDAR"){
@@ -1898,8 +1877,18 @@ function verificarMetaLote(seq){
     // Missão do LOTE cumprida — mostra o aviso uma vez por lote
     if(!seq.metaAvisada){
       seq.metaAvisada=true;
+      const noResetar=(ms().modoPosWin!=="BLINDAR");
+      // No modo Resetar, a posição reinicia automaticamente: aposta volta à base, risco zera.
+      // O histórico (Últimos 30 e V/D) é preservado — só os valores operacionais reiniciam.
+      if(noResetar){
+        seq.apostaAtual=sniperArredondarAposta(getValorApostaBaseLote(seq));
+        seq.perdasAcumuladas=0;
+        seq.streakLoss=0;
+        seq.lucroEtapa=0;
+        seq.metaAvisada=false; // libera para avisar de novo no próximo ciclo desta mesma etapa
+      }
       const msg=document.getElementById('modal-meta-letra-msg');
-      if(msg) msg.innerHTML=`O lote <b>#${String(seq.id).padStart(3,'0')}</b> (${seq.mercado}) cumpriu a missão! 🎯<br><br>Lucro do lote nesta etapa: <b style="color:var(--win);">${fmt(lucro)}</b><br>Meta: <b>${metaPct.toFixed(2)}%</b> sobre o capital do início da etapa (${fmt(alvo)}).<br><br>${ms().modoPosWin==="BLINDAR"?'O lote foi <b>🔒 blindado</b> — sai de "Pendentes" e protege o resultado.':'Modo <b>Resetar</b> ativo: o lote segue operando. Blinde manualmente se quiser proteger.'}`;
+      if(msg) msg.innerHTML=`O lote <b>#${String(seq.id).padStart(3,'0')}</b> (${seq.mercado}) cumpriu a missão! 🎯<br><br>Lucro do lote nesta etapa: <b style="color:var(--win);">${fmt(lucro)}</b><br>Meta: <b>${metaPct.toFixed(2)}%</b> sobre o capital do início da etapa (${fmt(alvo)}).<br><br>${ms().modoPosWin==="BLINDAR"?'O lote foi <b>🔒 blindado</b> — sai de "Pendentes" e protege o resultado.':'Modo <b>Resetar</b> ativo: a posição foi <b>reiniciada automaticamente</b> — aposta de volta à base, risco zerado. O histórico (Últimos 30 e V/D) foi preservado.'}`;
       const modal=document.getElementById('modal-meta-letra');
       if(modal) modal.style.display='flex';
     }
@@ -1922,9 +1911,7 @@ function processarPerdaSeq(seq,odd){
   seq.streakLoss=(seq.streakLoss||0)+1;
   const capitalGlobal=state.bancaAtual+(parseFloat(state.bancoCapital)||0);
   const limiteLote=capitalGlobal*((ms().stopLotePercent||5)/100);
-  const proximaAposta=ms().modoProgressao==="PERCENTUAL"
-    ? sniperArredondarAposta(seq.apostaAtual*fatorIncremento('LOSS'))
-    : (seq.perdasAcumuladas+getLucroDesejadoBaseLote(seq))/(odd-1);
+  const proximaAposta=sniperArredondarAposta(seq.apostaAtual*fatorIncremento('LOSS'));
   const estourouGales=seq.streakLoss>=(ms().maxGales||4);
   const estourouLote=seq.perdasAcumuladas>=limiteLote||proximaAposta>=limiteLote;
   if(estourouGales||estourouLote){
@@ -2911,7 +2898,7 @@ function distributingRiscoLoteCritico(indexAlvo){
   if(outros.length===0){ alert("Não há outro lote ativo para receber o risco.\n\nOs demais lotes estão blindados (finalizados) — e lotes blindados não recebem risco, para não expor o lucro já protegido. Reabra um lote se quiser usá-lo como destino."); return; }
   if(confirm("⚖️ Diluir o risco acumulado entre os outros lotes ativos?")){
     const frac=lc.perdasAcumuladas/outros.length; lc.perdasAcumuladas=0; lc.apostaAtual=sniperArredondarAposta(getValorApostaBaseLote(lc));
-    ms().sequencias.forEach(seq=>{ if(seq.status!=='FINISHED'&&seq.id!==lc.id){ seq.perdasAcumuladas=roundedFixo(seq.perdasAcumuladas+frac); if(ms().modoProgressao!=="PERCENTUAL"){ const odd=oddDoLote(seq); seq.apostaAtual=sniperArredondarAposta((seq.perdasAcumuladas+getLucroDesejadoBaseLote(seq))/(odd-1)); } } });
+    ms().sequencias.forEach(seq=>{ if(seq.status!=='FINISHED'&&seq.id!==lc.id){ seq.perdasAcumuladas=roundedFixo(seq.perdasAcumuladas+frac); } });
     dispararAnimacaoToastLotes(()=>{ salvarDadosEAtualizarTudo(); });
   }
 }
@@ -3136,11 +3123,9 @@ function preencherCamposConfig(){ if(typeof aplicarVisibilidadeAbas==="function"
   const clote2=document.getElementById('cfg-lote'); if(clote2) clote2.value=ms().loteQtd||500;
   const mg=document.getElementById('cfg-meta-global'); if(mg) mg.value=metaGlobalPct();
   document.getElementById('cfg-data-inicio').value=ms().dataInicioCiclo||hojeISO;
-  document.getElementById('cfg-modo-distribuicao').value=ms().modoDistribuicao||"PROPORCIONAL";
   const gi2=document.getElementById('cfg-gatilho-incr'); if(gi2) gi2.value=ms().gatilhoIncremento||"SEMPRE";
-  document.getElementById('cfg-modo-progressao').value=ms().modoProgressao||"RECUPERACAO";
   document.getElementById('cfg-incr-fixo').value=ms().incrFixoPercent||10.0;
-  atualizarVisibilidadeIncremento();
+  if(typeof atualizarAvisoGatilhoIncr==='function') atualizarAvisoGatilhoIncr();
   document.getElementById('cfg-sheets-url').value=state.sheetsUrl||"";
   calcularSomaCapitalGeralUI();
 }
@@ -3161,14 +3146,6 @@ function atualizarAvisoGatilhoIncr(){
   }
 }
 
-function atualizarVisibilidadeIncremento(){
-  const sel=document.getElementById('cfg-modo-progressao'); if(!sel) return;
-  const perc=sel.value==="PERCENTUAL";
-  const wrap=document.getElementById('wrap-incr-fixo'); if(wrap) wrap.style.display=perc?'block':'none';
-  const wrapG=document.getElementById('wrap-gatilho-incr'); if(wrapG) wrapG.style.display=perc?'block':'none';
-  const nota=document.getElementById('nota-modo-progressao'); if(nota) nota.style.display=perc?'block':'none';
-  if(perc && typeof atualizarAvisoGatilhoIncr==='function') atualizarAvisoGatilhoIncr();
-}
 function alternarModoPosWin(){ ms().modoPosWin=ms().modoPosWin==="BLINDAR"?"RESETAR":"BLINDAR"; salvarDadosEAtualizarTudo(); }
 function atualizarBotaoModoUI(){ aplicarNomesModos(); const btn=document.getElementById('btn-toggle-modo-pos-win'); if(!btn) return; btn.className="btn-modo "+(ms().modoPosWin==="BLINDAR"?"blindar":"resetar"); btn.innerText=ms().modoPosWin==="BLINDAR"?"🔒 Pós-Win: Blindar":"🔄 Pós-Win: Resetar"; }
 function atualizarLayoutContadoresPorModo(){ const r=document.getElementById('wrapper-contador-resetar'); if(!r) return; if(ms().modoPosWin==="BLINDAR"){ r.style.display='none'; }else{ r.style.display='block'; const lv=document.getElementById('lbl-vitorias-resetar-contador'); if(lv) lv.innerText=ms().vitoriasRodadaVoltarInicial; } }
