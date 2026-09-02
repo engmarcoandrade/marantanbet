@@ -623,7 +623,7 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">CONTROLE <span>FINANCEIRO</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v44.8</span></div>
+      <div class="app-logo">CONTROLE <span>FINANCEIRO</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v45.2</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
@@ -754,6 +754,7 @@ tbody tr:last-child td { border-bottom:none; }
               <th>Posição</th>
               <th>Categoria</th>
               <th>Meta</th>
+              <th>Régua</th>
               <th>Risco</th>
               <th>Aporte</th>
               <th>Seq.</th>
@@ -1222,6 +1223,9 @@ function aplicarBlindagemDeVariaveis(){
       if(x.incrPct===undefined||x.incrPct===null||x.incrPct==='') x.incrPct=(parseFloat(m.incrFixoPercent)||10.0);
       if(x.incrVitoria===undefined) x.incrVitoria=(m.gatilhoIncremento!=='PERDA');
       if(x.incrDerrota===undefined) x.incrDerrota=(m.gatilhoIncremento!=='GANHO');
+      if(x.reguaAtiva===undefined) x.reguaAtiva=false; // desligada por padrão — nada muda até você ativar
+      if(x.reguaJanela===undefined||isNaN(parseInt(x.reguaJanela))) x.reguaJanela=10;
+      if(x.reguaSensibilidade===undefined||isNaN(parseInt(x.reguaSensibilidade))) x.reguaSensibilidade=5;
     });
     if(Array.isArray(m.sequencias)) m.sequencias.forEach(sq=>{ if(!sq.ultimos) sq.ultimos=[]; if(!sq.mercado) sq.mercado=m.mercadosCustom[0].cod; if(sq.lucroEtapa===undefined) sq.lucroEtapa=0; if(sq.metaAvisada===undefined) sq.metaAvisada=false; if(sq.pausado===undefined) sq.pausado=false; });
   if(!Array.isArray(m.ordemBlocosOperacao)) m.ordemBlocosOperacao=['tabela','acoes','painel','placar'];
@@ -1601,6 +1605,65 @@ function incrGatilhoDoMercado(cod){
   const der=m?(m.incrDerrota!==false):true;   // padrão: marcado
   return {vitoria:vit, derrota:der};
 }
+
+// ── RÉGUA ADAPTATIVA ──
+// Ajusta o incremento da categoria para cima ou para baixo, dentro de um alcance fixo,
+// conforme a tendência dos últimos resultados do LOTE (ignora marcações de "anulado").
+const REGUA_ALCANCE_PCT=50; // alcance conservador: incremento varia ±50% em torno da base
+
+function reguaAtivaDoMercado(cod){
+  const m=getMercados().find(x=>x.cod===cod);
+  return !!(m&&m.reguaAtiva);
+}
+// Janela de Análise: quantos resultados reais a régua considera (estabilidade/confiança).
+function reguaJanelaDoMercado(cod){
+  const m=getMercados().find(x=>x.cod===cod);
+  const v=m&&m.reguaJanela!==undefined?parseInt(m.reguaJanela):NaN;
+  return (isNaN(v)||v<2)?10:v;
+}
+// Sensibilidade: com quantos resultados reais a régua já reage em força total (velocidade de reação).
+// Enquanto não atingir esse número, os espaços que faltam são tratados como NEUTROS (0,5) —
+// isso evita que 1 resultado isolado jogue a régua direto no extremo. Sempre ≤ Janela de Análise.
+function reguaSensibilidadeDoMercado(cod){
+  const m=getMercados().find(x=>x.cod===cod);
+  const v=m&&m.reguaSensibilidade!==undefined?parseInt(m.reguaSensibilidade):NaN;
+  const janela=reguaJanelaDoMercado(cod);
+  const s=(isNaN(v)||v<1)?5:v;
+  return Math.min(s,janela); // nunca maior que a janela — não faria sentido
+}
+
+// Posição da régua (0 a 1): média ponderada dos resultados reais do lote (mais recentes pesam mais),
+// dentro da Janela de Análise. Enquanto não houver resultados suficientes para preencher a
+// Sensibilidade, os espaços que faltam contam como NEUTROS (0,5) — reação suave no início,
+// que converge para o modelo normal assim que a Sensibilidade é atingida. 0,5 = sem tendência.
+function posicaoReguaDoLote(seq, janela, sensibilidade){
+  if(!seq||!Array.isArray(seq.ultimos)) return 0.5;
+  const reais=seq.ultimos.filter(r=>r===1||r===0); // exclui 'A' (anulado) — não é resultado
+  const janela_=janela||10;
+  const sens_=Math.min(sensibilidade||5, janela_);
+  const ult=reais.slice(-janela_);
+  const k=ult.length;
+  const N=Math.max(sens_,k); // total de "espaços" considerados no cálculo
+  const faltam=N-k;          // espaços ainda vazios (mais antigos) — contam como neutros
+  let somaP=0;
+  const somaW=N*(N+1)/2;
+  for(let i=1;i<=faltam;i++){ somaP+=i*0.5; }
+  ult.forEach((r,idx)=>{ const peso=faltam+idx+1; somaP+=r*peso; });
+  return somaW>0?(somaP/somaW):0.5;
+}
+
+// Incremento efetivo da categoria para este lote, considerando a Régua Adaptativa se ativa.
+// Sempre entre [base*(1-alcance/100), base*(1+alcance/100)].
+function incrPctEfetivoDoLote(seq){
+  const cod=seq?(seq.mercado||seq.letraRandomica):null;
+  const base=incrPctDoMercado(cod);
+  if(!reguaAtivaDoMercado(cod)) return base; // desligada: incremento fixo, como sempre foi
+  const janela=reguaJanelaDoMercado(cod);
+  const sensibilidade=reguaSensibilidadeDoMercado(cod);
+  const pos=posicaoReguaDoLote(seq, janela, sensibilidade);
+  const desvio=(pos-0.5)*2; // -1 a +1
+  return base*(1+desvio*(REGUA_ALCANCE_PCT/100));
+}
 // Mantido por compatibilidade com o resto do código — hoje só usado onde não há um lote específico à mão.
 function metaGlobalPct(){ const v=parseFloat(ms().metaGlobalPercent); return isNaN(v)?1.0:v; }
 // Mercados distintos presentes nos lotes atuais (nova arquitetura)
@@ -1804,7 +1867,7 @@ function agendarSalvarNotasLivres(){
 // resultado: 'WIN' ou 'LOSS'. Retorna o multiplicador da próxima aposta.
 function fatorIncremento(seq,resultado){
   const cod=seq?(seq.mercado||seq.letraRandomica):null;
-  const inc=1+((incrPctDoMercado(cod)||10)/100);
+  const inc=1+((incrPctEfetivoDoLote(seq)||10)/100);
   const g=incrGatilhoDoMercado(cod);
   if(g.vitoria&&g.derrota) return inc;                              // ambos marcados: cresce sempre
   if(g.vitoria&&!g.derrota) return resultado==='WIN'  ? inc : 1;     // só vitória
@@ -2032,6 +2095,8 @@ function renderEditorMercados(){
   lista.forEach((m,i)=>{
     const vit=(m.incrVitoria!==false), der=(m.incrDerrota!==false);
     const nenhum=!vit&&!der;
+    const regua=!!m.reguaAtiva;
+    const incrBase=parseFloat(m.incrPct!==undefined?m.incrPct:10.0)||10.0;
     html+=`<div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:6px;margin-bottom:6px;">
       <div style="display:flex;gap:14px;align-items:center;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px;">
         <input type="text" value="${(m.cod||'').replace(/"/g,'&quot;')}" oninput="editarMercadoCampo(${i},'cod',this.value)" placeholder="V1" style="width:54px;flex:none;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:11px;font-weight:700;padding:6px;border-radius:4px;text-transform:uppercase;">
@@ -2050,6 +2115,21 @@ function renderEditorMercados(){
         <button onclick="removerMercado(${i})" title="Remover" style="flex:none;width:28px;height:28px;background:var(--surface2);border:1px solid var(--loss);color:var(--loss);border-radius:4px;cursor:pointer;font-weight:700;">✕</button>
       </div>
       ${nenhum?'<div style="font-size:9px;color:var(--bar-amber);font-weight:700;margin-top:4px;">⚠️ nenhum marcado: aposta fixa, não cresce</div>':''}
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-top:6px;margin-top:6px;border-top:1px solid var(--border2);">
+        <label style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text);cursor:pointer;font-weight:700;">
+          <input type="checkbox" ${regua?'checked':''} onchange="editarMercadoCampo(${i},'reguaAtiva',this.checked)" style="width:15px;height:15px;cursor:pointer;">
+          📏 Régua Adaptativa
+        </label>
+        ${regua?`<div style="display:flex;align-items:center;gap:4px;">
+          <span style="font-size:9px;color:var(--muted);">Janela (jogos)</span>
+          <input type="number" step="1" min="2" max="50" value="${m.reguaJanela!==undefined?m.reguaJanela:10}" oninput="editarMercadoCampo(${i},'reguaJanela',this.value)" title="Quantos dos últimos resultados a régua considera (confiança/estabilidade)" style="width:48px;background:var(--surface2);border:1px solid var(--purple-border);color:var(--text);font-family:var(--mono);font-size:11px;font-weight:700;padding:5px;border-radius:4px;">
+        </div>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <span style="font-size:9px;color:var(--muted);">Sensibilidade</span>
+          <input type="number" step="1" min="1" max="${m.reguaJanela!==undefined?m.reguaJanela:10}" value="${m.reguaSensibilidade!==undefined?m.reguaSensibilidade:5}" oninput="editarMercadoCampo(${i},'reguaSensibilidade',this.value)" title="Com quantos resultados reais a régua já reage em força total (velocidade de reação, sempre ≤ Janela)" style="width:48px;background:var(--surface2);border:1px solid var(--bar-amber);color:var(--text);font-family:var(--mono);font-size:11px;font-weight:700;padding:5px;border-radius:4px;">
+        </div>
+        <span style="font-size:9px;color:var(--muted);">incremento varia entre ${(incrBase*0.5).toFixed(1)}% e ${(incrBase*1.5).toFixed(1)}% conforme a tendência (alcance ±50%)</span>`:''}
+      </div>
     </div>`;
   });
   box.innerHTML=html;
@@ -2069,9 +2149,12 @@ function editarMercadoCampo(i,campo,valor){
   else if(campo==='incrPct') l[i].incrPct=parseFloat(valor)||0.1;
   else if(campo==='incrVitoria') l[i].incrVitoria=!!valor;
   else if(campo==='incrDerrota') l[i].incrDerrota=!!valor;
+  else if(campo==='reguaAtiva') l[i].reguaAtiva=!!valor;
+  else if(campo==='reguaJanela') l[i].reguaJanela=Math.max(2,parseInt(valor)||10);
+  else if(campo==='reguaSensibilidade') l[i].reguaSensibilidade=Math.max(1,parseInt(valor)||5);
   else l[i][campo]=valor;
-  // Re-renderiza para o aviso de "aposta fixa" (nenhum marcado) refletir na hora
-  if(campo==='incrVitoria'||campo==='incrDerrota'){
+  // Re-renderiza para o aviso de "aposta fixa" e o painel da Régua refletirem na hora
+  if(campo==='incrVitoria'||campo==='incrDerrota'||campo==='reguaAtiva'||campo==='incrPct'||campo==='reguaJanela'){
     const backup=ms().mercadosCustom; ms().mercadosCustom=l; renderEditorMercados(); ms().mercadosCustom=backup;
   }
 }
@@ -2096,7 +2179,7 @@ function salvarMercados(){
   if(cods.length!==l.length){ alert('Todo mercado precisa de um código (sigla).'); return; }
   const dup=cods.find((c,idx)=>cods.indexOf(c)!==idx);
   if(dup){ alert('Código duplicado: '+dup+'. Cada código deve ser único.'); return; }
-  l.forEach(m=>{ if(!m.nome||!m.nome.trim()) m.nome=m.cod; if(m.basePct===undefined||isNaN(parseFloat(m.basePct))) m.basePct=1.0; if(m.metaPct===undefined||isNaN(parseFloat(m.metaPct))) m.metaPct=1.0; if(m.incrPct===undefined||isNaN(parseFloat(m.incrPct))) m.incrPct=10.0; if(m.incrVitoria===undefined) m.incrVitoria=true; if(m.incrDerrota===undefined) m.incrDerrota=true; });
+  l.forEach(m=>{ if(!m.nome||!m.nome.trim()) m.nome=m.cod; if(m.basePct===undefined||isNaN(parseFloat(m.basePct))) m.basePct=1.0; if(m.metaPct===undefined||isNaN(parseFloat(m.metaPct))) m.metaPct=1.0; if(m.incrPct===undefined||isNaN(parseFloat(m.incrPct))) m.incrPct=10.0; if(m.incrVitoria===undefined) m.incrVitoria=true; if(m.incrDerrota===undefined) m.incrDerrota=true; if(m.reguaAtiva===undefined) m.reguaAtiva=false; if(m.reguaJanela===undefined||isNaN(parseInt(m.reguaJanela))) m.reguaJanela=10; if(m.reguaSensibilidade===undefined||isNaN(parseInt(m.reguaSensibilidade))) m.reguaSensibilidade=5; });
   ms().mercadosCustom=JSON.parse(JSON.stringify(l));
   _mercadosEdit=null;
   const st=document.getElementById('mercados-status');
@@ -3043,7 +3126,7 @@ function renderLinhas(){
   let html='';
   // Agrupa os lotes por BLOCO. Cada bloco vira um cabeçalho recolhível.
   const blocos=getBlocos();
-  const NCOLS=13; // colunas da tabela (para o colspan do cabeçalho do bloco)
+  const NCOLS=14; // colunas da tabela (para o colspan do cabeçalho do bloco)
   blocos.forEach(bloco=>{
     const doBloco=lista.filter(({seq})=>(seq.blocoId||blocos[0].id)===bloco.id);
     // Não desenha bloco vazio quando há filtro ativo, para não poluir
@@ -3107,6 +3190,31 @@ function renderLinhas(){
           </div>
           <div style="height:11px;background:var(--surface2);border:1px solid ${negativo?'var(--bar-loss)':'var(--border)'};border-radius:99px;overflow:hidden;">
             ${fill}
+          </div>
+        </div>`;
+      })()}</td>
+      <td class="t-regua-cell">${(function(){
+        const cod=seq.mercado||seq.letraRandomica;
+        if(!reguaAtivaDoMercado(cod)) return '<span style="color:var(--muted);font-size:10px;">—</span>';
+        const janela=reguaJanelaDoMercado(cod);
+        const sensibilidade=reguaSensibilidadeDoMercado(cod);
+        const pos=posicaoReguaDoLote(seq, janela, sensibilidade);
+        const incrEfetivo=incrPctEfetivoDoLote(seq);
+        const pctPos=Math.round(pos*100);
+        // Cor por faixa: perto do centro = neutro, acima = favorável, abaixo = desfavorável.
+        // Sinal sempre por símbolo + texto, nunca só cor (não depende de percepção de cor).
+        let cor, seta;
+        if(pos>0.6){ cor='var(--bar-win)'; seta='▲'; }
+        else if(pos<0.4){ cor='var(--bar-loss)'; seta='▼'; }
+        else { cor='var(--bar-amber)'; seta='●'; }
+        return `<div style="min-width:96px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;font-size:9px;font-family:var(--mono);font-weight:700;margin-bottom:2px;">
+            <span style="color:var(--muted);" title="Posição da régua adaptativa (últimos ${janela} jogos)">📏 ${seta} ${pctPos}%</span>
+            <span style="color:${cor};" title="Incremento efetivo agora">${incrEfetivo.toFixed(1)}%</span>
+          </div>
+          <div style="height:11px;background:var(--surface2);border:1px solid var(--border);border-radius:99px;overflow:hidden;position:relative;">
+            <div style="position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--border2);"></div>
+            <div style="height:100%;width:${pctPos}%;background:${cor};border-radius:99px;transition:width .3s;"></div>
           </div>
         </div>`;
       })()}</td>
