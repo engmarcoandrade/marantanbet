@@ -533,6 +533,16 @@ tbody tr:last-child td { border-bottom:none; }
           📉 Proporcional inverso às odds<br><span style="font-size:10px;color:var(--muted);font-weight:400;">Odd menor (mais provável) recebe aposta maior; odd maior recebe menor.</span>
         </button>
       </div>
+      <div id="igualar-livre-box" style="display:none;margin-top:8px;padding:10px;background:var(--surface2);border:1px solid var(--purple-border);border-radius:6px;">
+        <div style="font-size:12px;font-weight:700;color:var(--purple);margin-bottom:8px;">🎚️ Proporção Livre</div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;font-family:var(--mono);font-weight:700;margin-bottom:4px;">
+          <span id="igualar-livre-nome-a" style="color:var(--purple);"></span>
+          <span id="igualar-livre-nome-b" style="color:var(--muted);"></span>
+        </div>
+        <input type="range" id="igualar-livre-slider" min="0" max="100" value="50" oninput="atualizarPreviewIgualarLivre(this.value)" style="width:100%;cursor:pointer;accent-color:var(--purple);">
+        <div id="igualar-livre-valores" style="text-align:center;font-size:12px;font-family:var(--mono);font-weight:700;margin:6px 0 10px;"></div>
+        <button onclick="aplicarIgualarLivre()" style="width:100%;padding:9px;background:var(--purple-dim);border:1px solid var(--purple-border);color:var(--purple);border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;">Aplicar esta proporção</button>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn-cancel" onclick="fecharModal('modal-igualar-apostas')">Cancelar</button>
@@ -623,7 +633,7 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">CONTROLE <span>FINANCEIRO</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v45.3</span></div>
+      <div class="app-logo">CONTROLE <span>FINANCEIRO</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v45.5</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
@@ -768,7 +778,6 @@ tbody tr:last-child td { border-bottom:none; }
           <tbody id="tabela-linhas-lotes"></tbody>
         </table>
       </div>
-      <div id="rodape-soma-letras" style="margin-top:8px; font-size:11px; font-family:var(--mono); color:var(--muted); text-align:right;"></div>
     </div>
 
     <div class="bloco-op" data-bloco="acoes">
@@ -1083,7 +1092,7 @@ const DEFAULT_MODO = {
   sequencias:[], historico:[], blocosLotes:[], senhaApp:"123", senhaAtiva:true, vitoriasRodadaVoltarInicial:0,
   maxGales:4, stopLotePercent:5.0,
   incrFixoPercent:10.0, gatilhoIncremento:"SEMPRE", vistaOperacao:"cards",
-  metaPorLetra:{"A":1.0,"B":1.0,"C":1.0,"D":1.0,"E":1.0,"F":1.0}, metaGlobalPercent:1.0, lucroLetraEtapa:{}, letrasMetaCumprida:{},
+  metaPorLetra:{"A":1.0,"B":1.0,"C":1.0,"D":1.0,"E":1.0,"F":1.0}, metaGlobalPercent:1.0, letrasMetaCumprida:{},
   estatSequencias:[], streakPorLetra:{}, registroApostas:[], perdasAssumidasTotal:0, assumidasCount:0, stopTravado:false
 };
 
@@ -1263,13 +1272,11 @@ function aplicarBlindagemDeVariaveis(){
   m.chartMode="ETAPA"; // controle por dia removido — sempre etapa
   if(!m.metaPorLetra) m.metaPorLetra={"A":1.0,"B":1.0,"C":1.0,"D":1.0,"E":1.0,"F":1.0};
   if(m.metaGlobalPercent===undefined) m.metaGlobalPercent=1.0;
-  if(!m.lucroLetraEtapa) m.lucroLetraEtapa={};
   if(!m.letrasMetaCumprida) m.letrasMetaCumprida={};
   if(!m.estatSequencias) m.estatSequencias=[];
   if(!m.registroApostas) m.registroApostas=[];
   if(!m.ajustesConferencia) m.ajustesConferencia=[];
   if(!m.reaberturas) m.reaberturas=[];
-  if(!m.lucroLetraArquivado) m.lucroLetraArquivado={};
   if(!m.streakPorLetra) m.streakPorLetra={};
   if(m.perdasAssumidasTotal===undefined) m.perdasAssumidasTotal=0;
   if(m.assumidasCount===undefined) m.assumidasCount=0;
@@ -1673,7 +1680,7 @@ function calcularSomaCapitalGeralUI(){ const b=parseFloat(document.getElementByI
 function gerarEstruturaLotesIniciais(){
   // Nova arquitetura: a operação começa VAZIA — os lotes são criados na aba Operação (➕ Adicionar lote).
   if(!Array.isArray(ms().sequencias)) ms().sequencias=[];
-  ms().lucroLetraEtapa=ms().lucroLetraEtapa||{}; ms().letrasMetaCumprida=ms().letrasMetaCumprida||{}; ms().lucroLetraArquivado=ms().lucroLetraArquivado||{};
+  ms().letrasMetaCumprida=ms().letrasMetaCumprida||{};
   ms().marantanLancamentosRodada={};
   ms().letrasBloqueadasRodada={};
   ms().stopTravado=false;
@@ -1882,8 +1889,6 @@ function processarWinSeq(seq,odd){
   const val=sniperArredondarAposta(seq.apostaAtual);
   state.bancaAtual+=(val*(odd-1));
   const lw=seq.letraRandomica;
-  if(!ms().lucroLetraEtapa) ms().lucroLetraEtapa={};
-  ms().lucroLetraEtapa[lw]=(ms().lucroLetraEtapa[lw]||0)+(val*(odd-1));
   seq.lucroEtapa=(seq.lucroEtapa||0)+(val*(odd-1)); // lucro do LOTE individual (para a barra por lote)
   // Percentual Fixo: vitória NÃO volta à base — segue incrementando de forma composta.
   // O ganho abate o risco acumulado do lote (exposição líquida), mantendo o stop por lote coerente.
@@ -1973,8 +1978,6 @@ function processarPerdaSeq(seq,odd){
   if(!seq.ultimos) seq.ultimos=[]; seq.ultimos.push(0); if(seq.ultimos.length>30) seq.ultimos.shift();
   const val=sniperArredondarAposta(seq.apostaAtual);
   state.bancaAtual-=val;
-  if(!ms().lucroLetraEtapa) ms().lucroLetraEtapa={};
-  ms().lucroLetraEtapa[seq.letraRandomica]=(ms().lucroLetraEtapa[seq.letraRandomica]||0)-val;
   seq.lucroEtapa=(seq.lucroEtapa||0)-val; // lucro do LOTE individual
   seq.perdasAcumuladas+=val;
   seq.streakLoss=(seq.streakLoss||0)+1;
@@ -2984,7 +2987,50 @@ function abrirIgualarApostas(){
     const media=totalApostas/ativos.length;
     prev.innerHTML=`Lotes ativos: <b>${ativos.length}</b><br>Total apostado hoje: <b>${fmt(totalApostas)}</b><br>No modo igualitário, cada um ficaria em <b>${fmt(media)}</b>.`;
   }
+  // A régua de Proporção Livre só faz sentido com exatamente 2 lotes (dois lados de uma balança).
+  const box=document.getElementById('igualar-livre-box');
+  if(box){
+    if(ativos.length===2){
+      box.style.display='block';
+      const [a,b]=ativos;
+      document.getElementById('igualar-livre-nome-a').innerText=`#${String(a.id).padStart(3,'0')} ${a.mercado}`;
+      document.getElementById('igualar-livre-nome-b').innerText=`${b.mercado} #${String(b.id).padStart(3,'0')}`;
+      document.getElementById('igualar-livre-slider').value=50;
+      atualizarPreviewIgualarLivre(50);
+    } else {
+      box.style.display='none';
+    }
+  }
   document.getElementById('modal-igualar-apostas').style.display='flex';
+}
+
+// Atualiza o texto de prévia da régua de Proporção Livre conforme o slider se move.
+function atualizarPreviewIgualarLivre(valorSlider){
+  const ativos=(ms().sequencias||[]).filter(s=>s.status!=='FINISHED' && !s.pausado);
+  if(ativos.length!==2) return;
+  const [a,b]=ativos;
+  const totalApostas=a.apostaAtual+b.apostaAtual;
+  const pctA=parseFloat(valorSlider); // 0 a 100, % que vai para o lote A
+  const valA=totalApostas*(pctA/100);
+  const valB=totalApostas-valA;
+  const el=document.getElementById('igualar-livre-valores');
+  if(el) el.innerHTML=`${fmt(valA)} <span style="color:var(--muted);font-weight:400;">(${pctA.toFixed(0)}%)</span>  ⇄  <span style="color:var(--muted);font-weight:400;">(${(100-pctA).toFixed(0)}%)</span> ${fmt(valB)}`;
+}
+
+// Aplica a proporção escolhida na régua livre, preservando o total apostado (igual às outras opções).
+function aplicarIgualarLivre(){
+  const ativos=(ms().sequencias||[]).filter(s=>s.status!=='FINISHED' && !s.pausado);
+  if(ativos.length!==2){ fecharModal('modal-igualar-apostas'); return; }
+  const [a,b]=ativos;
+  const totalApostas=a.apostaAtual+b.apostaAtual;
+  if(totalApostas<=0){ fecharModal('modal-igualar-apostas'); return; }
+  const slider=document.getElementById('igualar-livre-slider');
+  const pctA=slider?parseFloat(slider.value):50;
+  a.apostaAtual=sniperArredondarAposta(totalApostas*(pctA/100));
+  b.apostaAtual=sniperArredondarAposta(totalApostas-(a.apostaAtual));
+  // O risco acumulado (perdasAcumuladas) NÃO é alterado — só a aposta atual, igual às outras opções.
+  fecharModal('modal-igualar-apostas');
+  dispararAnimacaoToastLotes(()=>{ salvarDadosEAtualizarTudo(); });
 }
 
 function aplicarIgualarApostas(modo){
@@ -3082,7 +3128,7 @@ function confirmarConclusaoEtapa(){
     sq.lossesEtapa=0;
     sq.apostaAtual=sniperArredondarAposta(getValorApostaBaseLote(sq));
   });
-  ms().lucroLetraEtapa={}; ms().letrasMetaCumprida={};
+  ms().letrasMetaCumprida={};
   gerarEstruturaLotesIniciais();
   preencherCamposConfig();
 }
@@ -3245,16 +3291,6 @@ function renderLinhas(){
   tbody.innerHTML=html;
 }
 
-function renderRodapeSomaLetras(){
-  const el=document.getElementById('rodape-soma-letras'); if(!el) return;
-  const contas=ms().lucroLetraEtapa||{};
-  const arq=ms().lucroLetraArquivado||{};
-  let soma=Object.values(contas).reduce((a,c)=>a+(parseFloat(c)||0),0);
-  soma+=Object.values(arq).reduce((a,c)=>a+(parseFloat(c)||0),0);
-  if(Object.keys(contas).length===0&&Object.keys(arq).length===0){ el.innerText=''; return; }
-  const cor=soma>=0?'var(--win)':'var(--loss)';
-  el.innerHTML=`Σ letras = <b style="color:${cor};">${fmt(soma)}</b> <span style="opacity:.7;">(lucro em apostas da etapa)</span>`;
-}
 
 
 function preencherCamposConfig(){ if(typeof aplicarVisibilidadeAbas==="function") aplicarVisibilidadeAbas(); if(typeof renderEditorMercados==="function") renderEditorMercados(); if(typeof atualizarBotaoSenhaUI==="function") atualizarBotaoSenhaUI();
@@ -3786,7 +3822,7 @@ function atualizarPainelUI(forcarGrafico=false){
   const banner=document.getElementById('banner-stop');
   if(banner) banner.style.display=ms().stopTravado?'block':'none';
 
-  aplicarVisibilidadeAbas(); renderLinhas(); renderRodapeSomaLetras(); renderHistorico(); renderEstatisticas(); renderPainelVantagem(); atualizarBotaoModoUI(); atualizarLayoutContadoresPorModo();
+  aplicarVisibilidadeAbas(); renderLinhas(); renderHistorico(); renderEstatisticas(); renderPainelVantagem(); atualizarBotaoModoUI(); atualizarLayoutContadoresPorModo();
   if(document.getElementById('grafico')&&document.getElementById('grafico').classList.contains('active')) renderizarGrafico();
 }
 </script>
