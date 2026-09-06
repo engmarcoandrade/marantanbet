@@ -633,7 +633,7 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">CONTROLE <span>FINANCEIRO</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v45.5</span></div>
+      <div class="app-logo">CONTROLE <span>FINANCEIRO</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v45.7</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
@@ -1795,9 +1795,9 @@ function oddDoMercado(cod){ const m=getMercados().find(x=>x.cod===cod); return m
 function oddDoLote(seq){ if(!seq) return 2.00; return oddDoMercado(seq.mercado||(getMercados()[0]?getMercados()[0].cod:'V1')); }
 function oddPorLetra(l){ const seqs=(ms().sequencias||[]).filter(s=>s.letraRandomica===l); return seqs.length?oddDoLote(seqs[0]):2.00; }
 
-function registrarAposta(letra,odd,venceu,mercado){
+function registrarAposta(letra,odd,venceu,mercado,blocoId){
   if(!ms().registroApostas) ms().registroApostas=[];
-  ms().registroApostas.push({l:letra, o:odd, w:venceu?1:0, m:(mercado||(getMercados()[0]?getMercados()[0].cod:"V1")), d:new Date().toISOString()});
+  ms().registroApostas.push({l:letra, o:odd, w:venceu?1:0, m:(mercado||(getMercados()[0]?getMercados()[0].cod:"V1")), b:blocoId||null, d:new Date().toISOString()});
   if(ms().registroApostas.length>20000) ms().registroApostas.splice(0,ms().registroApostas.length-20000);
 }
 
@@ -1884,7 +1884,7 @@ function fatorIncremento(seq,resultado){
 
 function processarWinSeq(seq,odd){
   seq.winsEtapa++;
-  registrarAposta(seq.letraRandomica,odd,true,seq.mercado);
+  registrarAposta(seq.letraRandomica,odd,true,seq.mercado,seq.blocoId);
   if(!seq.ultimos) seq.ultimos=[]; seq.ultimos.push(1); if(seq.ultimos.length>30) seq.ultimos.shift();
   const val=sniperArredondarAposta(seq.apostaAtual);
   state.bancaAtual+=(val*(odd-1));
@@ -1974,7 +1974,7 @@ function verificarMetaLote(seq){
 
 function processarPerdaSeq(seq,odd){
   seq.lossesEtapa++;
-  registrarAposta(seq.letraRandomica,odd,false,seq.mercado);
+  registrarAposta(seq.letraRandomica,odd,false,seq.mercado,seq.blocoId);
   if(!seq.ultimos) seq.ultimos=[]; seq.ultimos.push(0); if(seq.ultimos.length>30) seq.ultimos.shift();
   const val=sniperArredondarAposta(seq.apostaAtual);
   state.bancaAtual-=val;
@@ -3380,12 +3380,52 @@ function vereditoEstatistico(vitorias,total,breakeven){
   return {cod:'INCONCLUSIVO', ic:ic, txt:'INDISTINGUÍVEL DE SORTE', det:`O intervalo de confiança (${(ic.baixo*100).toFixed(1)}% – ${(ic.alto*100).toFixed(1)}%) atravessa o ponto de equilíbrio (${(breakeven*100).toFixed(1)}%). Com estes dados, não é possível afirmar que existe vantagem. Mais apostas são necessárias.`};
 }
 
+// Aba de evento selecionada no painel de vantagem (Histórico). 'TODOS' = agregado de tudo.
+let histEventoSelecionado='TODOS';
+function selecionarEventoHistorico(blocoId){
+  histEventoSelecionado=blocoId;
+  renderPainelVantagem();
+}
+
 function renderPainelVantagem(){
   const box=document.getElementById('painel-vantagem'); if(!box) return;
-  const reg=ms().registroApostas||[];
+  const regTodos=ms().registroApostas||[];
+
+  if(regTodos.length===0){
+    box.innerHTML=`<div style="padding:20px;text-align:center;color:var(--text);font-size:13px;background:var(--surface);border:1px solid var(--border);border-radius:8px;">Nenhuma aposta registrada ainda.<br><span style="color:var(--muted);font-size:11px;">A medição começa no próximo resultado lançado.</span></div>`;
+    return;
+  }
+
+  // ── Abas de evento (bloco) ── cada aposta guarda o bloco de onde veio (campo 'b').
+  // Monta a lista de eventos com dados, na ordem em que apareceram pela primeira vez.
+  const blocosAtuais=getBlocos();
+  const ordemEventos=[]; const vistos=new Set();
+  regTodos.forEach(r=>{
+    const chave=r.b||'__sem_evento__';
+    if(!vistos.has(chave)){ vistos.add(chave); ordemEventos.push(chave); }
+  });
+  const nomeEvento=(chave)=>{
+    if(chave==='__sem_evento__') return 'Sem evento';
+    const b=blocosAtuais.find(x=>x.id===chave);
+    return b?b.nome:'Bloco removido';
+  };
+
+  let tabsHtml=`<div style="display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:6px;margin-bottom:10px;">
+    <button onclick="selecionarEventoHistorico('TODOS')" style="flex:none;padding:6px 12px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;background:${histEventoSelecionado==='TODOS'?'var(--accent-dim)':'var(--surface2)'};border:1px solid ${histEventoSelecionado==='TODOS'?'var(--accent-border)':'var(--border)'};color:${histEventoSelecionado==='TODOS'?'var(--accent)':'var(--muted)'};">Todos os eventos</button>`;
+  ordemEventos.forEach(chave=>{
+    const ativo=histEventoSelecionado===chave;
+    tabsHtml+=`<button onclick="selecionarEventoHistorico('${chave}')" style="flex:none;padding:6px 12px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;background:${ativo?'var(--purple-dim)':'var(--surface2)'};border:1px solid ${ativo?'var(--purple-border)':'var(--border)'};color:${ativo?'var(--purple)':'var(--muted)'};">${nomeEvento(chave)}</button>`;
+  });
+  tabsHtml+=`</div>`;
+
+  // Se o evento selecionado não existe mais nos dados (ex: era um bloco que sumiu), volta pra "Todos".
+  if(histEventoSelecionado!=='TODOS' && !ordemEventos.includes(histEventoSelecionado)){
+    histEventoSelecionado='TODOS';
+  }
+  const reg=(histEventoSelecionado==='TODOS') ? regTodos : regTodos.filter(r=>(r.b||'__sem_evento__')===histEventoSelecionado);
 
   if(reg.length===0){
-    box.innerHTML=`<div style="padding:20px;text-align:center;color:var(--text);font-size:13px;background:var(--surface);border:1px solid var(--border);border-radius:8px;">Nenhuma aposta registrada ainda.<br><span style="color:var(--muted);font-size:11px;">A medição começa no próximo resultado lançado.</span></div>`;
+    box.innerHTML=tabsHtml+`<div style="padding:20px;text-align:center;color:var(--muted);font-size:12px;">Nenhuma aposta registrada neste evento ainda.</div>`;
     return;
   }
 
@@ -3398,9 +3438,9 @@ function renderPainelVantagem(){
   const cores={INSUF:'var(--muted)', INCONCLUSIVO:'var(--bar-amber)', VANTAGEM:'var(--win)', DESVANTAGEM:'var(--loss)'};
   const icones={INSUF:'⏳', INCONCLUSIVO:'❓', VANTAGEM:'✔️', DESVANTAGEM:'✖️'};
 
-  let html=`
+  let html=tabsHtml+`
   <div style="background:var(--surface);border:1px solid var(--border);border-left:5px solid ${cores[vG.cod]};border-radius:8px;padding:14px;margin-bottom:10px;">
-    <div style="font-size:10px;color:var(--muted);font-family:var(--mono);font-weight:700;letter-spacing:.06em;margin-bottom:6px;">VEREDITO GLOBAL — TODAS AS LETRAS</div>
+    <div style="font-size:10px;color:var(--muted);font-family:var(--mono);font-weight:700;letter-spacing:.06em;margin-bottom:6px;">VEREDITO GLOBAL — ${histEventoSelecionado==='TODOS'?'TODOS OS EVENTOS':nomeEvento(histEventoSelecionado).toUpperCase()}</div>
     <div style="font-size:16px;font-weight:800;color:${cores[vG.cod]};font-family:var(--mono);margin-bottom:8px;">${icones[vG.cod]} ${vG.txt}</div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px;">
       <div><div style="font-size:9px;color:var(--muted);font-family:var(--mono);">TAXA DE ACERTO</div><div style="font-size:17px;font-weight:800;font-family:var(--mono);color:var(--text);">${(vG.ic.p*100).toFixed(1)}%</div></div>
@@ -3410,33 +3450,6 @@ function renderPainelVantagem(){
     <div style="font-size:11px;color:var(--text);line-height:1.6;">${vG.det}</div>
     <div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:8px;">Intervalo de confiança 95%: ${(vG.ic.baixo*100).toFixed(1)}% – ${(vG.ic.alto*100).toFixed(1)}% · Odd média ${oddMedia.toFixed(2)}</div>
   </div>`;
-
-  // ── Por letra ──
-  const porLetra={};
-  reg.forEach(r=>{ if(!porLetra[r.l]) porLetra[r.l]={n:0,w:0,so:0}; porLetra[r.l].n++; porLetra[r.l].w+=r.w; porLetra[r.l].so+=(r.o||2); });
-
-  html+=`<div style="font-size:10px;color:var(--muted);font-family:var(--mono);font-weight:700;letter-spacing:.06em;margin:12px 0 6px;">DESEMPENHO POR MERCADO (LETRA)</div>`;
-
-  Object.keys(porLetra).sort().forEach(l=>{
-    const d=porLetra[l], be=breakevenDeOdd(d.so/d.n), v=vereditoEstatistico(d.w,d.n,be);
-    const pctBar=Math.max(0,Math.min(100,v.ic.p*100));
-    const bePos=Math.max(0,Math.min(100,be*100));
-    html+=`
-    <div style="background:var(--surface);border:1px solid var(--border);border-left:4px solid ${cores[v.cod]};border-radius:8px;padding:10px;margin-bottom:6px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-        <div style="display:flex;align-items:center;gap:8px;">
-          <span style="font-family:var(--mono);font-weight:800;font-size:14px;color:var(--text);">${l}</span>
-          <span style="font-size:10px;font-weight:700;color:${cores[v.cod]};font-family:var(--mono);">${icones[v.cod]} ${v.txt}</span>
-        </div>
-        <span style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);">${(v.ic.p*100).toFixed(1)}% <span style="color:var(--muted);font-size:10px;">(${d.w}/${d.n})</span></span>
-      </div>
-      <div style="position:relative;height:8px;background:var(--surface2);border:1px solid var(--border);border-radius:99px;overflow:hidden;">
-        <div style="position:absolute;left:0;top:0;height:100%;width:${pctBar}%;background:${cores[v.cod]};"></div>
-        <div style="position:absolute;left:${bePos}%;top:-2px;width:2px;height:12px;background:var(--text);" title="Ponto de equilíbrio"></div>
-      </div>
-      <div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:5px;">IC95%: ${(v.ic.baixo*100).toFixed(1)}–${(v.ic.alto*100).toFixed(1)}% · equilíbrio ${(be*100).toFixed(1)}% (traço) · odd méd. ${(d.so/d.n).toFixed(2)}</div>
-    </div>`;
-  });
 
   // ── Por MERCADO (a quebra que responde "onde tenho vantagem?") ──
   const temMercado=reg.some(r=>r.m);
@@ -3490,6 +3503,24 @@ function renderPainelVantagem(){
             <span>🎯 Metas batidas: <b style="color:${corMetas};">${pctMetas.toFixed(0)}%</b> (${lotesMktOk}/${lotesMkt.length})</span>
             <span>📈 Odd média: <b>${(d.so/d.n).toFixed(2)}</b></span>
           </div>
+          ${(function(){
+            if(d.seqsFechadas.length===0) return '';
+            // Agrupa as secas fechadas por tamanho, contando quantas vezes cada tamanho aconteceu.
+            const freq={};
+            d.seqsFechadas.forEach(tam=>{ freq[tam]=(freq[tam]||0)+1; });
+            const tamanhos=Object.keys(freq).map(Number).sort((a,b)=>b-a); // maior pra menor
+            let linhas='';
+            tamanhos.forEach(tam=>{
+              linhas+=`<div style="display:flex;justify-content:space-between;font-size:10px;font-family:var(--mono);padding:2px 0;border-bottom:1px solid var(--border2);">
+                <span style="color:var(--text);">${tam} derrota${tam>1?'s':''} seguida${tam>1?'s':''}</span>
+                <span style="color:var(--muted);">${freq[tam]}x</span>
+              </div>`;
+            });
+            return `<div style="border-top:1px solid var(--border2);padding-top:8px;margin-top:8px;">
+              <div style="font-size:9px;color:var(--muted);font-family:var(--mono);font-weight:700;letter-spacing:.05em;margin-bottom:5px;">FREQUÊNCIA DAS SECAS (da maior pra menor)</div>
+              ${linhas}
+            </div>`;
+          })()}
         </div>
       </div>`;
     });
