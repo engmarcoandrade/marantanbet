@@ -633,7 +633,7 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">CONTROLE <span>FINANCEIRO</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v45.7</span></div>
+      <div class="app-logo">CONTROLE <span>FINANCEIRO</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v45.8</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
@@ -2116,23 +2116,22 @@ function renderEditorMercados(){
           <input type="checkbox" ${der?'checked':''} onchange="editarMercadoCampo(${i},'incrDerrota',this.checked)" style="width:22px;height:22px;cursor:pointer;flex:none;">
         </label>
         <button onclick="removerMercado(${i})" title="Remover" style="flex:none;width:36px;height:36px;background:var(--surface2);border:1px solid var(--loss);color:var(--loss);border-radius:5px;cursor:pointer;font-weight:700;font-size:14px;">✕</button>
+        <div style="width:1px;flex:none;align-self:stretch;background:var(--border2);"></div>
+        <label style="flex:none;display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text);cursor:pointer;font-weight:700;white-space:nowrap;">
+          <input type="checkbox" ${regua?'checked':''} onchange="editarMercadoCampo(${i},'reguaAtiva',this.checked)" style="width:20px;height:20px;cursor:pointer;flex:none;">
+          Régua Adaptativa
+        </label>
+        ${regua?`<div style="display:flex;align-items:center;gap:5px;flex:none;">
+          <span style="font-size:10px;color:var(--muted);white-space:nowrap;">Janela</span>
+          <input type="number" step="1" min="2" max="50" value="${m.reguaJanela!==undefined?m.reguaJanela:10}" oninput="editarMercadoCampo(${i},'reguaJanela',this.value)" title="Quantos dos últimos resultados a régua considera (confiança/estabilidade)" style="width:56px;flex:none;background:var(--surface2);border:1px solid var(--purple-border);color:var(--text);font-family:var(--mono);font-size:13px;font-weight:700;padding:7px;border-radius:5px;">
+        </div>
+        <div style="display:flex;align-items:center;gap:5px;flex:none;">
+          <span style="font-size:10px;color:var(--muted);white-space:nowrap;">Sensib.</span>
+          <input type="number" step="1" min="1" max="${m.reguaJanela!==undefined?m.reguaJanela:10}" value="${m.reguaSensibilidade!==undefined?m.reguaSensibilidade:5}" oninput="editarMercadoCampo(${i},'reguaSensibilidade',this.value)" title="Com quantos resultados reais a régua já reage em força total (velocidade de reação, sempre ≤ Janela)" style="width:56px;flex:none;background:var(--surface2);border:1px solid var(--bar-amber);color:var(--text);font-family:var(--mono);font-size:13px;font-weight:700;padding:7px;border-radius:5px;">
+        </div>
+        <span style="font-size:9px;color:var(--muted);flex:none;white-space:nowrap;">incremento: ${(incrBase*0.5).toFixed(1)}%–${(incrBase*1.5).toFixed(1)}%</span>`:''}
       </div>
       ${nenhum?'<div style="font-size:10px;color:var(--bar-amber);font-weight:700;margin-top:6px;">⚠️ nenhum marcado: aposta fixa, não cresce</div>':''}
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding-top:8px;margin-top:8px;border-top:1px solid var(--border2);">
-        <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text);cursor:pointer;font-weight:700;">
-          <input type="checkbox" ${regua?'checked':''} onchange="editarMercadoCampo(${i},'reguaAtiva',this.checked)" style="width:20px;height:20px;cursor:pointer;">
-          📏 Régua Adaptativa
-        </label>
-        ${regua?`<div style="display:flex;align-items:center;gap:5px;">
-          <span style="font-size:10px;color:var(--muted);">Janela (jogos)</span>
-          <input type="number" step="1" min="2" max="50" value="${m.reguaJanela!==undefined?m.reguaJanela:10}" oninput="editarMercadoCampo(${i},'reguaJanela',this.value)" title="Quantos dos últimos resultados a régua considera (confiança/estabilidade)" style="width:62px;background:var(--surface2);border:1px solid var(--purple-border);color:var(--text);font-family:var(--mono);font-size:13px;font-weight:700;padding:7px;border-radius:5px;">
-        </div>
-        <div style="display:flex;align-items:center;gap:5px;">
-          <span style="font-size:10px;color:var(--muted);">Sensibilidade</span>
-          <input type="number" step="1" min="1" max="${m.reguaJanela!==undefined?m.reguaJanela:10}" value="${m.reguaSensibilidade!==undefined?m.reguaSensibilidade:5}" oninput="editarMercadoCampo(${i},'reguaSensibilidade',this.value)" title="Com quantos resultados reais a régua já reage em força total (velocidade de reação, sempre ≤ Janela)" style="width:62px;background:var(--surface2);border:1px solid var(--bar-amber);color:var(--text);font-family:var(--mono);font-size:13px;font-weight:700;padding:7px;border-radius:5px;">
-        </div>
-        <span style="font-size:10px;color:var(--muted);">incremento varia entre ${(incrBase*0.5).toFixed(1)}% e ${(incrBase*1.5).toFixed(1)}% conforme a tendência (alcance ±50%)</span>`:''}
-      </div>
     </div>`;
   });
   box.innerHTML=html;
