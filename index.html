@@ -633,7 +633,7 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">CONTROLE <span>FINANCEIRO</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v45.15</span></div>
+      <div class="app-logo">CONTROLE <span>FINANCEIRO</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v45.16</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
@@ -3501,8 +3501,8 @@ function renderLinhas(){
           </div>
         </div>`;
       })()}</td>
-      <td class="t-mono ${seq.perdasAcumuladas>0?'t-loss':''}">${fmt(seq.perdasAcumuladas)}</td>
-      <td class="t-mono"><b>${seq.status==='FINISHED'?fmt(0):fmt(sniperArredondarAposta(seq.apostaAtual))}</b></td>
+      <td class="t-mono" style="color:var(--text);">${seq.perdasAcumuladas>0?'<span style="color:var(--loss);" title="Risco acumulado neste lote">⚠ ':'<span style="color:var(--muted);" title="Sem risco acumulado">◦ '}${fmt(seq.perdasAcumuladas)}</span></td>
+      <td class="t-mono" style="color:var(--text);"><span style="color:var(--muted);" title="Valor da próxima aposta — não é resultado, é só o valor apostado">🎲 </span><b>${seq.status==='FINISHED'?fmt(0):fmt(sniperArredondarAposta(seq.apostaAtual))}</b></td>
       <td class="t-mono" style="text-align:center;">${seqTxt}</td>
       <td><span class="t-win">${seq.winsEtapa}</span>/<span class="t-loss">${seq.lossesEtapa}</span></td>
       <td>${renderUltimos10(seq.ultimos)}</td>
