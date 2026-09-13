@@ -20,9 +20,9 @@
   --accent: #2D7FF9;
   --accent-dim: rgba(45,127,249,0.12);
   --accent-border: rgba(45,127,249,0.35);
-  --win: #3FB950;
-  --win-dim: rgba(63,185,80,0.12);
-  --win-border: rgba(63,185,80,0.35);
+  --win: #2D7FF9;
+  --win-dim: rgba(45,127,249,0.12);
+  --win-border: rgba(45,127,249,0.35);
   --loss: #F85149;
   --loss-dim: rgba(248,81,73,0.12);
   --loss-border: rgba(248,81,73,0.35);
@@ -30,7 +30,7 @@
   --purple-dim: rgba(188,140,255,0.12);
   --purple-border: rgba(188,140,255,0.35);
   /* Cores das barras de progresso (fortes; adaptam-se por tema) */
-  --bar-win: #2EA043;
+  --bar-win: #2D7FF9;
   --bar-loss: #E5484D;
   --bar-amber: #E8A317;
   --mono: 'JetBrains Mono', monospace;
@@ -52,16 +52,16 @@ body.light-mode {
   --accent: #0A4FB4;
   --accent-dim: rgba(10,79,180,0.10);
   --accent-border: rgba(10,79,180,0.45);
-  --win: #10661F;
-  --win-dim: rgba(16,102,31,0.10);
-  --win-border: rgba(16,102,31,0.45);
+  --win: #0A4FB4;
+  --win-dim: rgba(10,79,180,0.10);
+  --win-border: rgba(10,79,180,0.45);
   --loss: #A5170D;
   --loss-dim: rgba(165,23,13,0.10);
   --loss-border: rgba(165,23,13,0.45);
   --purple: #5A2DA0;
   --purple-dim: rgba(90,45,160,0.10);
   --purple-border: rgba(90,45,160,0.45);
-  --bar-win: #10661F;
+  --bar-win: #0A4FB4;
   --bar-loss: #A5170D;
   --bar-amber: #7A4F00;
 }
@@ -633,7 +633,7 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">CONTROLE <span>FINANCEIRO</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v45.14</span></div>
+      <div class="app-logo">CONTROLE <span>FINANCEIRO</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v45.15</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
@@ -1564,7 +1564,7 @@ function mostrarResumoAberturaEtapa(){
     html+=`<div style="margin-top:10px;">
       <div style="display:flex;justify-content:space-between;font-size:10px;font-family:var(--mono);font-weight:700;margin-bottom:3px;">
         <span style="color:var(--muted);">🎯 ${metaPct}%</span>
-        <span style="color:${progresso<0?'var(--loss)':'var(--text)'};">${progresso<0?'▼ ':''}${progresso.toFixed(1)}%</span>
+        <span style="color:${progresso<0?'var(--loss)':'var(--win)'};">${progresso<0?'▼ ':'▲ +'}${progresso.toFixed(1)}%</span>
       </div>
       <div style="height:12px;background:var(--surface2);border:1px solid ${progresso<0?'var(--bar-loss)':'var(--border)'};border-radius:99px;overflow:hidden;">
         <div style="height:100%;width:${progresso<0?8:prog}%;background:${progresso<0?'var(--bar-loss)':'var(--bar-win)'};border-radius:99px;"></div>
@@ -3459,8 +3459,8 @@ function renderLinhas(){
         const negativo=luc<0;
         // Tons FORTES e sólidos (deuteranopia): verde / âmbar / vermelho. Texto sempre presente e com sinal.
         const cor=cumprida?'var(--bar-win)':(negativo?'var(--bar-loss)':'var(--bar-amber)');
-        // Rótulo: mostra o sinal. Negativo aparece como "▼ -15%" (símbolo + sinal, não só cor).
-        const lbl=cumprida?'✔ 100%':(negativo?('▼ '+Math.round(pctReal)+'%'):(Math.round(pctReal)+'%'));
+        // Rótulo: mostra o sinal dos dois lados — nunca só a cor. Negativo "▼ -15%", positivo "▲ +15%".
+        const lbl=cumprida?'✔ 100%':(negativo?('▼ '+Math.round(pctReal)+'%'):('▲ +'+Math.round(pctReal)+'%'));
         const corTexto=cumprida?'var(--bar-win)':(negativo?'var(--bar-loss)':'var(--text)');
         // Quando negativo, a barra fica vazia mas com um traço vermelho de aviso à esquerda (não depende só de cor: tem o ▼ e o sinal no texto).
         const fill=negativo
