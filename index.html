@@ -633,7 +633,7 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">CONTROLE <span>FINANCEIRO</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v45.17</span></div>
+      <div class="app-logo">CONTROLE <span>FINANCEIRO</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v45.18</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
@@ -758,6 +758,8 @@ tbody tr:last-child td { border-bottom:none; }
         <button id="btn-escolher-lotes" class="filter-btn grp-view" onclick="abrirModalEscolherLotes()">👁️ Ver</button>
         <div class="filter-divisor"></div>
         <button id="btn-org-blocos" class="filter-btn" onclick="toggleOrganizarBlocos()">⋮⋮ Blocos</button>
+        <div class="filter-divisor"></div>
+        <button id="btn-desfazer-lote" class="filter-btn" onclick="desfazerUltimaMarcacao()" title="Desfaz a última marcação de Vitória, Derrota ou Anulada — restaura aposta, risco, gales e saldo" disabled style="opacity:0.45;">↩️ Desfazer</button>
 
       </div>
       <div class="table-wrap">
@@ -1143,6 +1145,7 @@ let state = JSON.parse(JSON.stringify(DEFAULT_STATE));
 const lotesAvisadosRisco = new Set();
 let ordemLotes = 'id'; // 'id' ou 'risco'
 let sinalizadoMeta=false, sinalizadoStop=false, chartInstance=null, filtroAtualExibicao='all', sheetsTimeout=null;
+let ultimaAcaoLote=null; // snapshot da marcação mais recente (Pos/Neg/Anular), pra permitir desfazer 1 nível
 
 // Estado único (modo Real/Virtual removido na v32.0). ms() mantido por compatibilidade.
 function ms(){ return state; }
@@ -2222,10 +2225,71 @@ function verificarTravaStop(){
   return false;
 }
 
+// ── DESFAZER ÚLTIMA MARCAÇÃO ──
+// Em vez de tentar reverter matematicamente a progressão (arriscado — envolve arredondamento,
+// gales, stop por lote, meta, régua), guardamos uma FOTO de tudo que a marcação pode alterar
+// e, se precisar desfazer, restauramos essa foto inteira. Só 1 nível (a mais recente) — se
+// você marcar de novo, a foto anterior é substituída.
+function capturarSnapshotAntesDeMarcar(index){
+  const seq=ms().sequencias[index]; if(!seq) return null;
+  return {
+    index, seqId:seq.id,
+    seqClone:JSON.parse(JSON.stringify(seq)),
+    bancaAtual:state.bancaAtual,
+    vitoriasRodadaVoltarInicial:ms().vitoriasRodadaVoltarInicial,
+    perdasAssumidasTotal:ms().perdasAssumidasTotal,
+    assumidasCount:ms().assumidasCount,
+    registroApostasLen:(ms().registroApostas||[]).length,
+    estatSequenciasLen:(ms().estatSequencias||[]).length,
+    streakPorLetraClone:JSON.parse(JSON.stringify(ms().streakPorLetra||{})),
+    marantanLancamentosRodadaClone:ms().marantanLancamentosRodada?JSON.parse(JSON.stringify(ms().marantanLancamentosRodada)):null,
+    lotesAvisadosRiscoClone:new Set(lotesAvisadosRisco),
+    ts:Date.now()
+  };
+}
+function atualizarBotaoDesfazer(){
+  const btn=document.getElementById('btn-desfazer-lote'); if(!btn) return;
+  btn.disabled=!ultimaAcaoLote;
+  btn.style.opacity=ultimaAcaoLote?'1':'0.45';
+  btn.style.cursor=ultimaAcaoLote?'pointer':'default';
+}
+function desfazerUltimaMarcacao(){
+  if(!ultimaAcaoLote){ return; }
+  const snap=ultimaAcaoLote;
+  const seqAtual=ms().sequencias[snap.index];
+  if(!seqAtual||seqAtual.id!==snap.seqId){
+    alert('Não foi possível desfazer: a posição desse lote mudou desde a última marcação (foi movido, removido ou reordenado).');
+    ultimaAcaoLote=null; atualizarBotaoDesfazer();
+    return;
+  }
+  if(!confirm('↩️ Desfazer a última marcação do lote #'+String(snap.seqId).padStart(3,'0')+'?\n\nIsso restaura a aposta, o risco, os gales, os "Últimos 30" e o saldo ao estado de antes dessa marcação.')) return;
+  ms().sequencias[snap.index]=snap.seqClone;
+  state.bancaAtual=snap.bancaAtual;
+  ms().vitoriasRodadaVoltarInicial=snap.vitoriasRodadaVoltarInicial;
+  ms().perdasAssumidasTotal=snap.perdasAssumidasTotal;
+  ms().assumidasCount=snap.assumidasCount;
+  if(ms().registroApostas) ms().registroApostas.length=snap.registroApostasLen;
+  if(ms().estatSequencias) ms().estatSequencias.length=snap.estatSequenciasLen;
+  ms().streakPorLetra=snap.streakPorLetraClone;
+  if(snap.marantanLancamentosRodadaClone) ms().marantanLancamentosRodada=snap.marantanLancamentosRodadaClone;
+  lotesAvisadosRisco.clear();
+  snap.lotesAvisadosRiscoClone.forEach(v=>lotesAvisadosRisco.add(v));
+  // Fecha modais de meta/risco que podem ter sido abertos pela marcação que estamos desfazendo —
+  // eles refletiam um estado que não existe mais.
+  const modalMeta=document.getElementById('modal-meta-letra'); if(modalMeta) modalMeta.style.display='none';
+  const modalRisco=document.getElementById('modal-risco-gales'); if(modalRisco) modalRisco.style.display='none';
+  ultimaAcaoLote=null; // um único nível — não empilha
+  atualizarBotaoDesfazer();
+  atualizarPainelUI(false);
+  salvarDadosEAtualizarTudo();
+}
+
 function registrarApostaIndividual(index,resultado,emMassa=false){
   if(index<0||index>=ms().sequencias.length) return;
   if(verificarTravaStop()) return;
   const seq=ms().sequencias[index]; if(seq.status==='FINISHED') return;
+  ultimaAcaoLote=capturarSnapshotAntesDeMarcar(index);
+  atualizarBotaoDesfazer();
   const l=seq.letraRandomica; const odd=oddDoLote(seq);
   registrarEventoLetra(l,resultado);
   let infoAssumida=null;
@@ -2245,6 +2309,8 @@ function registrarApostaIndividual(index,resultado,emMassa=false){
 function anularApostaLote(index){
   if(index<0||index>=ms().sequencias.length) return;
   const seq=ms().sequencias[index]; if(!seq) return;
+  ultimaAcaoLote=capturarSnapshotAntesDeMarcar(index);
+  atualizarBotaoDesfazer();
   if(!seq.ultimos) seq.ultimos=[];
   seq.ultimos.push('A');
   if(seq.ultimos.length>30) seq.ultimos.shift();
