@@ -633,7 +633,7 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">CONTROLE <span>FINANCEIRO</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v45.18</span></div>
+      <div class="app-logo">CONTROLE <span>FINANCEIRO</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v45.19</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
@@ -1147,6 +1147,101 @@ let ordemLotes = 'id'; // 'id' ou 'risco'
 let sinalizadoMeta=false, sinalizadoStop=false, chartInstance=null, filtroAtualExibicao='all', sheetsTimeout=null;
 let ultimaAcaoLote=null; // snapshot da marcação mais recente (Pos/Neg/Anular), pra permitir desfazer 1 nível
 
+/* ══════════════════════════════════════════════════════════════════════
+   ARQUIVOS (v45.19) — carregamento em duas camadas
+   Abrir o app busca só o núcleo (banca, lotes, config): rápido, sem tocar a
+   planilha. Os arrays grandes (apostas, histórico, notas, secas, gráfico) só
+   são buscados quando o usuário abre a aba que precisa deles.
+   Enquanto não estiverem carregados, o app NÃO pode mandar o servidor
+   reescrever as abas — só acrescentar as linhas novas. É o que este controle
+   registra: o que nasceu nesta sessão e ainda não foi gravado.
+   ══════════════════════════════════════════════════════════════════════ */
+const arquivos = {
+  carregados:false,       // já buscamos os arrays completos nesta sessão?
+  carregando:null,        // promessa em andamento, pra não buscar duas vezes
+  novos:{ apostas:[], secas:[], historico:[], grafico:[] },
+  removerDoFim:{ apostas:0, secas:0, historico:0, grafico:0 }
+};
+function arquivosZerarPendencias(){
+  arquivos.novos={ apostas:[], secas:[], historico:[], grafico:[] };
+  arquivos.removerDoFim={ apostas:0, secas:0, historico:0, grafico:0 };
+}
+// Registra um item recém-criado, para ser acrescentado na próxima gravação.
+function arquivosRegistrarNovo(qual,item){
+  if(arquivos.novos[qual]) arquivos.novos[qual].push(item);
+}
+// O Desfazer removeu N itens do fim. Se eles ainda estavam na fila de "novos"
+// (caso normal: foram criados nesta sessão), basta tirá-los da fila. Só o que
+// já tinha sido gravado precisa virar instrução de remoção pro servidor.
+function arquivosRegistrarRemocao(qual,quantos){
+  if(quantos<=0) return;
+  const fila=arquivos.novos[qual]||[];
+  const daFila=Math.min(quantos,fila.length);
+  if(daFila>0) fila.splice(fila.length-daFila,daFila);
+  const restante=quantos-daFila;
+  if(restante>0) arquivos.removerDoFim[qual]=(arquivos.removerDoFim[qual]||0)+restante;
+}
+// Monta as instruções que vão junto com a gravação.
+function montarInstrucoesArquivos(){
+  if(arquivos.carregados){
+    // Temos os arrays completos em mãos: o servidor pode reescrever com segurança.
+    return {
+      apostas:{modo:'substituir', todos:ms().registroApostas||[]},
+      secas:{modo:'substituir', todos:ms().estatSequencias||[]},
+      historico:{modo:'substituir', todos:ms().historico||[]},
+      grafico:{modo:'substituir', todos:state.resultadosReaisGrafico||[]},
+      notas:{modo:'substituir', todos:ms().notas||[]}
+    };
+  }
+  // Não carregamos: só mexer no fim de cada aba. Notas nem entram — só são
+  // editadas na própria aba, que exige carregamento.
+  const inst={};
+  ['apostas','secas','historico','grafico'].forEach(q=>{
+    const novos=arquivos.novos[q]||[];
+    const rem=arquivos.removerDoFim[q]||0;
+    if(novos.length>0||rem>0) inst[q]={modo:'acrescentar', novos:novos, removerDoFim:rem};
+  });
+  return inst;
+}
+// Busca os arrays completos. Chamado ao abrir Histórico, Notas ou Gráfico.
+async function garantirArquivosCarregados(){
+  if(arquivos.carregados) return true;
+  if(arquivos.carregando) return arquivos.carregando;
+  const url=state.sheetsUrl||SHEETS_URL_MEMORIA||'';
+  if(!url||!url.startsWith('http')) return false;
+  arquivos.carregando=(async()=>{
+    for(let tentativa=1;tentativa<=MAX_TENTATIVAS_SHEETS;tentativa++){
+      const controlador=new AbortController();
+      const tid=setTimeout(()=>controlador.abort(),20000); // abas de arquivo são mais lentas
+      try{
+        const resp=await fetch(url+'?parte=arquivos&t='+Date.now(),{signal:controlador.signal});
+        clearTimeout(tid);
+        const dados=await resp.json();
+        if(dados&&dados.status==='ok'){
+          // O que nasceu nesta sessão e ainda não foi gravado precisa sobreviver à fusão.
+          const pendApostas=[...(arquivos.novos.apostas||[])];
+          const pendSecas=[...(arquivos.novos.secas||[])];
+          const pendHist=[...(arquivos.novos.historico||[])];
+          const pendGraf=[...(arquivos.novos.grafico||[])];
+          ms().registroApostas=[...(dados.registroApostas||[]),...pendApostas];
+          ms().estatSequencias=[...(dados.estatSequencias||[]),...pendSecas];
+          ms().historico=[...(dados.historico||[]),...pendHist];
+          state.resultadosReaisGrafico=[...(dados.resultadosReaisGrafico||[]),...pendGraf];
+          ms().notas=dados.notas||[];
+          aplicarBlindagemDeVariaveis();
+          arquivos.carregados=true;
+          return true;
+        }
+      }catch(e){ clearTimeout(tid); }
+      if(tentativa<MAX_TENTATIVAS_SHEETS) await new Promise(r=>setTimeout(r,1200*tentativa));
+    }
+    return false;
+  })();
+  const r=await arquivos.carregando;
+  arquivos.carregando=null;
+  return r;
+}
+
 // Estado único (modo Real/Virtual removido na v32.0). ms() mantido por compatibilidade.
 function ms(){ return state; }
 
@@ -1154,7 +1249,7 @@ const fmt = (v) => v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 
 function fecharModal(id){ document.getElementById(id).style.display='none'; }
 
-const GS_SCRIPT_CODE = "// MÉTODO MARANTAN — Codigo.gs — V33.1\n//\n// V33.1: corrige uma corrida possível na migração automática — se dois aparelhos\n// chamassem doGet ao mesmo tempo durante a PRIMEIRA migração (antes do núcleo novo\n// existir), os dois podiam tentar migrar simultaneamente. Agora isso é protegido por\n// uma trava, sem deixar a leitura normal do dia a dia mais lenta (a trava só é usada\n// nesse evento único).\n//\n// MUDANÇA DE ARQUITETURA (V33.0 — correção do bug de sincronização entre dispositivos):\n// Antes, o estado INTEIRO (banca, lotes, histórico, apostas, anotações) era gravado\n// numa única \"propriedade\" do Apps Script, que tem limite de ~9KB. Com uso real, esse\n// limite estourava e a gravação falhava silenciosamente — cada aparelho continuava\n// funcionando com sua própria versão local, sem nunca se encontrar com as outras.\n//\n// Agora: só o NÚCLEO pequeno (banca, config, lotes ativos, categorias) fica na\n// propriedade rápida. Os arrays que crescem sem parar (apostas, histórico, anotações,\n// sequências de seca, gráfico) vão para abas da planilha, que não têm esse limite.\n\nvar CHAVE_NUCLEO = 'marantan_state_core';\nvar CHAVE_LEGADA = 'marantan_state'; // usada até a V32.0 — mantida só para migração\n\nfunction jsonOut_(obj) {\n  return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);\n}\n\nfunction doPost(e) {\n  var lock = LockService.getScriptLock();\n  try {\n    lock.waitLock(10000);\n    var ss = SpreadsheetApp.getActiveSpreadsheet();\n    if (!e || !e.postData || !e.postData.contents) {\n      return jsonOut_({ status: \"error\", message: \"Corpo vazio.\" });\n    }\n    var state = JSON.parse(e.postData.contents);\n    if (state.bancoCapital === undefined || !state.sequencias) {\n      return jsonOut_({ status: \"error\", message: \"Estrutura inválida.\" });\n    }\n\n    var registroApostas = Array.isArray(state.registroApostas) ? state.registroApostas : [];\n    var historico = Array.isArray(state.historico) ? state.historico : [];\n    var notas = Array.isArray(state.notas) ? state.notas : [];\n    var estatSequencias = Array.isArray(state.estatSequencias) ? state.estatSequencias : [];\n    var resultadosReaisGrafico = Array.isArray(state.resultadosReaisGrafico) ? state.resultadosReaisGrafico : [];\n\n    var core = {};\n    for (var k in state) {\n      if (k === 'registroApostas' || k === 'historico' || k === 'notas' ||\n          k === 'estatSequencias' || k === 'resultadosReaisGrafico') continue;\n      core[k] = state[k];\n    }\n    var coreJson = JSON.stringify(core);\n    if (coreJson.length > 8500) {\n      return jsonOut_({ status: \"error\", message: \"Núcleo do estado excedeu o limite mesmo após a divisão (\" + coreJson.length + \" bytes).\" });\n    }\n    PropertiesService.getScriptProperties().setProperty(CHAVE_NUCLEO, coreJson);\n\n    escreverApostas_(ss, registroApostas);\n    escreverHistorico_(ss, historico);\n    escreverNotas_(ss, notas);\n    escreverSecas_(ss, estatSequencias);\n    escreverGraficoReal_(ss, resultadosReaisGrafico);\n    escreverLotes_(ss, state.sequencias);\n    escreverDashboard_(ss, state);\n\n    SpreadsheetApp.flush();\n    return jsonOut_({ status: \"success\" });\n  } catch (error) {\n    return jsonOut_({ status: \"error\", message: error.toString() });\n  } finally {\n    lock.releaseLock();\n  }\n}\n\nfunction doGet(e) {\n  try {\n    var ss = SpreadsheetApp.getActiveSpreadsheet();\n    var core = migrarENuncaPerderDados_(ss);\n    if (!core) return jsonOut_({ status: \"ready\", version: \"33.0\" });\n\n    core.registroApostas = lerApostas_(ss);\n    core.historico = lerHistorico_(ss);\n    core.notas = lerNotas_(ss);\n    core.estatSequencias = lerSecas_(ss);\n    core.resultadosReaisGrafico = lerGraficoReal_(ss);\n\n    return ContentService.createTextOutput(JSON.stringify(core)).setMimeType(ContentService.MimeType.JSON);\n  } catch (error) {\n    return jsonOut_({ status: \"error\", message: error.toString() });\n  }\n}\n\n// Migração automática e única: se ainda não existe o núcleo novo, mas existe o estado\n// antigo (gravado por versões até a V32.0), separa tudo direitinho e preserva uma cópia\n// de segurança da chave antiga. Nunca apaga o dado original.\nfunction migrarENuncaPerderDados_(ss) {\n  var props = PropertiesService.getScriptProperties();\n  var nucleo = props.getProperty(CHAVE_NUCLEO);\n  if (nucleo) return JSON.parse(nucleo); // caminho rápido: já migrado, sem travar nada\n\n  // Só chega aqui na primeira vez (ou se nunca houve dado nenhum). Trava por segurança,\n  // caso dois aparelhos peguem essa janela ao mesmo tempo.\n  var lock = LockService.getScriptLock();\n  try {\n    lock.waitLock(15000);\n    nucleo = props.getProperty(CHAVE_NUCLEO);\n    if (nucleo) return JSON.parse(nucleo); // outra chamada já migrou enquanto esperávamos a trava\n\n    var legado = props.getProperty(CHAVE_LEGADA);\n    if (!legado) return null;\n    var estadoAntigo;\n    try { estadoAntigo = JSON.parse(legado); } catch (err) { return null; }\n    if (!estadoAntigo || typeof estadoAntigo !== 'object') return null;\n\n    var registroApostas = Array.isArray(estadoAntigo.registroApostas) ? estadoAntigo.registroApostas : [];\n    var historico = Array.isArray(estadoAntigo.historico) ? estadoAntigo.historico : [];\n    var notas = Array.isArray(estadoAntigo.notas) ? estadoAntigo.notas : [];\n    var estatSequencias = Array.isArray(estadoAntigo.estatSequencias) ? estadoAntigo.estatSequencias : [];\n    var resultadosReaisGrafico = Array.isArray(estadoAntigo.resultadosReaisGrafico) ? estadoAntigo.resultadosReaisGrafico : [];\n\n    var novoCore = {};\n    for (var k in estadoAntigo) {\n      if (k === 'registroApostas' || k === 'historico' || k === 'notas' ||\n          k === 'estatSequencias' || k === 'resultadosReaisGrafico') continue;\n      novoCore[k] = estadoAntigo[k];\n    }\n    props.setProperty(CHAVE_NUCLEO, JSON.stringify(novoCore));\n    props.setProperty('marantan_state_legado_backup', legado); // cópia de segurança — nunca apagada automaticamente\n\n    escreverApostas_(ss, registroApostas);\n    escreverHistorico_(ss, historico);\n    escreverNotas_(ss, notas);\n    escreverSecas_(ss, estatSequencias);\n    escreverGraficoReal_(ss, resultadosReaisGrafico);\n    SpreadsheetApp.flush();\n    return novoCore;\n  } finally {\n    lock.releaseLock();\n  }\n}\n\n// ───────────────────────── ABA: Apostas (painel de Wilson) ─────────────────────────\nfunction escreverApostas_(ss, lista) {\n  var sh = ss.getSheetByName(\"Apostas\") || ss.insertSheet(\"Apostas\");\n  sh.clear();\n  sh.appendRow([\"Mercado(l)\", \"Odd\", \"Venceu\", \"MercadoCod(m)\", \"BlocoId\", \"Data\"]);\n  if (lista.length > 0) {\n    var linhas = lista.map(function (r) {\n      return [r.l || '', parseFloat(r.o) || 0, r.w ? 1 : 0, r.m || '', r.b || '', r.d || ''];\n    });\n    var rangeTexto = sh.getRange(2, 6, linhas.length, 1);\n    rangeTexto.setNumberFormat('@'); // evita a planilha \"adivinhar\" que a coluna Data é uma data real\n    sh.getRange(2, 1, linhas.length, 6).setValues(linhas);\n  }\n}\nfunction lerApostas_(ss) {\n  var sh = ss.getSheetByName(\"Apostas\");\n  if (!sh || sh.getLastRow() < 2) return [];\n  var vals = sh.getRange(2, 1, sh.getLastRow() - 1, 6).getValues();\n  return vals.filter(function (row) { return row[0] !== '' || row[3] !== ''; }).map(function (row) {\n    return {\n      l: String(row[0] || ''),\n      o: parseFloat(row[1]) || 0,\n      w: row[2] ? 1 : 0,\n      m: String(row[3] || ''),\n      b: row[4] === '' ? null : String(row[4]),\n      d: valorComoTexto_(row[5])\n    };\n  });\n}\n\n// ───────────────────────── ABA: Historico ─────────────────────────\nfunction escreverHistorico_(ss, lista) {\n  var sh = ss.getSheetByName(\"Historico\") || ss.insertSheet(\"Historico\");\n  sh.clear();\n  sh.appendRow([\"Etapa\", \"DataCalendario\", \"Horário\", \"Lucro\", \"Saldo Total\", \"Saldo Plataforma\", \"% Meta\"]);\n  if (lista.length > 0) {\n    var linhas = lista.map(function (h, i) {\n      return [\n        parseInt(h.etapa) || (i + 1), h.dataCalendario || '', h.data || '',\n        parseFloat(h.lucro) || 0, parseFloat(h.totalPos) || 0, parseFloat(h.bancaPos) || 0,\n        (parseFloat(h.pct) || 0) / 100\n      ];\n    });\n    sh.getRange(2, 2, linhas.length, 1).setNumberFormat('@');\n    sh.getRange(2, 3, linhas.length, 1).setNumberFormat('@');\n    sh.getRange(2, 1, linhas.length, 7).setValues(linhas);\n    sh.getRange(2, 4, linhas.length, 2).setNumberFormat(\"R$ #,##0.00\");\n    sh.getRange(2, 7, linhas.length, 1).setNumberFormat(\"0.0%\");\n  }\n}\nfunction lerHistorico_(ss) {\n  var sh = ss.getSheetByName(\"Historico\");\n  if (!sh || sh.getLastRow() < 2) return [];\n  var vals = sh.getRange(2, 1, sh.getLastRow() - 1, 7).getValues();\n  return vals.filter(function (row) { return row[0] !== ''; }).map(function (row) {\n    return {\n      etapa: parseInt(row[0]) || 0,\n      dataCalendario: valorComoTexto_(row[1]),\n      data: valorComoTexto_(row[2]),\n      lucro: parseFloat(row[3]) || 0,\n      totalPos: parseFloat(row[4]) || 0,\n      bancaPos: parseFloat(row[5]) || 0,\n      pct: (parseFloat(row[6]) || 0) * 100\n    };\n  });\n}\n\n// ───────────────────────── ABA: Notas ─────────────────────────\nfunction escreverNotas_(ss, lista) {\n  var sh = ss.getSheetByName(\"Notas\") || ss.insertSheet(\"Notas\");\n  sh.clear();\n  sh.appendRow([\"id\", \"ts\", \"tsEdit\", \"texto\", \"fixada\"]);\n  if (lista.length > 0) {\n    var linhas = lista.map(function (n) {\n      return [n.id || '', n.ts || 0, n.tsEdit || 0, n.texto || '', !!n.fixada];\n    });\n    sh.getRange(2, 1, linhas.length, 5).setValues(linhas);\n  }\n}\nfunction lerNotas_(ss) {\n  var sh = ss.getSheetByName(\"Notas\");\n  if (!sh || sh.getLastRow() < 2) return [];\n  var vals = sh.getRange(2, 1, sh.getLastRow() - 1, 5).getValues();\n  return vals.filter(function (row) { return row[0] !== ''; }).map(function (row) {\n    return {\n      id: String(row[0]),\n      ts: parseInt(row[1]) || 0,\n      tsEdit: parseInt(row[2]) || 0,\n      texto: String(row[3] || ''),\n      fixada: !!row[4]\n    };\n  });\n}\n\n// ───────────────────────── ABA: Secas (frequência de sequências sem vitória) ─────────────────────────\nfunction escreverSecas_(ss, lista) {\n  var sh = ss.getSheetByName(\"Secas\") || ss.insertSheet(\"Secas\");\n  sh.clear();\n  sh.appendRow([\"l\", \"c\", \"d\"]);\n  if (lista.length > 0) {\n    var linhas = lista.map(function (s) { return [s.l || '', parseInt(s.c) || 0, s.d || '']; });\n    sh.getRange(2, 3, linhas.length, 1).setNumberFormat('@');\n    sh.getRange(2, 1, linhas.length, 3).setValues(linhas);\n  }\n}\nfunction lerSecas_(ss) {\n  var sh = ss.getSheetByName(\"Secas\");\n  if (!sh || sh.getLastRow() < 2) return [];\n  var vals = sh.getRange(2, 1, sh.getLastRow() - 1, 3).getValues();\n  return vals.filter(function (row) { return row[0] !== ''; }).map(function (row) {\n    return { l: String(row[0] || ''), c: parseInt(row[1]) || 0, d: valorComoTexto_(row[2]) };\n  });\n}\n\n// ───────────────────────── ABA: GraficoReal ─────────────────────────\nfunction escreverGraficoReal_(ss, lista) {\n  var sh = ss.getSheetByName(\"GraficoReal\") || ss.insertSheet(\"GraficoReal\");\n  sh.clear();\n  sh.appendRow([\"Saldo\"]);\n  if (lista.length > 0) {\n    var linhas = lista.map(function (v) { return [parseFloat(v) || 0]; });\n    sh.getRange(2, 1, linhas.length, 1).setValues(linhas);\n  }\n}\nfunction lerGraficoReal_(ss) {\n  var sh = ss.getSheetByName(\"GraficoReal\");\n  if (!sh || sh.getLastRow() < 2) return [];\n  var vals = sh.getRange(2, 1, sh.getLastRow() - 1, 1).getValues();\n  return vals.map(function (row) { return parseFloat(row[0]) || 0; });\n}\n\n// ───────────────────────── ABA: Lotes (só leitura visual — não é fonte de dados) ─────────────────────────\nfunction escreverLotes_(ss, sequencias) {\n  var sh = ss.getSheetByName(\"Lotes\") || ss.insertSheet(\"Lotes\");\n  sh.clear();\n  sh.appendRow([\"Lote ID\", \"Mercado\", \"Aposta\", \"Risco Acum.\", \"Vitórias\", \"Derrotas\", \"Status\"]);\n  if (sequencias && sequencias.length > 0) {\n    var linhas = sequencias.map(function (s, j) {\n      return [\n        parseInt(s.id) || (j + 1), (s.mercado || s.letraRandomica || '').toString().toUpperCase(),\n        parseFloat(s.apostaAtual) || 0.01, parseFloat(s.perdasAcumuladas) || 0,\n        parseInt(s.winsEtapa) || 0, parseInt(s.lossesEtapa) || 0, s.status || 'PENDING'\n      ];\n    });\n    sh.getRange(2, 1, linhas.length, 7).setValues(linhas);\n    sh.getRange(2, 3, linhas.length, 2).setNumberFormat(\"R$ #,##0.00\");\n  }\n}\n\n// ───────────────────────── ABA: Dashboard (só leitura visual) ─────────────────────────\nfunction escreverDashboard_(ss, state) {\n  var sh = ss.getSheetByName(\"Dashboard\") || ss.insertSheet(\"Dashboard\");\n  sh.clear();\n  sh.appendRow([\"MÉTODO MARANTAN\", \"V33.1\"]);\n  sh.appendRow([\"Banca Ativa\", \"Etapa\", \"Última Sinc\"]);\n  sh.appendRow([parseFloat(state.bancaAtual) || 0, parseInt(state.etapaAtual) || 1,\n    new Date(state.ultimoTimestampSinc || Date.now()).toLocaleString(\"pt-BR\")]);\n  sh.appendRow([\"Banco (Reserva)\", parseFloat(state.bancoCapital) || 0, \"\"]);\n}\n\n// Lê uma célula que pode ter sido convertida em Date/Hora pela planilha, e devolve o texto original.\nfunction valorComoTexto_(v) {\n  if (v instanceof Date) {\n    // Hora \"HH:mm:ss\" tem mais chance de acerto; datas ISO \"yyyy-MM-dd\" a outra.\n    var soHora = Utilities.formatDate(v, Session.getScriptTimeZone() || \"GMT\", \"HH:mm:ss\");\n    var soData = Utilities.formatDate(v, Session.getScriptTimeZone() || \"GMT\", \"yyyy-MM-dd\");\n    // Heurística simples: se a data é \"hoje\" (1970 ou a base do Sheets), provavelmente era só uma hora.\n    return v.getFullYear() <= 1899 ? soHora : soData;\n  }\n  return String(v || '');\n}\n";
+const GS_SCRIPT_CODE = "// MÉTODO MARANTAN — Codigo.gs — V34.0\n//\n// POR QUE ESTA VERSÃO EXISTE\n// A V33 corrigiu a sincronização entre aparelhos (o estado inteiro não cabia mais no\n// limite de 9KB de uma propriedade), passando os arrays grandes para abas da planilha.\n// Só que isso deixou a ABERTURA do app lenta: cada carregamento passou a ler 5 abas da\n// planilha, e leitura de planilha é a operação mais lenta do Apps Script. Resultado:\n// falhas intermitentes ao abrir, que a V33.1 só disfarçava com tentativas repetidas.\n//\n// V34.0 — CARREGAMENTO EM DUAS CAMADAS\n// 1) Abrir o app  -> lê APENAS a propriedade do núcleo (banca, lotes, config, categorias).\n//                    ZERO leitura de planilha. É o caminho quente, e agora é instantâneo.\n// 2) Abas de arquivo (Histórico, Notas, Gráfico) -> buscam os arrays grandes só quando\n//                    o usuário realmente abre aquela aba (`?parte=arquivos`).\n//\n// GRAVAÇÃO INCREMENTAL (o ponto delicado)\n// Se o app não carregou os arrays, ele NÃO pode reescrever as abas — apagaria tudo.\n// Então cada aba aceita dois modos, informados pelo cliente:\n//   - \"acrescentar\": só adiciona as linhas novas ao fim (e opcionalmente remove as N\n//     últimas, para o botão Desfazer). Usado quando o app não carregou o arquivo.\n//   - \"substituir\": reescreve a aba inteira. Só quando o app carregou o arquivo e o\n//     usuário pode de fato tê-lo editado (excluir etapa, editar nota, resetar Wilson).\n// Na dúvida, o padrão é \"acrescentar\" — o modo que nunca apaga dado.\n\nvar CHAVE_NUCLEO = 'marantan_state_core';\nvar CHAVE_LEGADA = 'marantan_state'; // usada até a V32.0 — mantida só para migração\n\n// Arrays que vivem em abas da planilha, não na propriedade do núcleo.\nvar CAMPOS_ARQUIVO = ['registroApostas', 'historico', 'notas', 'estatSequencias', 'resultadosReaisGrafico'];\n\nfunction jsonOut_(obj) {\n  return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);\n}\n\n// ═══════════════════════════════ LEITURA ═══════════════════════════════\n\nfunction doGet(e) {\n  try {\n    var parte = (e && e.parameter && e.parameter.parte) ? String(e.parameter.parte) : 'nucleo';\n\n    if (parte === 'arquivos') {\n      // Caminho frio: só quando o usuário abre Histórico, Notas ou Gráfico.\n      var ss = SpreadsheetApp.getActiveSpreadsheet();\n      return jsonOut_({\n        status: 'ok',\n        registroApostas: lerApostas_(ss),\n        historico: lerHistorico_(ss),\n        notas: lerNotas_(ss),\n        estatSequencias: lerSecas_(ss),\n        resultadosReaisGrafico: lerGraficoReal_(ss)\n      });\n    }\n\n    // Caminho quente (abrir o app): uma leitura de propriedade, nada de planilha.\n    var props = PropertiesService.getScriptProperties();\n    var nucleoJson = props.getProperty(CHAVE_NUCLEO);\n\n    if (!nucleoJson) {\n      // Só aqui a planilha é tocada na abertura: primeira execução (migração do formato antigo).\n      var core = migrarENuncaPerderDados_();\n      if (!core) return jsonOut_({ status: 'ready', version: '34.0' });\n      core.__versaoServidor = '34.0';\n      core.__arquivosNoServidor = true;\n      return ContentService.createTextOutput(JSON.stringify(core)).setMimeType(ContentService.MimeType.JSON);\n    }\n\n    var nucleo = JSON.parse(nucleoJson);\n    nucleo.__versaoServidor = '34.0';\n    nucleo.__arquivosNoServidor = true; // avisa o cliente: os arrays existem, só não vieram agora\n    return ContentService.createTextOutput(JSON.stringify(nucleo)).setMimeType(ContentService.MimeType.JSON);\n  } catch (error) {\n    return jsonOut_({ status: 'error', message: error.toString() });\n  }\n}\n\n// ═══════════════════════════════ GRAVAÇÃO ═══════════════════════════════\n\nfunction doPost(e) {\n  var lock = LockService.getScriptLock();\n  try {\n    lock.waitLock(20000);\n    if (!e || !e.postData || !e.postData.contents) {\n      return jsonOut_({ status: 'error', message: 'Corpo vazio.' });\n    }\n    var recebido = JSON.parse(e.postData.contents);\n    if (recebido.bancoCapital === undefined || !recebido.sequencias) {\n      return jsonOut_({ status: 'error', message: 'Estrutura inválida.' });\n    }\n\n    var instrucoes = recebido.__arquivos || {}; // como tratar cada aba\n    delete recebido.__arquivos;\n\n    // ── 1. Núcleo: tudo menos os arrays de arquivo ──\n    var core = {};\n    for (var k in recebido) {\n      if (CAMPOS_ARQUIVO.indexOf(k) !== -1) continue;\n      if (k.indexOf('__') === 0) continue; // campos de controle não são persistidos\n      core[k] = recebido[k];\n    }\n    var coreJson = JSON.stringify(core);\n    if (coreJson.length > 8500) {\n      return jsonOut_({ status: 'error', message: 'Núcleo do estado excedeu o limite (' + coreJson.length + ' bytes). Algo que deveria estar em aba de arquivo ficou no núcleo.' });\n    }\n    PropertiesService.getScriptProperties().setProperty(CHAVE_NUCLEO, coreJson);\n\n    // ── 2. Abas de arquivo, conforme as instruções do cliente ──\n    var ss = SpreadsheetApp.getActiveSpreadsheet();\n    var relatorio = {};\n    relatorio.apostas = aplicarNaAba_(ss, 'Apostas', instrucoes.apostas, CABECALHO_APOSTAS, apostaParaLinha_, TEXTO_APOSTAS);\n    relatorio.secas = aplicarNaAba_(ss, 'Secas', instrucoes.secas, CABECALHO_SECAS, secaParaLinha_, TEXTO_SECAS);\n    relatorio.historico = aplicarNaAba_(ss, 'Historico', instrucoes.historico, CABECALHO_HISTORICO, historicoParaLinha_, TEXTO_HISTORICO);\n    relatorio.grafico = aplicarNaAba_(ss, 'GraficoReal', instrucoes.grafico, CABECALHO_GRAFICO, graficoParaLinha_, TEXTO_GRAFICO);\n    relatorio.notas = aplicarNaAba_(ss, 'Notas', instrucoes.notas, CABECALHO_NOTAS, notaParaLinha_, TEXTO_NOTAS);\n\n    // ── 3. Abas puramente visuais (sempre reescritas, são pequenas) ──\n    escreverLotes_(ss, recebido.sequencias);\n    escreverDashboard_(ss, recebido);\n\n    SpreadsheetApp.flush();\n    return jsonOut_({ status: 'success', arquivos: relatorio });\n  } catch (error) {\n    return jsonOut_({ status: 'error', message: error.toString() });\n  } finally {\n    lock.releaseLock();\n  }\n}\n\n// Aplica uma instrução a uma aba. Instrução pode ser:\n//   {modo:'substituir', todos:[...]}            -> reescreve a aba inteira\n//   {modo:'acrescentar', novos:[...], removerDoFim:N} -> só mexe no fim da aba\n//   ausente/indefinida                          -> não toca na aba (mais seguro)\nfunction aplicarNaAba_(ss, nomeAba, instrucao, cabecalho, conversor, colunasTexto) {\n  if (!instrucao || !instrucao.modo) return 'intocada';\n\n  if (instrucao.modo === 'substituir') {\n    var todos = Array.isArray(instrucao.todos) ? instrucao.todos : [];\n    reescreverAba_(ss, nomeAba, cabecalho, todos, conversor, colunasTexto);\n    return 'substituida:' + todos.length;\n  }\n\n  if (instrucao.modo === 'acrescentar') {\n    var sh = garantirAba_(ss, nomeAba, cabecalho);\n    var removidas = 0;\n    var remover = parseInt(instrucao.removerDoFim) || 0;\n    if (remover > 0) {\n      var ultima = sh.getLastRow();\n      var disponiveis = Math.max(0, ultima - 1); // linha 1 é cabeçalho\n      removidas = Math.min(remover, disponiveis);\n      if (removidas > 0) sh.deleteRows(ultima - removidas + 1, removidas);\n    }\n    var novos = Array.isArray(instrucao.novos) ? instrucao.novos : [];\n    if (novos.length > 0) {\n      var linhas = novos.map(conversor);\n      var inicio = sh.getLastRow() + 1;\n      marcarColunasComoTexto_(sh, inicio, linhas.length, colunasTexto);\n      sh.getRange(inicio, 1, linhas.length, cabecalho.length).setValues(linhas);\n    }\n    return 'acrescentou:' + novos.length + ' removeu:' + removidas;\n  }\n\n  return 'modo_desconhecido';\n}\n\n// Formata as colunas indicadas como texto puro ANTES de gravar. Isso impede dois\n// estragos: a planilha converter datas em Date, e interpretar um texto que comece\n// com \"=\", \"+\" ou \"-\" como fórmula (uma anotação \"=teste\" viraria erro de fórmula).\nfunction marcarColunasComoTexto_(sh, linhaInicio, quantasLinhas, colunasTexto) {\n  if (!colunasTexto || colunasTexto.length === 0 || quantasLinhas <= 0) return;\n  for (var i = 0; i < colunasTexto.length; i++) {\n    sh.getRange(linhaInicio, colunasTexto[i], quantasLinhas, 1).setNumberFormat('@');\n  }\n}\n\nfunction garantirAba_(ss, nome, cabecalho) {\n  var sh = ss.getSheetByName(nome);\n  if (!sh) {\n    sh = ss.insertSheet(nome);\n    sh.appendRow(cabecalho);\n  } else if (sh.getLastRow() === 0) {\n    sh.appendRow(cabecalho);\n  }\n  return sh;\n}\n\nfunction reescreverAba_(ss, nome, cabecalho, lista, conversor, colunasTexto) {\n  var sh = ss.getSheetByName(nome) || ss.insertSheet(nome);\n  sh.clear();\n  sh.appendRow(cabecalho);\n  if (lista.length > 0) {\n    var linhas = lista.map(conversor);\n    marcarColunasComoTexto_(sh, 2, linhas.length, colunasTexto);\n    sh.getRange(2, 1, linhas.length, cabecalho.length).setValues(linhas);\n  }\n}\n\n// ═══════════════════════ CONVERSORES E LEITORES POR ABA ═══════════════════════\n\nvar CABECALHO_APOSTAS = ['Mercado(l)', 'Odd', 'Venceu', 'MercadoCod(m)', 'BlocoId', 'Data'];\n// Colunas que DEVEM ficar como texto puro (1-based). Sem isso a planilha \"adivinha\" e\n// converte datas em Date, e — pior — trata texto iniciado por \"=\" ou \"+\" como fórmula.\nvar TEXTO_APOSTAS = [1, 4, 5, 6];\nfunction apostaParaLinha_(r) {\n  return [r.l || '', parseFloat(r.o) || 0, r.w ? 1 : 0, r.m || '', r.b || '', r.d || ''];\n}\nfunction lerApostas_(ss) {\n  var sh = ss.getSheetByName('Apostas');\n  if (!sh || sh.getLastRow() < 2) return [];\n  var vals = sh.getRange(2, 1, sh.getLastRow() - 1, 6).getValues();\n  return vals.filter(function (row) { return row[0] !== '' || row[3] !== ''; }).map(function (row) {\n    return {\n      l: String(row[0] || ''), o: parseFloat(row[1]) || 0, w: row[2] ? 1 : 0,\n      m: String(row[3] || ''), b: row[4] === '' ? null : String(row[4]), d: valorComoTexto_(row[5])\n    };\n  });\n}\n\nvar CABECALHO_SECAS = ['l', 'c', 'd'];\nvar TEXTO_SECAS = [1, 3];\nfunction secaParaLinha_(s) { return [s.l || '', parseInt(s.c) || 0, s.d || '']; }\nfunction lerSecas_(ss) {\n  var sh = ss.getSheetByName('Secas');\n  if (!sh || sh.getLastRow() < 2) return [];\n  var vals = sh.getRange(2, 1, sh.getLastRow() - 1, 3).getValues();\n  return vals.filter(function (row) { return row[0] !== ''; }).map(function (row) {\n    return { l: String(row[0] || ''), c: parseInt(row[1]) || 0, d: valorComoTexto_(row[2]) };\n  });\n}\n\nvar CABECALHO_HISTORICO = ['Etapa', 'DataCalendario', 'Horario', 'Lucro', 'SaldoTotal', 'SaldoPlataforma', 'PctMeta'];\nvar TEXTO_HISTORICO = [2, 3];\nfunction historicoParaLinha_(h) {\n  return [\n    parseInt(h.etapa) || 0, h.dataCalendario || '', h.data || '',\n    parseFloat(h.lucro) || 0, parseFloat(h.totalPos) || 0, parseFloat(h.bancaPos) || 0,\n    parseFloat(h.pct) || 0\n  ];\n}\nfunction lerHistorico_(ss) {\n  var sh = ss.getSheetByName('Historico');\n  if (!sh || sh.getLastRow() < 2) return [];\n  var vals = sh.getRange(2, 1, sh.getLastRow() - 1, 7).getValues();\n  return vals.filter(function (row) { return row[0] !== ''; }).map(function (row) {\n    return {\n      etapa: parseInt(row[0]) || 0, dataCalendario: valorComoTexto_(row[1]), data: valorComoTexto_(row[2]),\n      lucro: parseFloat(row[3]) || 0, totalPos: parseFloat(row[4]) || 0,\n      bancaPos: parseFloat(row[5]) || 0, pct: parseFloat(row[6]) || 0\n    };\n  });\n}\n\nvar CABECALHO_GRAFICO = ['Saldo'];\nvar TEXTO_GRAFICO = [];\nfunction graficoParaLinha_(v) { return [parseFloat(v) || 0]; }\nfunction lerGraficoReal_(ss) {\n  var sh = ss.getSheetByName('GraficoReal');\n  if (!sh || sh.getLastRow() < 2) return [];\n  var vals = sh.getRange(2, 1, sh.getLastRow() - 1, 1).getValues();\n  return vals.map(function (row) { return parseFloat(row[0]) || 0; });\n}\n\nvar CABECALHO_NOTAS = ['id', 'ts', 'tsEdit', 'texto', 'fixada'];\nvar TEXTO_NOTAS = [1, 4];\nfunction notaParaLinha_(n) { return [n.id || '', n.ts || 0, n.tsEdit || 0, n.texto || '', !!n.fixada]; }\nfunction lerNotas_(ss) {\n  var sh = ss.getSheetByName('Notas');\n  if (!sh || sh.getLastRow() < 2) return [];\n  var vals = sh.getRange(2, 1, sh.getLastRow() - 1, 5).getValues();\n  return vals.filter(function (row) { return row[0] !== ''; }).map(function (row) {\n    return {\n      id: String(row[0]), ts: parseInt(row[1]) || 0, tsEdit: parseInt(row[2]) || 0,\n      texto: String(row[3] || ''), fixada: !!row[4]\n    };\n  });\n}\n\n// ═══════════════════════ ABAS VISUAIS (não são fonte de dados) ═══════════════════════\n\nfunction escreverLotes_(ss, sequencias) {\n  var sh = ss.getSheetByName('Lotes') || ss.insertSheet('Lotes');\n  sh.clear();\n  sh.appendRow(['Lote ID', 'Mercado', 'Aposta', 'Risco Acum.', 'Vitórias', 'Derrotas', 'Status']);\n  if (sequencias && sequencias.length > 0) {\n    var linhas = sequencias.map(function (s, j) {\n      return [\n        parseInt(s.id) || (j + 1), (s.mercado || s.letraRandomica || '').toString().toUpperCase(),\n        parseFloat(s.apostaAtual) || 0.01, parseFloat(s.perdasAcumuladas) || 0,\n        parseInt(s.winsEtapa) || 0, parseInt(s.lossesEtapa) || 0, s.status || 'PENDING'\n      ];\n    });\n    sh.getRange(2, 1, linhas.length, 7).setValues(linhas);\n    sh.getRange(2, 3, linhas.length, 2).setNumberFormat('R$ #,##0.00');\n  }\n}\n\nfunction escreverDashboard_(ss, state) {\n  var sh = ss.getSheetByName('Dashboard') || ss.insertSheet('Dashboard');\n  sh.clear();\n  sh.appendRow(['MÉTODO MARANTAN', 'V34.0']);\n  sh.appendRow(['Banca Ativa', 'Etapa', 'Última Sinc']);\n  sh.appendRow([parseFloat(state.bancaAtual) || 0, parseInt(state.etapaAtual) || 1,\n    new Date(state.ultimoTimestampSinc || Date.now()).toLocaleString('pt-BR')]);\n  sh.appendRow(['Banco (Reserva)', parseFloat(state.bancoCapital) || 0, '']);\n}\n\n// ═══════════════════════ MIGRAÇÃO (roda uma vez só) ═══════════════════════\n\n// Se ainda não existe o núcleo, mas existe o estado antigo (V32 ou V33), separa tudo\n// e preserva uma cópia de segurança. Nunca apaga o dado original.\nfunction migrarENuncaPerderDados_() {\n  var props = PropertiesService.getScriptProperties();\n  var nucleo = props.getProperty(CHAVE_NUCLEO);\n  if (nucleo) return JSON.parse(nucleo);\n\n  var lock = LockService.getScriptLock();\n  try {\n    lock.waitLock(20000);\n    nucleo = props.getProperty(CHAVE_NUCLEO);\n    if (nucleo) return JSON.parse(nucleo); // outra chamada migrou enquanto esperávamos\n\n    var legado = props.getProperty(CHAVE_LEGADA);\n    if (!legado) return null;\n    var antigo;\n    try { antigo = JSON.parse(legado); } catch (err) { return null; }\n    if (!antigo || typeof antigo !== 'object') return null;\n\n    var ss = SpreadsheetApp.getActiveSpreadsheet();\n    var novoCore = {};\n    for (var k in antigo) {\n      if (CAMPOS_ARQUIVO.indexOf(k) !== -1) continue;\n      novoCore[k] = antigo[k];\n    }\n    props.setProperty(CHAVE_NUCLEO, JSON.stringify(novoCore));\n    props.setProperty('marantan_state_legado_backup', legado);\n\n    reescreverAba_(ss, 'Apostas', CABECALHO_APOSTAS, Array.isArray(antigo.registroApostas) ? antigo.registroApostas : [], apostaParaLinha_, TEXTO_APOSTAS);\n    reescreverAba_(ss, 'Historico', CABECALHO_HISTORICO, Array.isArray(antigo.historico) ? antigo.historico : [], historicoParaLinha_, TEXTO_HISTORICO);\n    reescreverAba_(ss, 'Notas', CABECALHO_NOTAS, Array.isArray(antigo.notas) ? antigo.notas : [], notaParaLinha_, TEXTO_NOTAS);\n    reescreverAba_(ss, 'Secas', CABECALHO_SECAS, Array.isArray(antigo.estatSequencias) ? antigo.estatSequencias : [], secaParaLinha_, TEXTO_SECAS);\n    reescreverAba_(ss, 'GraficoReal', CABECALHO_GRAFICO, Array.isArray(antigo.resultadosReaisGrafico) ? antigo.resultadosReaisGrafico : [], graficoParaLinha_, TEXTO_GRAFICO);\n    SpreadsheetApp.flush();\n    return novoCore;\n  } finally {\n    lock.releaseLock();\n  }\n}\n\n// Lê uma célula que a planilha pode ter convertido em Date, devolvendo o texto original.\n// Os conversores gravam com apóstrofo à frente para evitar essa conversão; isto é a rede de segurança.\nfunction valorComoTexto_(v) {\n  if (v instanceof Date) {\n    return v.getFullYear() <= 1899\n      ? Utilities.formatDate(v, Session.getScriptTimeZone() || 'GMT', 'HH:mm:ss')\n      : Utilities.formatDate(v, Session.getScriptTimeZone() || 'GMT', \"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\");\n  }\n  return String(v || '');\n}\n";
 
 function copiarScriptGS(){
   const box = document.getElementById('gs-code-box');
@@ -1187,7 +1282,12 @@ async function salvarNaNuvem(sincrona=false){
   if(!url||!url.startsWith("http")){ atualizarStatusSheets('err'); return; }
   const ts=Date.now();
   state.ultimoTimestampSinc=ts;
-  const payload=JSON.stringify(state);
+  // Monta o pacote: núcleo + instruções de como tratar cada aba de arquivo.
+  // Guardamos uma foto das pendências enviadas: só limpamos depois que o servidor
+  // confirmar, senão uma falha de rede faria essas linhas se perderem.
+  const instrucoes=montarInstrucoesArquivos();
+  const pendenciasEnviadas={ novos:JSON.parse(JSON.stringify(arquivos.novos)), removerDoFim:{...arquivos.removerDoFim} };
+  const payload=JSON.stringify(Object.assign({},state,{__arquivos:instrucoes}));
   if(sincrona&&navigator.sendBeacon){ navigator.sendBeacon(url,payload); return; }
   atualizarStatusSheets('sync');
   try{
@@ -1196,8 +1296,25 @@ async function salvarNaNuvem(sincrona=false){
     // Verificação real: lê de volta e confere se o timestamp gravado bate com o enviado.
     const okReal=await verificarSincronizacaoReal(url,ts);
     atualizarStatusSheets(okReal?'on':'err');
-    if(!okReal){ window.__ultimoErroSheets='O servidor não confirmou a gravação. Provável causa: o Codigo.gs no Apps Script está desatualizado (precisa ser o V33.1) ou a implantação expirou.'; }
+    if(okReal){
+      // Gravado de verdade: descarta apenas as pendências que foram enviadas,
+      // preservando qualquer coisa que tenha nascido durante a gravação.
+      descartarPendenciasEnviadas(pendenciasEnviadas);
+    } else {
+      window.__ultimoErroSheets='O servidor não confirmou a gravação. Provável causa: o Codigo.gs no Apps Script está desatualizado (precisa ser o V34.0) ou a implantação expirou.';
+    }
   }catch(err){ atualizarStatusSheets('err'); window.__ultimoErroSheets='Falha de rede ao salvar: '+err; }
+}
+
+// Remove da fila só o que foi efetivamente gravado. Se o usuário marcou uma aposta
+// nova enquanto a gravação estava em curso, ela continua na fila para a próxima.
+function descartarPendenciasEnviadas(enviadas){
+  ['apostas','secas','historico','grafico'].forEach(q=>{
+    const quantosEnviados=(enviadas.novos[q]||[]).length;
+    if(quantosEnviados>0) (arquivos.novos[q]||[]).splice(0,quantosEnviados);
+    const remEnviado=enviadas.removerDoFim[q]||0;
+    if(remEnviado>0) arquivos.removerDoFim[q]=Math.max(0,(arquivos.removerDoFim[q]||0)-remEnviado);
+  });
 }
 
 // Lê o estado do servidor e confirma que a última gravação chegou.
@@ -1218,15 +1335,17 @@ async function forcarSalvamentoSheets(){
   const url=state.sheetsUrl||SHEETS_URL_MEMORIA||"";
   const ts=Date.now(); state.ultimoTimestampSinc=ts;
   atualizarStatusSheets('sync');
+  const instrucoes=montarInstrucoesArquivos();
+  const pendenciasEnviadas={ novos:JSON.parse(JSON.stringify(arquivos.novos)), removerDoFim:{...arquivos.removerDoFim} };
   try{
-    await fetch(url,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain"},body:JSON.stringify(state)});
+    await fetch(url,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain"},body:JSON.stringify(Object.assign({},state,{__arquivos:instrucoes}))});
   }catch(e){}
   // espera breve e confirma de verdade
   await new Promise(r=>setTimeout(r,600));
   const ok=await verificarSincronizacaoReal(url,ts);
   atualizarStatusSheets(ok?'on':'err');
-  if(ok){ alert("✅ Sincronizado e confirmado pelo servidor."); }
-  else{ alert("⚠️ O app enviou os dados, mas o servidor NÃO confirmou a gravação.\n\nCausa mais provável: o Codigo.gs no Google Apps Script ainda não é o V33.1, ou a implantação precisa ser refeita.\n\nVá em Config → Integração, copie o script V33.1, cole no Apps Script e reimplante como \"Qualquer pessoa\"."); }
+  if(ok){ descartarPendenciasEnviadas(pendenciasEnviadas); alert("✅ Sincronizado e confirmado pelo servidor."); }
+  else{ alert("⚠️ O app enviou os dados, mas o servidor NÃO confirmou a gravação.\n\nCausa mais provável: o Codigo.gs no Google Apps Script ainda não é o V34.0, ou a implantação precisa ser refeita.\n\nVá em Config → Integração, copie o script V34.0, cole no Apps Script e reimplante como \"Qualquer pessoa\"."); }
 }
 
 async function salvarManualSheets(){
@@ -1658,6 +1777,48 @@ function openTab(tabId){
   if(tabId==='grafico') renderizarGrafico();
   if(tabId==='notas'){ notaEditandoId=null; renderNotas(); }
   if(tabId==='config') preencherScriptBox();
+  // Histórico, Notas e Gráfico dependem dos arrays grandes, que não vêm na abertura
+  // do app. Busca sob demanda e redesenha quando chegarem.
+  if(tabId==='historico'||tabId==='notas'||tabId==='grafico'){
+    if(!arquivos.carregados){
+      mostrarAvisoCarregandoArquivos(tabId,true);
+      garantirArquivosCarregados().then(sucesso=>{
+        mostrarAvisoCarregandoArquivos(tabId,false,sucesso);
+        if(!sucesso) return;
+        if(tabId==='grafico') renderizarGrafico();
+        if(tabId==='notas') renderNotas();
+        if(tabId==='historico'){
+          if(typeof renderPainelVantagem==='function') renderPainelVantagem();
+          if(typeof renderEstatisticas==='function') renderEstatisticas();
+          if(typeof renderHistorico==='function') renderHistorico();
+        }
+        atualizarPainelUI(false);
+      });
+    }
+  }
+}
+
+// Mostra um aviso discreto no topo da aba enquanto os dados de arquivo estão vindo.
+function mostrarAvisoCarregandoArquivos(tabId,carregando,sucesso){
+  const painel=document.getElementById(tabId); if(!painel) return;
+  const idAviso='aviso-arq-'+tabId;
+  let el=document.getElementById(idAviso);
+  if(carregando){
+    if(!el){
+      el=document.createElement('div');
+      el.id=idAviso;
+      el.style.cssText='background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;margin-bottom:8px;font-size:11px;color:var(--muted);font-family:var(--sans);';
+      painel.insertBefore(el,painel.firstChild);
+    }
+    el.innerText='⏳ Buscando o histórico completo no Sheets...';
+    return;
+  }
+  if(!el) return;
+  if(sucesso){ el.remove(); }
+  else{
+    el.innerText='⚠️ Não foi possível buscar o histórico completo. Os números desta aba podem estar incompletos — toque na aba novamente para tentar de novo.';
+    el.style.borderColor='var(--loss)';
+  }
 }
 
 // Base FIXA por etapa: calculada sobre o capital global (plataforma + banco) do INÍCIO da etapa.
@@ -1800,9 +1961,20 @@ function ajustarCamposDeOddsMenu(usarState=false){ /* removido: odds agora vêm 
 function salvarDadosEAtualizarTudo(){ state.ultimoTimestampSinc=Date.now(); state.sheetsUrl=state.sheetsUrl||SHEETS_URL_MEMORIA; if(state.sheetsUrl) SHEETS_URL_MEMORIA=state.sheetsUrl; atualizarPainelUI(false); agendarSalvarNuvem(); } // sem localStorage
 function reiniciarBancaTotalSistema(){ if(confirm("⚠️ Resetar o sistema inteiro?")){ state=JSON.parse(JSON.stringify(DEFAULT_STATE)); sinalizadoMeta=false; sinalizadoStop=false; gerarEstruturaLotesIniciais(); } }
 function ajustarBancaAtivaExternamente(){ const v=parseFloat(document.getElementById('cfg-banca-capital').value); if(isNaN(v)||v<=0) return; const parcial=state.bancaAtual-state.bancaInicioEtapa; state.bancaInicial=v; state.bancaInicioEtapa=v; state.bancaAtual=v+parcial; salvarDadosEAtualizarTudo(); }
+// Ações que REESCREVEM uma aba inteira (resetar Wilson, excluir etapa, editar nota)
+// só podem rodar com os arrays completos em mãos — senão reescreveriam a aba com
+// dados parciais e apagariam o resto. Este guarda impede isso.
+function exigirArquivosCarregados(oQueIaFazer){
+  if(arquivos.carregados) return true;
+  alert('⏳ O histórico completo ainda não foi carregado do Sheets.\n\nPara '+oQueIaFazer+' com segurança, o app precisa ter todos os dados em mãos — senão essa ação apagaria o que não foi carregado.\n\nAguarde alguns segundos nesta aba e tente de novo.');
+  garantirArquivosCarregados();
+  return false;
+}
+
 // Reseta só os dados que alimentam o painel de vantagem estatística (Wilson) e a tabela de
 // sequências sem vitória. NÃO toca em banca, lotes ativos, config, notas ou histórico de etapas.
 function resetarDadosWilson(){
+  if(!exigirArquivosCarregados('resetar os dados do painel')) return;
   const n=(ms().registroApostas||[]).length;
   const msg="🗑️ Resetar dados do painel de vantagem (Wilson)?\n\n"
     +"Serão apagados:\n"
@@ -1820,7 +1992,9 @@ function resetarDadosWilson(){
   renderEstatisticas();
 }
 
-function excluirRegistroEtapaHistorico(index){ if(confirm("🗑 Excluir esta etapa do histórico?")){
+function excluirRegistroEtapaHistorico(index){
+  if(!exigirArquivosCarregados('excluir uma etapa do histórico')) return;
+  if(confirm("🗑 Excluir esta etapa do histórico?")){
   const banco=parseFloat(state.bancoCapital)||0;
   ms().historico.splice(index,1); ms().historico.forEach((h,i)=>{ h.etapa=i+1; }); ms().etapaAtual=ms().historico.length+1;
   let totalInicial=(state.bancaInicial||0)+banco; let pts=[totalInicial];
@@ -1860,7 +2034,9 @@ function registrarEventoLetra(l,resultado){
   const cur=ms().streakPorLetra[l]||0;
   if(resultado==='WIN'){
     // Fecha a sequência: registra o comprimento (0 = venceu de primeira)
-    ms().estatSequencias.push({l:l, c:cur, d:new Date().toISOString().split('T')[0]});
+    const _regSeca={l:l, c:cur, d:new Date().toISOString().split('T')[0]};
+    ms().estatSequencias.push(_regSeca);
+    arquivosRegistrarNovo('secas',_regSeca);
     ms().streakPorLetra[l]=0;
     if(ms().estatSequencias.length>5000) ms().estatSequencias.splice(0,ms().estatSequencias.length-5000);
   } else {
@@ -1900,7 +2076,9 @@ function oddPorLetra(l){ const seqs=(ms().sequencias||[]).filter(s=>s.letraRando
 
 function registrarAposta(letra,odd,venceu,mercado,blocoId){
   if(!ms().registroApostas) ms().registroApostas=[];
-  ms().registroApostas.push({l:letra, o:odd, w:venceu?1:0, m:(mercado||(getMercados()[0]?getMercados()[0].cod:"V1")), b:blocoId||null, d:new Date().toISOString()});
+  const _regAposta={l:letra, o:odd, w:venceu?1:0, m:(mercado||(getMercados()[0]?getMercados()[0].cod:"V1")), b:blocoId||null, d:new Date().toISOString()};
+  ms().registroApostas.push(_regAposta);
+  arquivosRegistrarNovo('apostas',_regAposta);
   if(ms().registroApostas.length>20000) ms().registroApostas.splice(0,ms().registroApostas.length-20000);
 }
 
@@ -1973,6 +2151,7 @@ function limparNotaNova(){
   txt.value=''; atualizarContadorNotaNova(); txt.focus();
 }
 function salvarNovaNota(){
+  if(!exigirArquivosCarregados('salvar uma anotação')) return;
   const txt=document.getElementById('nota-nova-txt'); if(!txt) return;
   const conteudo=txt.value.trim();
   if(conteudo===''){ alert('Escreva alguma coisa antes de salvar.'); txt.focus(); return; }
@@ -1989,12 +2168,14 @@ function alternarOrdemNotas(){
   renderNotas();
 }
 function fixarNota(id){
+  if(!exigirArquivosCarregados('fixar uma anotação')) return;
   const n=(ms().notas||[]).find(x=>x.id===id); if(!n) return;
   n.fixada=!n.fixada;
   salvarDadosEAtualizarTudo();
   renderNotas();
 }
 function excluirNota(id){
+  if(!exigirArquivosCarregados('excluir uma anotação')) return;
   const n=(ms().notas||[]).find(x=>x.id===id); if(!n) return;
   const trecho=n.texto.length>60?n.texto.slice(0,60)+'...':n.texto;
   if(!confirm('Excluir esta anotação?\n\n"'+trecho+'"\n\nEsta ação não pode ser desfeita.')) return;
@@ -2006,6 +2187,7 @@ function excluirNota(id){
 function iniciarEdicaoNota(id){ notaEditandoId=id; renderNotas(); }
 function cancelarEdicaoNota(){ notaEditandoId=null; renderNotas(); }
 function salvarEdicaoNota(id){
+  if(!exigirArquivosCarregados('editar uma anotação')) return;
   const ta=document.getElementById('edit-nota-'+id); if(!ta) return;
   const n=(ms().notas||[]).find(x=>x.id===id); if(!n) return;
   const novo=ta.value.trim();
@@ -2268,8 +2450,16 @@ function desfazerUltimaMarcacao(){
   ms().vitoriasRodadaVoltarInicial=snap.vitoriasRodadaVoltarInicial;
   ms().perdasAssumidasTotal=snap.perdasAssumidasTotal;
   ms().assumidasCount=snap.assumidasCount;
-  if(ms().registroApostas) ms().registroApostas.length=snap.registroApostasLen;
-  if(ms().estatSequencias) ms().estatSequencias.length=snap.estatSequenciasLen;
+  if(ms().registroApostas){
+    const _remApostas=Math.max(0,ms().registroApostas.length-snap.registroApostasLen);
+    ms().registroApostas.length=snap.registroApostasLen;
+    arquivosRegistrarRemocao('apostas',_remApostas);
+  }
+  if(ms().estatSequencias){
+    const _remSecas=Math.max(0,ms().estatSequencias.length-snap.estatSequenciasLen);
+    ms().estatSequencias.length=snap.estatSequenciasLen;
+    arquivosRegistrarRemocao('secas',_remSecas);
+  }
   ms().streakPorLetra=snap.streakPorLetraClone;
   if(snap.marantanLancamentosRodadaClone) ms().marantanLancamentosRodada=snap.marantanLancamentosRodadaClone;
   lotesAvisadosRisco.clear();
@@ -3413,8 +3603,11 @@ function confirmarConclusaoEtapa(){
   if(!ms().historico) ms().historico=[];
   const lucroNecFinal=totalAnterior*(ms().metaPercent/100);
   const pctEtapa=lucroNecFinal>0?(lucro/lucroNecFinal)*100:0;
-  ms().historico.push({ etapa:ms().etapaAtual, dataCalendario:new Date().toISOString().split('T')[0], data:new Date().toLocaleTimeString('pt-BR'), lucro:lucro, totalPos:vTotal, bancaPos:novaPlataforma, pct:pctEtapa });
+  const _regHist={ etapa:ms().etapaAtual, dataCalendario:new Date().toISOString().split('T')[0], data:new Date().toLocaleTimeString('pt-BR'), lucro:lucro, totalPos:vTotal, bancaPos:novaPlataforma, pct:pctEtapa };
+  ms().historico.push(_regHist);
+  arquivosRegistrarNovo('historico',_regHist);
   state.resultadosReaisGrafico.push(vTotal); // gráfico usa TOTAL
+  arquivosRegistrarNovo('grafico',vTotal);
   state.bancaInicioEtapa=novaPlataforma;
   state.bancaInicial=novaPlataforma;
   ms().etapaAtual++;
@@ -4138,8 +4331,14 @@ function atualizarPainelUI(forcarGrafico=false){
   const lucroEtapa=state.bancaAtual-state.bancaInicioEtapa;
   const lucroNecessario=metaVal-baseEtapa;
   if(!state.resultadosReaisGrafico||state.resultadosReaisGrafico.length===0) state.resultadosReaisGrafico=[state.bancaInicial];
-
-  const lucroTotal=state.bancaAtual-state.resultadosReaisGrafico[0];
+  // O primeiro ponto do gráfico é o ponto de partida do lucro total. Como o array
+  // completo só é buscado quando o usuário abre a aba Gráfico, guardamos esse único
+  // número no núcleo — assim o Painel mostra o lucro certo desde a abertura.
+  if(arquivos.carregados||state.graficoPrimeiroPonto===undefined){
+    state.graficoPrimeiroPonto=state.resultadosReaisGrafico[0];
+  }
+  const pontoPartida=(state.graficoPrimeiroPonto!==undefined)?state.graficoPrimeiroPonto:state.resultadosReaisGrafico[0];
+  const lucroTotal=state.bancaAtual-pontoPartida;
   const el=(id,v)=>{ const e=document.getElementById(id); if(e) e.innerText=v; };
 
   el('kpi-global', fmt(capitalGlobal));
