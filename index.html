@@ -633,7 +633,7 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">CONTROLE <span>FINANCEIRO</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v45.16</span></div>
+      <div class="app-logo">CONTROLE <span>FINANCEIRO</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v45.17</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
@@ -3982,7 +3982,9 @@ function renderHistorico(){
 function renderizarGrafico(){
   const canvas=document.getElementById('meuGrafico'); if(!canvas) return;
   const ctx=canvas.getContext('2d');
-  const textColor='#8B949E'; const gridColor='#21262D';
+  const claro=document.body.classList.contains('light-mode');
+  const textColor=claro?'#30363D':'#8B949E'; const gridColor=claro?'#DDE3E9':'#21262D';
+  const labelColor=claro?'#000000':'#E6EDF3';
   const banco=parseFloat(state.bancoCapital)||0;
   const totalInicial=state.bancaInicial+banco;
 
@@ -3996,13 +3998,68 @@ function renderizarGrafico(){
   for(let i=1;i<Math.max(pts.length,max);i++) metaPts.push(metaPts[i-1]*fc);
   while(pts.length<max){ pts.push(null); labels.push('E'+pts.length); }
   if(chartInstance) chartInstance.destroy();
+
+  // Plugin próprio (sem depender de biblioteca externa) que escreve o valor de cada ponto
+  // real acima dele — sempre visível, não depende de toque/mouse.
+  const valorLabelsPlugin = {
+    id: 'valorLabels',
+    afterDatasetsDraw(chart){
+      const meta = chart.getDatasetMeta(0); // dataset 0 = "Realizado"
+      const dataset = chart.data.datasets[0];
+      const c = chart.ctx;
+      c.save();
+      c.font = 'bold 10px monospace';
+      c.textAlign = 'center';
+      c.fillStyle = labelColor;
+      meta.data.forEach((point, index) => {
+        const value = dataset.data[index];
+        if(value===null||value===undefined) return;
+        const rotulo = 'R$'+Math.round(value).toLocaleString('pt-BR');
+        c.fillText(rotulo, point.x, point.y - 10);
+      });
+      c.restore();
+    }
+  };
+
   chartInstance=new Chart(ctx,{
     type:'line',
     data:{ labels:labels, datasets:[
       { label:'Realizado', data:pts, borderColor:'#2D7FF9', borderWidth:2, pointRadius:pts.map(p=>p!==null?3:0), pointBackgroundColor:'#2D7FF9', fill:false, tension:0.15, spanGaps:false },
       { label:'Meta por Etapa', data:metaPts.slice(0,labels.length), borderColor:'#3FB950', borderWidth:1, borderDash:[4,4], pointRadius:0, fill:false, tension:0.1 }
     ]},
-    options:{ responsive:true, maintainAspectRatio:true, plugins:{ legend:{ labels:{ color:textColor, font:{size:11} } } }, scales:{ x:{ ticks:{ color:textColor, maxTicksLimit:10, font:{size:10} }, grid:{ color:gridColor } }, y:{ ticks:{ color:textColor, font:{size:10}, callback:(v)=>'R$'+v.toLocaleString('pt-BR',{maximumFractionDigits:0}) }, grid:{ color:gridColor } } } }
+    plugins:[valorLabelsPlugin],
+    options:{ responsive:true, maintainAspectRatio:true,
+      layout:{ padding:{ top:18 } }, // espaço pro rótulo do valor não cortar no topo
+      plugins:{
+        legend:{ labels:{ color:textColor, font:{size:11} } },
+        tooltip:{
+          // Ao tocar/passar o mouse: valor, variação % vs ponto anterior, e comparação com a meta.
+          // Sempre com seta + sinal no texto — não depende de cor pra ser entendido.
+          callbacks:{
+            label:function(context){
+              if(context.datasetIndex!==0) return context.dataset.label+': '+fmt(context.parsed.y);
+              const i=context.dataIndex;
+              const val=pts[i];
+              if(val===null||val===undefined) return null;
+              const linhas=['Valor: '+fmt(val)];
+              if(i>0 && pts[i-1]!==null && pts[i-1]!==undefined && pts[i-1]!==0){
+                const variacao=((val-pts[i-1])/pts[i-1])*100;
+                const sinal=variacao>=0?'▲ +':'▼ ';
+                linhas.push('Variação: '+sinal+variacao.toFixed(1)+'% vs ponto anterior');
+              }
+              const metaAqui=metaPts[i];
+              if(metaAqui){
+                const deltaM=val-metaAqui;
+                const pctM=(val/metaAqui-1)*100;
+                const sinalM=deltaM>=0?'▲ +':'▼ ';
+                linhas.push('Vs. meta: '+sinalM+fmt(Math.abs(deltaM))+' ('+sinalM+Math.abs(pctM).toFixed(1)+'%)');
+              }
+              return linhas;
+            }
+          }
+        }
+      },
+      scales:{ x:{ ticks:{ color:textColor, maxTicksLimit:10, font:{size:10} }, grid:{ color:gridColor } }, y:{ ticks:{ color:textColor, font:{size:10}, callback:(v)=>'R$'+v.toLocaleString('pt-BR',{maximumFractionDigits:0}) }, grid:{ color:gridColor } } } }
   });
 }
 
