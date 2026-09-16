@@ -409,6 +409,47 @@ tbody tr:last-child td { border-bottom:none; }
   </div>
 </div>
 
+<!-- Tela de carregamento: aparece ANTES de qualquer coisa, cobrindo a tela inteira.
+     Enquanto ela estiver visível, não existe app interativo por baixo — não tem como
+     mexer numa banca que ainda não foi confirmada como a de verdade. -->
+<div id="tela-carregando" style="position:fixed;inset:0;z-index:100000;background:var(--bg,#0D1117);display:flex;align-items:center;justify-content:center;flex-direction:column;padding:20px;">
+  <div style="background:var(--surface,#161B22);border:1px solid var(--border,#30363D);border-radius:12px;padding:32px 28px;max-width:340px;width:100%;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.5);">
+    <div style="font-size:32px;margin-bottom:12px;">☁️</div>
+    <div style="font-family:var(--sans);font-weight:800;font-size:15px;color:var(--text,#E6EDF3);margin-bottom:6px;">Buscando seus dados no Sheets...</div>
+    <div id="txt-carregando-detalhe" style="font-size:11px;color:var(--muted,#8B949E);">Isso leva só um instante.</div>
+  </div>
+</div>
+
+<!-- Tela de erro de carregamento: substitui o alerta antigo (que deixava o app aberto
+     por baixo, mostrando uma banca zerada como se fosse real). Enquanto esta tela estiver
+     visível, NADA é salvo — é fisicamente impossível sobrescrever seus dados de verdade
+     com um estado em branco, porque o app não te deixa nem operar. -->
+<div id="tela-erro-carregar" style="position:fixed;inset:0;z-index:100000;background:var(--bg,#0D1117);display:none;align-items:center;justify-content:center;flex-direction:column;padding:20px;">
+  <div style="background:var(--surface,#161B22);border:1px solid var(--loss,#F85149);border-radius:12px;padding:28px;max-width:360px;width:100%;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.5);">
+    <div style="font-size:32px;margin-bottom:8px;">⚠️</div>
+    <div style="font-family:var(--sans);font-weight:800;font-size:16px;color:var(--loss,#F85149);margin-bottom:8px;">Não foi possível buscar seus dados</div>
+    <div id="txt-erro-carregar-motivo" style="font-size:12px;color:var(--muted,#8B949E);margin-bottom:16px;line-height:1.5;"></div>
+    <div style="font-size:11px;color:var(--muted,#8B949E);margin-bottom:16px;line-height:1.5;">Por segurança, o app não vai abrir com uma banca vazia — isso evita que qualquer coisa que você fizer aqui apague seus dados reais na planilha por engano.</div>
+    <button onclick="tentarNovamenteCarregamento()" style="width:100%;background:var(--accent,#2F81F7);border:none;color:#fff;font-weight:700;font-size:14px;padding:11px;border-radius:8px;cursor:pointer;margin-bottom:8px;">🔄 Tentar novamente</button>
+  </div>
+</div>
+
+<!-- Tela de confirmação quando a planilha responde "sem nenhum dado salvo". Isso é normal
+     numa implantação nova — mas também é exatamente o que aconteceria se o app estivesse
+     apontando pra uma planilha ou implantação ERRADA. Por isso pedimos confirmação, em vez
+     de simplesmente abrir como se fosse a primeira vez. -->
+<div id="tela-confirmar-vazio" style="position:fixed;inset:0;z-index:100000;background:var(--bg,#0D1117);display:none;align-items:center;justify-content:center;flex-direction:column;padding:20px;">
+  <div style="background:var(--surface,#161B22);border:1px solid var(--bar-amber,#E8A317);border-radius:12px;padding:28px;max-width:360px;width:100%;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.5);">
+    <div style="font-size:32px;margin-bottom:8px;">🧐</div>
+    <div style="font-family:var(--sans);font-weight:800;font-size:16px;color:var(--text,#E6EDF3);margin-bottom:8px;">Nenhum dado encontrado na planilha</div>
+    <div style="font-size:12px;color:var(--muted,#8B949E);margin-bottom:14px;line-height:1.6;">Isso é normal se for a primeira vez que você conecta essa implantação. <b>Mas também é o que aparece se o app estiver apontando pra uma planilha ou implantação diferente da sua de sempre.</b></div>
+    <div style="font-size:12px;color:var(--text,#E6EDF3);margin-bottom:16px;line-height:1.6;">Se você tinha dados antes e não esperava ver isso: <b>pare aqui</b> e confira a URL do Apps Script na Config, e a planilha em que ele está vinculado, antes de continuar.</div>
+    <button onclick="confirmarComecarDoZero()" style="width:100%;background:var(--surface2,#0D1117);border:1px solid var(--border,#30363D);color:var(--text,#E6EDF3);font-weight:700;font-size:13px;padding:11px;border-radius:8px;cursor:pointer;margin-bottom:8px;">✅ Confirmo — é a primeira vez, começar do zero</button>
+    <button onclick="tentarNovamenteCarregamento()" style="width:100%;background:var(--accent,#2F81F7);border:none;color:#fff;font-weight:700;font-size:13px;padding:11px;border-radius:8px;cursor:pointer;">🔄 Verificar de novo</button>
+  </div>
+</div>
+
+
 
 <!-- MODAIS -->
 <div id="modal-meta" class="modal-overlay">
@@ -633,7 +674,7 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">CONTROLE <span>FINANCEIRO</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v45.19</span></div>
+      <div class="app-logo">CONTROLE <span>FINANCEIRO</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v45.20</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
@@ -1147,6 +1188,14 @@ let ordemLotes = 'id'; // 'id' ou 'risco'
 let sinalizadoMeta=false, sinalizadoStop=false, chartInstance=null, filtroAtualExibicao='all', sheetsTimeout=null;
 let ultimaAcaoLote=null; // snapshot da marcação mais recente (Pos/Neg/Anular), pra permitir desfazer 1 nível
 
+// ── TRAVA DE SEGURANÇA CONTRA PERDA DE DADOS ──
+// Enquanto isto for false, NENHUMA gravação sai para a nuvem — nem automática, nem manual.
+// Só vira true depois que o app confirma ter recebido os dados de verdade do servidor
+// (ou depois que o usuário confirma explicitamente que é uma planilha nova). Sem isso,
+// um carregamento que falhou silenciosamente já grava um estado em branco por cima do
+// estado real na primeira ação do usuário — foi exatamente isso que causou a perda de dados.
+let cargaInicialConfirmada=false;
+
 /* ══════════════════════════════════════════════════════════════════════
    ARQUIVOS (v45.19) — carregamento em duas camadas
    Abrir o app busca só o núcleo (banca, lotes, config): rápido, sem tocar a
@@ -1278,6 +1327,7 @@ function atualizarStatusSheets(status){
 }
 
 async function salvarNaNuvem(sincrona=false){
+  if(!cargaInicialConfirmada){ console.warn('Gravação bloqueada: a carga inicial ainda não foi confirmada.'); return; }
   const url=state.sheetsUrl||SHEETS_URL_MEMORIA||"";
   if(!url||!url.startsWith("http")){ atualizarStatusSheets('err'); return; }
   const ts=Date.now();
@@ -1329,8 +1379,12 @@ async function verificarSincronizacaoReal(url,tsEnviado){
   }catch(e){ return false; }
 }
 
-function agendarSalvarNuvem(){ if(sheetsTimeout) clearTimeout(sheetsTimeout); sheetsTimeout=setTimeout(()=>{ salvarNaNuvem(); },2500); }
+function agendarSalvarNuvem(){
+  if(!cargaInicialConfirmada){ console.warn('Gravação bloqueada: a carga inicial ainda não foi confirmada.'); return; }
+  if(sheetsTimeout) clearTimeout(sheetsTimeout); sheetsTimeout=setTimeout(()=>{ salvarNaNuvem(); },2500);
+}
 async function forcarSalvamentoSheets(){
+  if(!cargaInicialConfirmada){ alert('⏳ Ainda não confirmamos o carregamento dos seus dados reais.\n\nPor segurança, salvar está bloqueado até isso acontecer — assim não corremos o risco de gravar um estado em branco por cima da sua planilha.'); return; }
   if(sheetsTimeout) clearTimeout(sheetsTimeout);
   const url=state.sheetsUrl||SHEETS_URL_MEMORIA||"";
   const ts=Date.now(); state.ultimoTimestampSinc=ts;
@@ -1530,6 +1584,7 @@ async function carregarDaNuvem(){
   if(candidatas.length===0){ atualizarStatusSheets('err'); window.__ultimoErroSheets='Nenhuma URL válida configurada.'; return false; }
   atualizarStatusSheets('sync');
   let ultimoMotivo='';
+  let algumReady=false;
   for(const url of candidatas){
     const r=await tentarUmaUrlComRetry(url);
     if(r.ok){
@@ -1546,10 +1601,12 @@ async function carregarDaNuvem(){
       if(url!==principal) console.log('Sheets: conectado via URL de fallback.');
       return true;
     }
+    if(r.ready) algumReady=true;
     ultimoMotivo=r.motivo;
   }
   atualizarStatusSheets('err');
   window.__ultimoErroSheets=ultimoMotivo;
+  window.__ultimoCarregamentoFoiReady=algumReady;
   return false;
 }
 
@@ -1583,31 +1640,73 @@ async function inicializarApp(){
   // URL guardada apenas em memória via DEFAULT_STATE ou campo Config
   const urlSalva = SHEETS_URL_MEMORIA || "";
 
+  state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+  cargaInicialConfirmada=false;
+
   if(urlSalva && urlSalva.startsWith("http")){
-    // Sempre começa com state vazio — só Sheets alimenta os dados
-    state = JSON.parse(JSON.stringify(DEFAULT_STATE));
     state.sheetsUrl = urlSalva;
     aplicarBlindagemDeVariaveis();
-    atualizarStatusSheets('sync');
-    preencherCamposConfig(); ajustarCamposDeOddsMenu(true); atualizarPainelUI(true);
-    const ok = await carregarDaNuvem();
-    if(!ok){
-      atualizarStatusSheets('err');
-      const motivo=window.__ultimoErroSheets||'Causa desconhecida.';
-      alert('⚠️ Não foi possível conectar ao Google Sheets.\n\nMotivo: '+motivo+'\n\nVerifique a URL na aba Config e use "Testar conexão".');
-    }
-    mostrarBloqueio(); // pede a senha após carregar o estado (com a senha sincronizada)
-    agendarResumoAbertura();
+    mostrarTelaCarregando(true);
+    await tentarCarregarComTelasBloqueantes();
   } else {
-    // Sem URL configurada — tela vazia aguardando configuração
-    state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+    // Sem URL configurada — não há nada pra carregar; a Config abre normalmente,
+    // mas a gravação continua travada até uma URL válida ser testada com sucesso.
     aplicarBlindagemDeVariaveis();
+    mostrarTelaCarregando(false);
     preencherCamposConfig(); ajustarCamposDeOddsMenu(true); atualizarPainelUI(true);
     atualizarStatusSheets('err');
     mostrarBloqueio();
     agendarResumoAbertura();
   }
   calcularSomaCapitalGeralUI();
+}
+
+function mostrarTelaCarregando(mostrar){
+  const t=document.getElementById('tela-carregando'); if(t) t.style.display=mostrar?'flex':'none';
+}
+function mostrarTelaErroCarregar(mostrar,motivo){
+  const t=document.getElementById('tela-erro-carregar'); if(t) t.style.display=mostrar?'flex':'none';
+  if(mostrar){ const m=document.getElementById('txt-erro-carregar-motivo'); if(m) m.innerText=motivo||'Motivo desconhecido.'; }
+}
+function mostrarTelaConfirmarVazio(mostrar){
+  const t=document.getElementById('tela-confirmar-vazio'); if(t) t.style.display=mostrar?'flex':'none';
+}
+
+// Faz a tentativa de carregamento e decide qual das telas bloqueantes mostrar.
+// Esta função é o único lugar que pode liberar cargaInicialConfirmada=true.
+async function tentarCarregarComTelasBloqueantes(){
+  mostrarTelaErroCarregar(false); mostrarTelaConfirmarVazio(false); mostrarTelaCarregando(true);
+  window.__ultimoCarregamentoFoiReady=false;
+  const ok = await carregarDaNuvem();
+  mostrarTelaCarregando(false);
+
+  if(ok){
+    cargaInicialConfirmada=true;
+    mostrarBloqueio(); // pede a senha após carregar o estado (com a senha sincronizada)
+    agendarResumoAbertura();
+    return;
+  }
+
+  if(window.__ultimoCarregamentoFoiReady){
+    // O servidor respondeu, mas nunca teve nada salvo. Pode ser legítimo (implantação
+    // nova) ou sinal de estar apontando pro lugar errado — pedimos confirmação humana.
+    mostrarTelaConfirmarVazio(true);
+    return;
+  }
+
+  // Falha de verdade (rede, timeout, erro do servidor): tela bloqueante com motivo.
+  mostrarTelaErroCarregar(true, window.__ultimoErroSheets||'Causa desconhecida.');
+}
+function tentarNovamenteCarregamento(){ tentarCarregarComTelasBloqueantes(); }
+
+// Só chamado quando o usuário CONFIRMA explicitamente que é uma planilha nova mesmo.
+function confirmarComecarDoZero(){
+  mostrarTelaConfirmarVazio(false);
+  cargaInicialConfirmada=true;
+  preencherCamposConfig(); ajustarCamposDeOddsMenu(true); atualizarPainelUI(true);
+  atualizarStatusSheets('on');
+  mostrarBloqueio();
+  agendarResumoAbertura();
 }
 
 // beforeunload removido — save só acontece após cada ação, nunca ao fechar
@@ -2007,8 +2106,17 @@ function alterarDataInicioCicloUI(){ ms().dataInicioCiclo=document.getElementByI
 function salvarConfiguracoes(){
   // Compartilhado
   state.bancoCapital=parseFloat(document.getElementById('cfg-banco-capital').value)||0.00;
-  state.sheetsUrl=document.getElementById('cfg-sheets-url').value.trim();
+  const urlDigitada=document.getElementById('cfg-sheets-url').value.trim();
+  const urlMudou=urlDigitada && urlDigitada!==state.sheetsUrl;
+  state.sheetsUrl=urlDigitada;
   if(state.sheetsUrl) SHEETS_URL_MEMORIA=state.sheetsUrl;
+  if(urlMudou){
+    // Trocar de planilha é o mesmo risco que uma carga que falhou: se a nova URL for
+    // a errada, salvar às cegas por cima dela seria tão ruim quanto o problema original.
+    // Exige uma carga confirmada de novo, com as mesmas telas de segurança da abertura.
+    cargaInicialConfirmada=false;
+    arquivos.carregados=false; arquivos.carregando=null; arquivosZerarPendencias();
+  }
   // Específico do modo ativo
   ms().metaPercent=parseFloat(document.getElementById('cfg-meta').value);
   ms().stopLossPercent=parseFloat(document.getElementById('cfg-stoploss').value);
@@ -2019,7 +2127,13 @@ function salvarConfiguracoes(){
   // Recalcula a aposta base dos lotes existentes (a base pode ter mudado), sem apagar lotes.
   (ms().sequencias||[]).forEach(sq=>{ if(sq.status==='PENDING'&&(parseFloat(sq.perdasAcumuladas)||0)<0.005){ sq.apostaAtual=sniperArredondarAposta(getValorApostaBaseLote(sq)); } });
   salvarDadosEAtualizarTudo();
-  alert("Configurações salvas.");
+  if(urlMudou){
+    alert("Configurações salvas. Como a URL do Sheets mudou, vamos confirmar o carregamento dos dados dessa nova planilha antes de liberar o salvamento novamente.");
+    mostrarTelaCarregando(true);
+    tentarCarregarComTelasBloqueantes();
+  } else {
+    alert("Configurações salvas.");
+  }
 }
 
 function sniperArredondarAposta(val){ return Math.max(0.01, Math.round(val*100)/100); }
