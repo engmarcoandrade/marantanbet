@@ -674,7 +674,7 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">CONTROLE <span>FINANCEIRO</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v45.21</span></div>
+      <div class="app-logo">CONTROLE <span>FINANCEIRO</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v45.22</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
@@ -1210,7 +1210,7 @@ const arquivos = {
   carregando:null,        // promessa em andamento, pra não buscar duas vezes
   novos:{ apostas:[], secas:[], historico:[], grafico:[] },
   removerDoFim:{ apostas:0, secas:0, historico:0, grafico:0 },
-  ultimoErro:null         // motivo real da última falha ao buscar (v45.21) — pra mostrar pro usuário, não só "falhou"
+  ultimoErro:null         // motivo real da última falha ao buscar (v45.22) — pra mostrar pro usuário, não só "falhou"
 };
 function arquivosZerarPendencias(){
   arquivos.novos={ apostas:[], secas:[], historico:[], grafico:[] };
@@ -1261,7 +1261,7 @@ async function garantirArquivosCarregados(){
   if(!url||!url.startsWith('http')){ arquivos.ultimoErro='Nenhuma URL do Sheets configurada.'; return false; }
   arquivos.carregando=(async()=>{
     arquivos.ultimoErro=null;
-    // v45.21: 5 abas ficam mais lentas de ler conforme os dados crescem — 20s deixou de
+    // v45.22: 5 abas ficam mais lentas de ler conforme os dados crescem — 20s deixou de
     // ser suficiente com o tempo. 35s + mais uma tentativa dá margem sem travar o app.
     for(let tentativa=1;tentativa<=MAX_TENTATIVAS_ARQUIVOS;tentativa++){
       const controlador=new AbortController();
@@ -1575,7 +1575,7 @@ async function tentarUmaUrl(url){
 // Tenta uma URL até MAX_TENTATIVAS vezes, com pausa crescente entre elas, antes de desistir.
 // É o que evita o usuário precisar fechar e reabrir o app manualmente num "cold start" lento.
 const MAX_TENTATIVAS_SHEETS=3;
-const MAX_TENTATIVAS_ARQUIVOS=4; // v45.21: buscar Histórico/Notas/Gráfico lê 5 abas — mais generoso que o núcleo
+const MAX_TENTATIVAS_ARQUIVOS=4; // v45.22: buscar Histórico/Notas/Gráfico lê 5 abas — mais generoso que o núcleo
 async function tentarUmaUrlComRetry(url){
   let ultimoResultado=null;
   for(let i=1;i<=MAX_TENTATIVAS_SHEETS;i++){
@@ -2085,7 +2085,8 @@ function ajustarBancaAtivaExternamente(){ const v=parseFloat(document.getElement
 // dados parciais e apagariam o resto. Este guarda impede isso.
 function exigirArquivosCarregados(oQueIaFazer){
   if(arquivos.carregados) return true;
-  alert('⏳ O histórico completo ainda não foi carregado do Sheets.\n\nPara '+oQueIaFazer+' com segurança, o app precisa ter todos os dados em mãos — senão essa ação apagaria o que não foi carregado.\n\nAguarde alguns segundos nesta aba e tente de novo.');
+  const motivo=arquivos.ultimoErro?('\n\nMotivo da última tentativa: '+arquivos.ultimoErro):'';
+  alert('⏳ O histórico completo ainda não foi carregado do Sheets.\n\nPara '+oQueIaFazer+' com segurança, o app precisa ter todos os dados em mãos — senão essa ação apagaria o que não foi carregado.\n\nAguarde alguns segundos nesta aba e tente de novo.'+motivo);
   garantirArquivosCarregados();
   return false;
 }
