@@ -674,7 +674,7 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">CONTROLE <span>FINANCEIRO</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v45.24</span></div>
+      <div class="app-logo">CONTROLE <span>FINANCEIRO</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v45.25</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
@@ -801,6 +801,12 @@ tbody tr:last-child td { border-bottom:none; }
         <button id="btn-org-blocos" class="filter-btn" onclick="toggleOrganizarBlocos()">⋮⋮ Blocos</button>
         <div class="filter-divisor"></div>
         <button id="btn-desfazer-lote" class="filter-btn" onclick="desfazerUltimaMarcacao()" title="Desfaz a última marcação de Vitória, Derrota ou Anulada — restaura aposta, risco, gales e saldo" disabled style="opacity:0.45;">↩️ Desfazer</button>
+        <div class="filter-divisor"></div>
+        <select id="sel-casas-decimais" class="filter-btn" style="padding-right:4px;cursor:pointer;" title="Casas decimais usadas para arredondar os valores de aposta (R$)" onchange="alterarCasasDecimaisAposta(this.value)">
+          <option value="2">R$ 0,00</option>
+          <option value="1">R$ 0,0</option>
+          <option value="0">R$ 0</option>
+        </select>
 
       </div>
       <div class="table-wrap">
@@ -1173,7 +1179,8 @@ const DEFAULT_MODO = {
   incrFixoPercent:10.0, gatilhoIncremento:"SEMPRE", vistaOperacao:"cards",
   metaPorLetra:{"A":1.0,"B":1.0,"C":1.0,"D":1.0,"E":1.0,"F":1.0}, metaGlobalPercent:1.0, letrasMetaCumprida:{},
   estatSequencias:[], streakPorLetra:{}, registroApostas:[], perdasAssumidasTotal:0, assumidasCount:0, stopTravado:false,
-  notas:[], mostrarNotas:true
+  notas:[], mostrarNotas:true,
+  casasDecimaisAposta:2 // v45.25: casas decimais do arredondamento dos valores de aposta
 };
 
 const DEFAULT_STATE = Object.assign({}, DEFAULT_MODO, {
@@ -1560,6 +1567,7 @@ function aplicarBlindagemDeVariaveis(){
   if(m.perdasAssumidasTotal===undefined) m.perdasAssumidasTotal=0;
   if(m.assumidasCount===undefined) m.assumidasCount=0;
   if(m.stopTravado===undefined) m.stopTravado=false;
+  if(m.casasDecimaisAposta===undefined||isNaN(parseInt(m.casasDecimaisAposta,10))) m.casasDecimaisAposta=2;
 }
 
 async function testarConexaoSheets(){
@@ -2287,7 +2295,17 @@ function salvarConfiguracoes(){
   }
 }
 
-function sniperArredondarAposta(val){ return Math.max(0.01, Math.round(val*100)/100); }
+// v45.25: casas decimais configuráveis — os valores de aposta cresceram e o Marco
+// pediu para não precisar mais digitar centavos toda hora. 2 casas (padrão) segue
+// arredondando em centavos, como sempre; 0 casas arredonda pro real mais próximo.
+function casasDecimaisApostaValida(){
+  const c=parseInt((ms&&ms()&&ms().casasDecimaisAposta),10);
+  return (isNaN(c)||c<0||c>2) ? 2 : c;
+}
+function sniperArredondarAposta(val){
+  const fator=Math.pow(10,casasDecimaisApostaValida());
+  return Math.max(1/fator, Math.round((parseFloat(val)||0)*fator)/fator);
+}
 function roundedFixo(val){ return val; }
 
 // ── ESTATÍSTICA DE SEQUÊNCIAS (por letra, deduplicada por rodada) ──
@@ -3902,8 +3920,27 @@ function corSeq(streak, maxG){
   return 'var(--win)';
 }
 
+// v45.25: mantém o seletor de casas decimais mostrando o valor salvo, sempre que a
+// aba Operação é redesenhada (senão ele voltaria pro padrão "R$ 0,00" visualmente,
+// mesmo com o state guardando outra coisa).
+function sincronizarSeletorCasasDecimais(){
+  const sel=document.getElementById('sel-casas-decimais'); if(!sel) return;
+  const val=String(casasDecimaisApostaValida());
+  if(sel.value!==val) sel.value=val;
+}
+// Muda quantas casas decimais os valores de aposta usam a partir de agora.
+// Reaplica o arredondamento nos lotes PENDING na hora — assim o efeito é visível
+// imediatamente na tabela, sem precisar marcar nenhum resultado antes.
+function alterarCasasDecimaisAposta(valor){
+  const casas=parseInt(valor,10);
+  ms().casasDecimaisAposta=(isNaN(casas)||casas<0||casas>2)?2:casas;
+  (ms().sequencias||[]).forEach(sq=>{ if(sq.status==='PENDING') sq.apostaAtual=sniperArredondarAposta(sq.apostaAtual); });
+  salvarDadosEAtualizarTudo();
+}
+
 function renderLinhas(){
   const tbody=document.getElementById('tabela-linhas-lotes'); if(!tbody) return;
+  sincronizarSeletorCasasDecimais();
   const maxG=ms().maxGales||4;
 
   // Montar lista com índice original para ações individuais
