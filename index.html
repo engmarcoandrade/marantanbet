@@ -674,7 +674,7 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">CONTROLE <span>FINANCEIRO</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v45.22</span></div>
+      <div class="app-logo">CONTROLE <span>FINANCEIRO</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v45.23</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
@@ -997,7 +997,7 @@ tbody tr:last-child td { border-bottom:none; }
         <label class="cfg-label">URL Google Sheets</label>
         <input type="text" id="cfg-sheets-url" class="cfg-input" style="font-family:var(--sans);font-size:12px;" placeholder="https://script.google.com/macros/s/.../exec">
         <button class="btn-secondary" style="margin-top:8px;" onclick="testarConexaoSheets()">🔌 Testar Conexão</button>
-        <div id="cfg-teste-resultado" style="font-size:11px;line-height:1.5;margin-top:8px;"></div>
+        <div id="cfg-teste-resultado" style="font-size:11px;line-height:1.5;margin-top:8px;white-space:pre-wrap;"></div>
       </div>
       <div style="margin-top:10px;">
         <div class="cfg-label" style="margin-bottom:6px;">📋 Script do Apps Script</div>
@@ -1210,8 +1210,43 @@ const arquivos = {
   carregando:null,        // promessa em andamento, pra não buscar duas vezes
   novos:{ apostas:[], secas:[], historico:[], grafico:[] },
   removerDoFim:{ apostas:0, secas:0, historico:0, grafico:0 },
-  ultimoErro:null         // motivo real da última falha ao buscar (v45.22) — pra mostrar pro usuário, não só "falhou"
+  ultimoErro:null,        // motivo real da última falha ao buscar (v45.22) — pra mostrar pro usuário, não só "falhou"
+  scriptDesatualizado:false // v45.23: o Apps Script publicado não entende ?parte=arquivos
 };
+
+/* ── Por que esta função existe (v45.23) ──────────────────────────────────
+   O app pedia `?parte=arquivos` e recebia 200 + JSON válido, mas sem
+   `status:'ok'`. A única resposta com essa forma, no Codigo.gs, é o NÚCLEO
+   (o estado) — que o servidor devolve quando não reconhece o parâmetro
+   `parte`. Ou seja: a implantação publicada é anterior à V34.0.
+   Isso acontece porque SALVAR o código no editor do Apps Script NÃO atualiza
+   a web app: é preciso criar uma NOVA VERSÃO da implantação. O sintoma é
+   cruel — abrir o app funciona (o caminho do núcleo é o mesmo nas duas
+   versões), só as abas de arquivo falham, sempre, para sempre.
+   Aqui a gente nomeia esse caso em vez de chamá-lo de "resposta inesperada".
+   ────────────────────────────────────────────────────────────────────────── */
+function diagnosticarRespostaArquivos(dados){
+  arquivos.scriptDesatualizado=false;
+  if(dados&&dados.message) return 'Erro dentro do Apps Script: '+dados.message;
+  // Cheira a objeto de estado? Então veio o núcleo no lugar das abas de arquivo.
+  const pareceEstado = dados && typeof dados==='object' &&
+    (dados.bancoCapital!==undefined || dados.sequencias!==undefined ||
+     dados.bancaAtual!==undefined || dados.__versaoServidor!==undefined);
+  if(pareceEstado){
+    arquivos.scriptDesatualizado=true;
+    const v = dados.__versaoServidor ? ('V'+dados.__versaoServidor) : 'anterior à V34.0';
+    return 'O script publicado no Apps Script está DESATUALIZADO ('+v+'): ele devolveu o estado '
+         + 'no lugar das abas de arquivo, porque não reconhece "?parte=arquivos". '
+         + 'Corrija em Configurações → Copiar Script → cole no Apps Script → Implantar → '
+         + 'Gerenciar implantações → editar (lápis) → Versão: NOVA VERSÃO → Implantar. '
+         + 'Só salvar o código no editor NÃO atualiza a URL.';
+  }
+  if(dados&&dados.status==='ready'){
+    return 'A implantação está viva, mas a planilha ainda não tem dados gravados.';
+  }
+  return 'O servidor respondeu de forma inesperada. Começo da resposta: '
+       + JSON.stringify(dados).slice(0,140);
+}
 function arquivosZerarPendencias(){
   arquivos.novos={ apostas:[], secas:[], historico:[], grafico:[] };
   arquivos.removerDoFim={ apostas:0, secas:0, historico:0, grafico:0 };
@@ -1289,9 +1324,10 @@ async function garantirArquivosCarregados(){
           arquivos.ultimoErro=null;
           return true;
         }
-        // O servidor respondeu, mas não com status 'ok' — captura a mensagem real dele
-        // (ex: erro dentro do Apps Script) em vez de só marcar como falha genérica.
-        arquivos.ultimoErro=(dados&&dados.message)?('Erro no servidor: '+dados.message):'O servidor respondeu de forma inesperada.';
+        // O servidor respondeu, mas não com status 'ok'.
+        arquivos.ultimoErro=diagnosticarRespostaArquivos(dados);
+        // Script antigo publicado: insistir 4x não muda nada, só faz o usuário esperar à toa.
+        if(arquivos.scriptDesatualizado) return false;
       }catch(e){
         clearTimeout(tid);
         arquivos.ultimoErro=(e&&e.name==='AbortError')?'A busca demorou demais e foi cancelada (a planilha está grande e pode estar lenta para responder).':('Falha de rede: '+(e&&e.message?e.message:e));
@@ -1538,6 +1574,10 @@ async function testarConexaoSheets(){
     const tsSrv=r.data.ultimoTimestampSinc?new Date(r.data.ultimoTimestampSinc).toLocaleString('pt-BR'):'—';
     div.style.color='var(--win)';
     div.innerText='✅ Conectado! Banca '+fmt(r.data.bancaAtual||0)+', '+totLotes+' lotes. Última gravação no servidor: '+tsSrv+'.';
+    // v45.23: o teste antigo parava aqui — e por isso dizia "Conectado" mesmo quando as
+    // abas de arquivo (Histórico/Notas/Gráfico) estavam falhando em toda abertura.
+    // Agora ele testa TAMBÉM a segunda rota, que é a que vinha quebrando.
+    await testarRotaArquivos(url,div);
   } else if(r.ready){
     div.style.color='var(--bar-amber)';
     div.innerText='🟡 Implantação viva, mas ainda sem dados salvos. Faça uma operação e use "Salvar no Sheets agora".';
@@ -1545,6 +1585,43 @@ async function testarConexaoSheets(){
     div.style.color='var(--loss)';
     div.innerText='❌ '+r.motivo;
   }
+}
+
+// Testa a rota `?parte=arquivos` — a que alimenta Histórico, Notas e Gráfico.
+// Escreve o resultado logo abaixo do resultado do teste do núcleo.
+async function testarRotaArquivos(url,div){
+  const linhaNucleo=div.innerText;
+  div.innerText=linhaNucleo+'\n🔄 Testando o histórico completo (abas de arquivo)...';
+  const controlador=new AbortController();
+  const tid=setTimeout(()=>controlador.abort(),35000);
+  let linha2;
+  let cor='var(--win)';
+  try{
+    const resp=await fetch(url+'?parte=arquivos&t='+Date.now(),{signal:controlador.signal});
+    clearTimeout(tid);
+    let dados=null;
+    try{ dados=await resp.json(); }catch(e){ dados=null; }
+    if(dados&&dados.status==='ok'){
+      linha2='✅ Histórico completo OK — na planilha: '
+        +(dados.registroApostas||[]).length+' apostas, '
+        +(dados.historico||[]).length+' etapas, '
+        +(dados.notas||[]).length+' notas.';
+    }else if(dados===null){
+      cor='var(--loss)';
+      linha2='❌ Histórico completo: a resposta não veio em JSON (provável tela de login — a implantação precisa estar com acesso "Qualquer pessoa").';
+    }else{
+      cor='var(--loss)';
+      linha2='❌ Histórico completo: '+diagnosticarRespostaArquivos(dados);
+    }
+  }catch(e){
+    clearTimeout(tid);
+    cor='var(--loss)';
+    linha2=(e&&e.name==='AbortError')
+      ? '❌ Histórico completo: demorou mais de 35s e foi cancelado.'
+      : '❌ Histórico completo: falha de rede — '+(e&&e.message?e.message:e);
+  }
+  div.innerText=linhaNucleo+'\n\n'+linha2;
+  if(cor==='var(--loss)') div.style.color='var(--loss)';
 }
 
 async function tentarUmaUrl(url){
@@ -1930,12 +2007,14 @@ function mostrarAvisoCarregandoArquivos(tabId,carregando,sucesso){
   if(!el) return;
   if(sucesso){ el.remove(); }
   else{
-    const motivo=arquivos.ultimoErro?(' Motivo: '+arquivos.ultimoErro):'';
+    const motivo=arquivos.ultimoErro?('<br><br><span style="opacity:.85;">'+arquivos.ultimoErro+'</span>'):'';
+    const oQueFazer=arquivos.scriptDesatualizado
+      ? 'Tentar de novo não vai resolver: o conserto é reimplantar o script (passo a passo acima).'
+      : 'Toque na aba novamente para tentar de novo.';
     el.innerHTML='⚠️ Não foi possível buscar do Sheets o histórico de <b>outras sessões/aparelhos</b>. '
       +'Os números que já aparecem nesta tela (painel Wilson, apostas desta sessão) são reais e '
       +'continuam corretos — o que pode faltar é o que foi registrado antes de abrir o app agora. '
-      +'Toque na aba novamente para tentar de novo.'
-      +(motivo?('<br><span style="opacity:.75;font-size:10px;">'+motivo+'</span>'):'');
+      +oQueFazer+motivo;
     el.style.borderColor='var(--loss)';
   }
 }
