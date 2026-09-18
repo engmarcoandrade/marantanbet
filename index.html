@@ -674,7 +674,7 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">CONTROLE <span>FINANCEIRO</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v45.23</span></div>
+      <div class="app-logo">CONTROLE <span>FINANCEIRO</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v45.24</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
@@ -1211,7 +1211,8 @@ const arquivos = {
   novos:{ apostas:[], secas:[], historico:[], grafico:[] },
   removerDoFim:{ apostas:0, secas:0, historico:0, grafico:0 },
   ultimoErro:null,        // motivo real da última falha ao buscar (v45.22) — pra mostrar pro usuário, não só "falhou"
-  scriptDesatualizado:false // v45.23: o Apps Script publicado não entende ?parte=arquivos
+  scriptDesatualizado:false, // v45.23: o Apps Script publicado não entende ?parte=arquivos
+  modoLegado:false          // v45.23: servidor antigo manda tudo junto na abertura
 };
 
 /* ── Por que esta função existe (v45.23) ──────────────────────────────────
@@ -1609,6 +1610,15 @@ async function testarRotaArquivos(url,div){
     }else if(dados===null){
       cor='var(--loss)';
       linha2='❌ Histórico completo: a resposta não veio em JSON (provável tela de login — a implantação precisa estar com acesso "Qualquer pessoa").';
+    }else if(arquivos.modoLegado&&arquivos.carregados){
+      // A rota nova não existe neste servidor, mas os dados chegam junto com a
+      // abertura do app — então está funcionando, só que pelo caminho antigo.
+      cor='var(--bar-amber)';
+      linha2='🟡 Histórico completo: chegando pelo formato antigo (modo compatibilidade) — '
+        +(ms().registroApostas||[]).length+' apostas, '
+        +(ms().historico||[]).length+' etapas, '
+        +(ms().notas||[]).length+' notas.\n'
+        +'Funciona, mas a abertura do app fica mais lenta. Reimplantar o script (V34) deixa mais rápido.';
     }else{
       cor='var(--loss)';
       linha2='❌ Histórico completo: '+diagnosticarRespostaArquivos(dados);
@@ -1621,7 +1631,7 @@ async function testarRotaArquivos(url,div){
       : '❌ Histórico completo: falha de rede — '+(e&&e.message?e.message:e);
   }
   div.innerText=linhaNucleo+'\n\n'+linha2;
-  if(cor==='var(--loss)') div.style.color='var(--loss)';
+  if(cor!=='var(--win)') div.style.color=cor;
 }
 
 async function tentarUmaUrl(url){
@@ -1669,6 +1679,46 @@ function atualizarStatusSheetsTentativa(i,total){
   if(txt&&i>1) txt.textContent='Sheets sincronizando... tentativa '+i+' de '+total;
 }
 
+/* ── MODO COMPATIBILIDADE (v45.23) ───────────────────────────────────────
+   Nem todo servidor lá fora é V34. Existem dois formatos de resposta na
+   abertura do app, e dá para distinguir com segurança:
+
+   • V34+  → manda só o núcleo e marca `__arquivosNoServidor:true`, que quer
+             dizer "os arrays existem aqui, mas não vieram nesta resposta".
+             O app precisa buscá-los depois, via `?parte=arquivos`.
+   • Antes → manda o ESTADO INTEIRO, arrays juntos, e não marca nada.
+             Nesse caso os dados JÁ ESTÃO na mão: não há o que buscar.
+
+   Sem esta detecção, o app tratava o segundo caso como se fosse o primeiro:
+   ficava exigindo uma rota que aquele servidor não tem, mostrava aviso de
+   erro e bloqueava ações (resetar Wilson, excluir etapa) — tudo isso
+   segurando na mão os dados completos que ele dizia não ter.
+
+   Gravar no modo antigo é seguro: aquele servidor ignora as instruções
+   `__arquivos` e grava o payload inteiro, que já leva os arrays completos.
+   ────────────────────────────────────────────────────────────────────── */
+function detectarModoDeServidor(data){
+  if(!data||typeof data!=='object') return;
+  if(data.__arquivosNoServidor){   // V34+: os arrays ficaram no servidor
+    arquivos.modoLegado=false;
+    return;
+  }
+  // Só considera "veio tudo junto" se algum array realmente veio na resposta.
+  // Se nenhum veio, NÃO marcamos como carregado — seria abrir a porta para
+  // uma gravação futura reescrever as abas com vazio.
+  const veioAlgumArray =
+    Array.isArray(data.registroApostas) || Array.isArray(data.historico) ||
+    Array.isArray(data.notas) || Array.isArray(data.estatSequencias) ||
+    Array.isArray(data.resultadosReaisGrafico);
+  if(veioAlgumArray){
+    arquivos.modoLegado=true;
+    arquivos.carregados=true;     // não há nada a buscar: já está tudo aqui
+    arquivos.scriptDesatualizado=false;
+    arquivos.ultimoErro=null;
+    console.log('Sheets: servidor no formato antigo — arrays vieram junto com o núcleo. Modo compatibilidade ativo.');
+  }
+}
+
 async function carregarDaNuvem(){
   const principal=state.sheetsUrl||SHEETS_URL_MEMORIA||"";
   // Ordem de tentativa: URL configurada/principal, depois os fallbacks (sem repetir)
@@ -1684,6 +1734,7 @@ async function carregarDaNuvem(){
       data.sheetsUrl=url; // fixa a URL que funcionou
       SHEETS_URL_MEMORIA=url;
       state=data;
+      detectarModoDeServidor(data); // v45.23 — ANTES da blindagem, que preencheria os arrays com []
       aplicarBlindagemDeVariaveis();
       if(!Array.isArray(state.sequencias)) state.sequencias=[];
       try{ preencherCamposConfig(); ajustarCamposDeOddsMenu(true); atualizarPainelUI(true); }
