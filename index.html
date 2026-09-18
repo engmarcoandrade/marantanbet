@@ -674,7 +674,7 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">CONTROLE <span>FINANCEIRO</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v45.20</span></div>
+      <div class="app-logo">CONTROLE <span>FINANCEIRO</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v45.21</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
@@ -1209,7 +1209,8 @@ const arquivos = {
   carregados:false,       // já buscamos os arrays completos nesta sessão?
   carregando:null,        // promessa em andamento, pra não buscar duas vezes
   novos:{ apostas:[], secas:[], historico:[], grafico:[] },
-  removerDoFim:{ apostas:0, secas:0, historico:0, grafico:0 }
+  removerDoFim:{ apostas:0, secas:0, historico:0, grafico:0 },
+  ultimoErro:null         // motivo real da última falha ao buscar (v45.21) — pra mostrar pro usuário, não só "falhou"
 };
 function arquivosZerarPendencias(){
   arquivos.novos={ apostas:[], secas:[], historico:[], grafico:[] };
@@ -1257,15 +1258,21 @@ async function garantirArquivosCarregados(){
   if(arquivos.carregados) return true;
   if(arquivos.carregando) return arquivos.carregando;
   const url=state.sheetsUrl||SHEETS_URL_MEMORIA||'';
-  if(!url||!url.startsWith('http')) return false;
+  if(!url||!url.startsWith('http')){ arquivos.ultimoErro='Nenhuma URL do Sheets configurada.'; return false; }
   arquivos.carregando=(async()=>{
-    for(let tentativa=1;tentativa<=MAX_TENTATIVAS_SHEETS;tentativa++){
+    arquivos.ultimoErro=null;
+    // v45.21: 5 abas ficam mais lentas de ler conforme os dados crescem — 20s deixou de
+    // ser suficiente com o tempo. 35s + mais uma tentativa dá margem sem travar o app.
+    for(let tentativa=1;tentativa<=MAX_TENTATIVAS_ARQUIVOS;tentativa++){
       const controlador=new AbortController();
-      const tid=setTimeout(()=>controlador.abort(),20000); // abas de arquivo são mais lentas
+      const tid=setTimeout(()=>controlador.abort(),35000);
       try{
         const resp=await fetch(url+'?parte=arquivos&t='+Date.now(),{signal:controlador.signal});
         clearTimeout(tid);
-        const dados=await resp.json();
+        if(!resp.ok){ arquivos.ultimoErro='O servidor respondeu com erro HTTP '+resp.status+'.'; continue; }
+        let dados;
+        try{ dados=await resp.json(); }
+        catch(erroJson){ arquivos.ultimoErro='A resposta do servidor não veio no formato esperado (não é JSON válido).'; continue; }
         if(dados&&dados.status==='ok'){
           // O que nasceu nesta sessão e ainda não foi gravado precisa sobreviver à fusão.
           const pendApostas=[...(arquivos.novos.apostas||[])];
@@ -1279,10 +1286,17 @@ async function garantirArquivosCarregados(){
           ms().notas=dados.notas||[];
           aplicarBlindagemDeVariaveis();
           arquivos.carregados=true;
+          arquivos.ultimoErro=null;
           return true;
         }
-      }catch(e){ clearTimeout(tid); }
-      if(tentativa<MAX_TENTATIVAS_SHEETS) await new Promise(r=>setTimeout(r,1200*tentativa));
+        // O servidor respondeu, mas não com status 'ok' — captura a mensagem real dele
+        // (ex: erro dentro do Apps Script) em vez de só marcar como falha genérica.
+        arquivos.ultimoErro=(dados&&dados.message)?('Erro no servidor: '+dados.message):'O servidor respondeu de forma inesperada.';
+      }catch(e){
+        clearTimeout(tid);
+        arquivos.ultimoErro=(e&&e.name==='AbortError')?'A busca demorou demais e foi cancelada (a planilha está grande e pode estar lenta para responder).':('Falha de rede: '+(e&&e.message?e.message:e));
+      }
+      if(tentativa<MAX_TENTATIVAS_ARQUIVOS) await new Promise(r=>setTimeout(r,1200*tentativa));
     }
     return false;
   })();
@@ -1561,6 +1575,7 @@ async function tentarUmaUrl(url){
 // Tenta uma URL até MAX_TENTATIVAS vezes, com pausa crescente entre elas, antes de desistir.
 // É o que evita o usuário precisar fechar e reabrir o app manualmente num "cold start" lento.
 const MAX_TENTATIVAS_SHEETS=3;
+const MAX_TENTATIVAS_ARQUIVOS=4; // v45.21: buscar Histórico/Notas/Gráfico lê 5 abas — mais generoso que o núcleo
 async function tentarUmaUrlComRetry(url){
   let ultimoResultado=null;
   for(let i=1;i<=MAX_TENTATIVAS_SHEETS;i++){
@@ -1915,7 +1930,12 @@ function mostrarAvisoCarregandoArquivos(tabId,carregando,sucesso){
   if(!el) return;
   if(sucesso){ el.remove(); }
   else{
-    el.innerText='⚠️ Não foi possível buscar o histórico completo. Os números desta aba podem estar incompletos — toque na aba novamente para tentar de novo.';
+    const motivo=arquivos.ultimoErro?(' Motivo: '+arquivos.ultimoErro):'';
+    el.innerHTML='⚠️ Não foi possível buscar do Sheets o histórico de <b>outras sessões/aparelhos</b>. '
+      +'Os números que já aparecem nesta tela (painel Wilson, apostas desta sessão) são reais e '
+      +'continuam corretos — o que pode faltar é o que foi registrado antes de abrir o app agora. '
+      +'Toque na aba novamente para tentar de novo.'
+      +(motivo?('<br><span style="opacity:.75;font-size:10px;">'+motivo+'</span>'):'');
     el.style.borderColor='var(--loss)';
   }
 }
