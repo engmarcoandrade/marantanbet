@@ -674,7 +674,7 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">CONTROLE <span>FINANCEIRO</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v45.26</span></div>
+      <div class="app-logo">CONTROLE <span>FINANCEIRO</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v45.27</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
@@ -1490,7 +1490,7 @@ function aplicarBlindagemDeVariaveis(){
   if(state.bancaAtual===undefined) state.bancaAtual=100.00;
   if(state.bancaInicial===undefined) state.bancaInicial=state.bancaAtual;
   if(state.bancaInicioEtapa===undefined) state.bancaInicioEtapa=state.bancaAtual;
-  if(!state.resultadosReaisGrafico||state.resultadosReaisGrafico.length===0) state.resultadosReaisGrafico=[state.bancaInicial];
+  if(!state.resultadosReaisGrafico||state.resultadosReaisGrafico.length===0) state.resultadosReaisGrafico=[(parseFloat(state.bancaInicial)||0)+(parseFloat(state.bancoCapital)||0)]; // v45.27: total (plataforma+banco), como todos os outros pontos
 
   // Defaults de todos os campos operacionais, agora direto em state
   const m=state;
@@ -2254,8 +2254,13 @@ function excluirRegistroEtapaHistorico(index){
   if(!exigirArquivosCarregados('excluir uma etapa do histórico')) return;
   if(confirm("🗑 Excluir esta etapa do histórico?")){
   const banco=parseFloat(state.bancoCapital)||0;
+  // v45.27: a origem PRECISA ser lida antes do splice — se a etapa excluída for a #1,
+  // é justamente ela que carrega a informação de onde o ciclo começou. Antes usava
+  // state.bancaInicial (= início da etapa ATUAL), o que reescrevia todo o histórico
+  // somando os lucros em cima do saldo de hoje.
+  const origemDoCiclo=pontoDePartidaDoCiclo();
   ms().historico.splice(index,1); ms().historico.forEach((h,i)=>{ h.etapa=i+1; }); ms().etapaAtual=ms().historico.length+1;
-  let totalInicial=(state.bancaInicial||0)+banco; let pts=[totalInicial];
+  let totalInicial=origemDoCiclo; let pts=[totalInicial];
   ms().historico.forEach(item=>{ totalInicial+=item.lucro; item.totalPos=totalInicial; item.bancaPos=totalInicial-banco; pts.push(totalInicial); });
   state.bancaInicioEtapa=totalInicial-banco; state.bancaAtual=totalInicial-banco;
   state.resultadosReaisGrafico=pts; gerarEstruturaLotesIniciais(); salvarDadosEAtualizarTudo();
@@ -4402,7 +4407,7 @@ function alternarOrdenacaoHistorico(){
 function renderProjecaoEtapas(){
   const box=document.getElementById('projecao-etapas-body'); if(!box) return;
   const metaPct=parseFloat(ms().metaPercent)||0;
-  const capitalInicialCiclo=state.bancaInicial+(parseFloat(state.bancoCapital)||0);
+  const capitalInicialCiclo=pontoDePartidaDoCiclo(); // v45.27: antes era o início da etapa atual
   const baseAtual=state.bancaInicioEtapa+(parseFloat(state.bancoCapital)||0);
   const nFuturas=Math.max(1,Math.min(20,parseInt(document.getElementById('input-proj-etapas').value)||5));
 
@@ -4415,12 +4420,18 @@ function renderProjecaoEtapas(){
   // Últimas etapas concluídas (até 3, para contexto, mais recentes primeiro)
   const hist=(ms().historico||[]).slice(-3);
   hist.forEach(h=>{
-    const cresc=capitalInicialCiclo>0?(((h.bancaPos||h.totalPos||0)/capitalInicialCiclo)-1)*100:0;
+    // v45.27: usa o TOTAL (plataforma + banco), mesma unidade do capital inicial.
+    // Antes dividia o valor só da plataforma por um capital que incluía o banco.
+    const valorEtapa=parseFloat(h.totalPos)||parseFloat(h.bancaPos)||0;
+    const cresc=capitalInicialCiclo>0?((valorEtapa/capitalInicialCiclo)-1)*100:0;
+    // Sinal real, não fixo: um crescimento negativo aparecia como "+-3.2%".
+    const sinal=cresc>=0?'+':'';
+    const cor=cresc>=0?'var(--win)':'var(--loss)';
     html+=`<div style="display:grid;grid-template-columns:50px 1fr 1fr 1fr;gap:4px;font-size:11px;padding:4px;background:var(--surface);border-radius:4px;margin-bottom:2px;">
       <span style="font-weight:700;color:var(--win);">#${h.etapa} ✔</span>
       <span style="text-align:right;font-family:var(--mono);color:var(--muted);">—</span>
-      <span style="text-align:right;font-family:var(--mono);">${fmt(h.bancaPos||h.totalPos||0)}</span>
-      <span style="text-align:right;font-family:var(--mono);font-weight:700;color:var(--win);">+${cresc.toFixed(1)}%</span>
+      <span style="text-align:right;font-family:var(--mono);">${fmt(valorEtapa)}</span>
+      <span style="text-align:right;font-family:var(--mono);font-weight:700;color:${cor};">${sinal}${cresc.toFixed(1)}%</span>
     </div>`;
   });
 
@@ -4540,21 +4551,53 @@ function renderHistorico(){
 
 
 
+/* ── PONTO DE PARTIDA DO CICLO (v45.27) ──────────────────────────────────
+   O valor TOTAL (plataforma + banco) com que o ciclo começou.
+
+   Por que não usar state.bancaInicial: apesar do nome, ela é sobrescrita a
+   cada etapa concluída (confirmarConclusaoEtapa) e passa a guardar o início
+   da ETAPA ATUAL. Três lugares confiavam nela como início do ciclo — a linha
+   de meta do gráfico, a projeção de etapas e a exclusão de etapa — e por
+   isso todos partiam do saldo de hoje.
+
+   Fonte da verdade: o próprio histórico. Cada etapa grava o total final e o
+   lucro dela (lucro = total final − total do início da etapa). Logo, na
+   primeira etapa: totalPos − lucro = total do início do ciclo. Exato, e não
+   depende de nenhuma variável que muda com o tempo.
+
+   Sem etapa concluída ainda, o ciclo começa no início da etapa atual.
+   ────────────────────────────────────────────────────────────────────── */
+function pontoDePartidaDoCiclo(){
+  const hist=ms().historico||[];
+  if(hist.length>0){
+    const tp=parseFloat(hist[0].totalPos), lu=parseFloat(hist[0].lucro);
+    if(isFinite(tp)&&isFinite(lu)) return tp-lu;
+  }
+  return (parseFloat(state.bancaInicioEtapa)||0)+(parseFloat(state.bancoCapital)||0);
+}
+
+// Série "Realizado": ponto de partida + o total de cada etapa concluída, direto do
+// histórico. Antes vinha de resultadosReaisGrafico, cujo primeiro ponto podia ter sido
+// gravado sem o banco (só a plataforma) — era o "R$500" que não batia com nada.
+function serieRealizadoDoCiclo(){
+  const hist=ms().historico||[];
+  return [pontoDePartidaDoCiclo(), ...hist.map(h=>parseFloat(h.totalPos)||0)];
+}
+
 function renderizarGrafico(){
   const canvas=document.getElementById('meuGrafico'); if(!canvas) return;
   const ctx=canvas.getContext('2d');
   const claro=document.body.classList.contains('light-mode');
   const textColor=claro?'#30363D':'#8B949E'; const gridColor=claro?'#DDE3E9':'#21262D';
   const labelColor=claro?'#000000':'#E6EDF3';
-  const banco=parseFloat(state.bancoCapital)||0;
-  const totalInicial=state.bancaInicial+banco;
-
   // Evolução por Etapa — realizado x meta por etapa
   const max=parseInt(document.getElementById('input-etapas').value)||30;
-  let pts=[...state.resultadosReaisGrafico];
+  let pts=serieRealizadoDoCiclo();
   let labels=pts.map((_,i)=>i===0?'Início':'E'+i);
-  // Linha de meta por etapa
-  let metaPts=[totalInicial];
+  // Linha de meta por etapa: parte do MESMO ponto que a linha realizada e cresce
+  // a meta% por etapa, juro composto. Não se ajusta pelos resultados — é a régua
+  // de "onde eu estaria se tivesse batido a meta em todas as etapas".
+  let metaPts=[pts[0]];
   const fc=1+(ms().metaPercent/100);
   for(let i=1;i<Math.max(pts.length,max);i++) metaPts.push(metaPts[i-1]*fc);
   while(pts.length<max){ pts.push(null); labels.push('E'+pts.length); }
@@ -4649,7 +4692,7 @@ function atualizarPainelUI(forcarGrafico=false){
   const stopVal=baseEtapa*(1-ms().stopLossPercent/100); // global: plataforma + banco
   const lucroEtapa=state.bancaAtual-state.bancaInicioEtapa;
   const lucroNecessario=metaVal-baseEtapa;
-  if(!state.resultadosReaisGrafico||state.resultadosReaisGrafico.length===0) state.resultadosReaisGrafico=[state.bancaInicial];
+  if(!state.resultadosReaisGrafico||state.resultadosReaisGrafico.length===0) state.resultadosReaisGrafico=[(parseFloat(state.bancaInicial)||0)+(parseFloat(state.bancoCapital)||0)]; // v45.27: total (plataforma+banco), como todos os outros pontos
   // O primeiro ponto do gráfico é o ponto de partida do lucro total. Como o array
   // completo só é buscado quando o usuário abre a aba Gráfico, guardamos esse único
   // número no núcleo — assim o Painel mostra o lucro certo desde a abertura.
