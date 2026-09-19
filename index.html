@@ -674,7 +674,7 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">CONTROLE <span>FINANCEIRO</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v45.25</span></div>
+      <div class="app-logo">CONTROLE <span>FINANCEIRO</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v45.26</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
@@ -4565,16 +4565,33 @@ function renderizarGrafico(){
   const valorLabelsPlugin = {
     id: 'valorLabels',
     afterDatasetsDraw(chart){
-      const meta = chart.getDatasetMeta(0); // dataset 0 = "Realizado"
-      const dataset = chart.data.datasets[0];
       const c = chart.ctx;
       c.save();
       c.font = 'bold 10px monospace';
       c.textAlign = 'center';
+
+      // Dataset 0 = "Realizado" (linha de baixo, azul) — um rótulo por etapa já concluída.
+      const metaReal = chart.getDatasetMeta(0);
+      const dsReal = chart.data.datasets[0];
       c.fillStyle = labelColor;
-      meta.data.forEach((point, index) => {
-        const value = dataset.data[index];
+      metaReal.data.forEach((point, index) => {
+        const value = dsReal.data[index];
         if(value===null||value===undefined) return;
+        const rotulo = 'R$'+Math.round(value).toLocaleString('pt-BR');
+        c.fillText(rotulo, point.x, point.y - 10);
+      });
+
+      // Dataset 1 = "Meta por Etapa" (linha de cima, tracejada verde). Ela é calculada
+      // pra todas as etapas até o máximo escolhido, mas só faz sentido rotular onde a
+      // etapa JÁ foi concluída — senão viraria previsão numérica travestida de fato.
+      // Usa o mesmo índice do Realizado como critério: pts[index]!==null é "concluída".
+      const metaLinha = chart.getDatasetMeta(1);
+      const dsMeta = chart.data.datasets[1];
+      c.fillStyle = dsMeta.borderColor || '#3FB950';
+      metaLinha.data.forEach((point, index) => {
+        const value = dsMeta.data[index];
+        const etapaConcluida = dsReal.data[index]!==null && dsReal.data[index]!==undefined;
+        if(value===null||value===undefined||!etapaConcluida) return;
         const rotulo = 'R$'+Math.round(value).toLocaleString('pt-BR');
         c.fillText(rotulo, point.x, point.y - 10);
       });
