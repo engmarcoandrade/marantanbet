@@ -674,7 +674,7 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">CONTROLE <span>FINANCEIRO</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v45.28</span></div>
+      <div class="app-logo">CONTROLE <span>FINANCEIRO</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v45.29</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
@@ -935,7 +935,20 @@ tbody tr:last-child td { border-bottom:none; }
             <input type="number" id="cfg-banca-total-disabled" class="cfg-input" disabled>
           </div>
         </div>
-        <p style="font-size:10px;color:var(--muted);line-height:1.5;margin-top:8px;">O <b>Banco</b> é reserva de segurança; a <b>Plataforma</b> é o dinheiro em operação. Todas as contas (meta, stop, base) são globais — usam o total.</p>
+        <p style="font-size:10px;color:var(--muted);line-height:1.5;margin-top:8px;">O <b>Banco</b> é reserva de segurança; a <b>Plataforma</b> é o dinheiro em operação. Os três valores acima continuam sendo o seu dinheiro real — o que muda abaixo é apenas <b>qual deles alimenta as contas de aposta</b>.</p>
+      </div>
+      <div class="form-group">
+        <label class="cfg-label">Capital operacional (base das apostas)</label>
+        <select id="cfg-capital-modo" class="cfg-input" onchange="alterarCapitalModoUI()" style="font-family:var(--sans);">
+          <option value="TOTAL">Total — plataforma + banco</option>
+          <option value="PLATAFORMA">Só a plataforma — ignora o banco</option>
+          <option value="FIXO">Valor fixo — eu digito quanto</option>
+        </select>
+        <div id="cfg-capital-fixo-wrap" style="margin-top:8px;display:none;">
+          <div class="cfg-label" style="margin-bottom:4px;">🎯 Valor fixo a operar</div>
+          <input type="number" id="cfg-capital-fixo" class="cfg-input" step="0.01" value="0.00" inputmode="decimal" oninput="atualizarPreviaCapitalOperacional()">
+        </div>
+        <div id="cfg-capital-previa" style="font-size:10px;color:var(--muted);line-height:1.5;margin-top:8px;"></div>
       </div>
       <div class="form-group">
         <label class="cfg-label">Data de Início do Ciclo</label>
@@ -1180,7 +1193,9 @@ const DEFAULT_MODO = {
   metaPorLetra:{"A":1.0,"B":1.0,"C":1.0,"D":1.0,"E":1.0,"F":1.0}, metaGlobalPercent:1.0, letrasMetaCumprida:{},
   estatSequencias:[], streakPorLetra:{}, registroApostas:[], perdasAssumidasTotal:0, assumidasCount:0, stopTravado:false,
   notas:[], mostrarNotas:true,
-  casasDecimaisAposta:2 // v45.25: casas decimais do arredondamento dos valores de aposta
+  casasDecimaisAposta:2, // v45.25: casas decimais do arredondamento dos valores de aposta
+  capitalModo:'TOTAL',   // v45.29: TOTAL | PLATAFORMA | FIXO — qual dinheiro alimenta as apostas
+  capitalFixo:0          // v45.29: usado só no modo FIXO
 };
 
 const DEFAULT_STATE = Object.assign({}, DEFAULT_MODO, {
@@ -1568,6 +1583,8 @@ function aplicarBlindagemDeVariaveis(){
   if(m.assumidasCount===undefined) m.assumidasCount=0;
   if(m.stopTravado===undefined) m.stopTravado=false;
   if(m.casasDecimaisAposta===undefined||isNaN(parseInt(m.casasDecimaisAposta,10))) m.casasDecimaisAposta=2;
+  if(m.capitalModo!=='PLATAFORMA'&&m.capitalModo!=='FIXO') m.capitalModo='TOTAL'; // v45.29
+  if(m.capitalFixo===undefined||isNaN(parseFloat(m.capitalFixo))) m.capitalFixo=0;
 }
 
 async function testarConexaoSheets(){
@@ -2083,9 +2100,57 @@ function mostrarAvisoCarregandoArquivos(tabId,carregando,sucesso){
 // Versões POR LOTE: o lucro desejado usa a aposta base (%) do MERCADO daquele lote.
 // Modo da Base% de um mercado: 'LUCRO' (base = lucro desejado) ou 'APOSTA' (base = valor apostado)
 
+/* ══════════════════════════════════════════════════════════════════════
+   CAPITAL OPERACIONAL (v45.29)
+   Qual dinheiro alimenta as contas de aposta. Três modos:
+     TOTAL      → plataforma + banco (como sempre foi; é o padrão)
+     PLATAFORMA → só o saldo da plataforma, ignorando o banco
+     FIXO       → um valor digitado (ex.: operar como se tivesse R$800)
+
+   POR QUE EXISTEM DUAS FUNÇÕES, E POR QUE ELAS PRECISAM ANDAR JUNTAS
+   O app compara o capital de AGORA contra alvos calculados sobre o capital
+   do INÍCIO da etapa (meta = base × 1+meta%, stop = base × 1−stop%). Se a
+   base encolher mas o "agora" continuar somando tudo, a meta aparece como
+   batida assim que o app abre. Por isso o "agora" é sempre a base escolhida
+   MAIS o lucro real da etapa:
+
+       atual = base + (bancaAtual − bancaInicioEtapa)
+
+   Essa fórmula vale para os três modos e, no modo TOTAL, reproduz
+   exatamente o comportamento antigo (bancaAtual + banco).
+
+   O que NÃO passa por aqui: histórico, gráfico, conclusão de etapa e o KPI
+   de capital global. Isso é dinheiro real e continua somando tudo.
+   ══════════════════════════════════════════════════════════════════════ */
+function capitalModoValido(){
+  const m=(ms()&&ms().capitalModo)?String(ms().capitalModo).toUpperCase():'TOTAL';
+  return (m==='PLATAFORMA'||m==='FIXO')?m:'TOTAL';
+}
+function capitalOperacionalBase(){
+  const modo=capitalModoValido();
+  const plataforma=parseFloat(state.bancaInicioEtapa)||0;
+  const banco=parseFloat(state.bancoCapital)||0;
+  if(modo==='PLATAFORMA') return plataforma;
+  if(modo==='FIXO'){
+    const v=parseFloat(ms().capitalFixo)||0;
+    // Valor fixo não preenchido: volta pro total em vez de zerar todas as apostas.
+    return v>0?v:(plataforma+banco);
+  }
+  return plataforma+banco;
+}
+function capitalOperacionalAtual(){
+  return capitalOperacionalBase()+((parseFloat(state.bancaAtual)||0)-(parseFloat(state.bancaInicioEtapa)||0));
+}
+function rotuloCapitalModo(){
+  const modo=capitalModoValido();
+  if(modo==='PLATAFORMA') return 'só plataforma';
+  if(modo==='FIXO') return 'valor fixo';
+  return 'plataforma + banco';
+}
+
 // Valor de referência da base (capital da etapa x Base%). Único modo suportado: APOSTA
 // — o percentual configurado é sempre o tamanho da aposta em si.
-function valorBaseDoLote(seq){ const capitalInicioEtapa=state.bancaInicioEtapa+(parseFloat(state.bancoCapital)||0); return capitalInicioEtapa*(basePctDoLote(seq)/100); }
+function valorBaseDoLote(seq){ return capitalOperacionalBase()*(basePctDoLote(seq)/100); }
 
 // Lucro-alvo de uma rodada do lote: o que a aposta base renderia naquela odd (aposto X, ganho X*(odd-1)).
 function getLucroDesejadoBaseLote(seq){
@@ -2100,8 +2165,7 @@ function getValorApostaBaseLote(seq){
 }
 
 function getValorApostaBasePorCod(cod){
-  const capIni=state.bancaInicioEtapa+(parseFloat(state.bancoCapital)||0);
-  return capIni*(basePctDoMercado(cod)/100);
+  return capitalOperacionalBase()*(basePctDoMercado(cod)/100);
 }
 // Meta, incremento e gatilho agora são POR CATEGORIA — cada mercado tem os seus.
 function metaPctDoMercado(cod){ const m=getMercados().find(x=>x.cod===cod); const v=m&&m.metaPct!==undefined?parseFloat(m.metaPct):NaN; return isNaN(v)?1.0:v; }
@@ -2176,7 +2240,36 @@ function incrPctEfetivoDoLote(seq){
 function metaGlobalPct(){ const v=parseFloat(ms().metaGlobalPercent); return isNaN(v)?1.0:v; }
 // Mercados distintos presentes nos lotes atuais (nova arquitetura)
 function mercadosAtivosDosLotes(){ const set=[]; (ms().sequencias||[]).forEach(sq=>{ const k=sq.mercado||sq.letraRandomica; if(k&&set.indexOf(k)<0) set.push(k); }); return set; }
-function calcularSomaCapitalGeralUI(){ const b=parseFloat(document.getElementById('cfg-banco-capital').value)||0; const c=parseFloat(document.getElementById('cfg-banca-capital').value)||0; document.getElementById('cfg-banca-total-disabled').value=(b+c).toFixed(2); }
+// v45.29 — mostra/esconde a caixa do valor fixo e atualiza a prévia.
+// Só mexe na tela: a escolha passa a valer quando o usuário salva as configurações.
+function alterarCapitalModoUI(){
+  const sel=document.getElementById('cfg-capital-modo');
+  const wrap=document.getElementById('cfg-capital-fixo-wrap');
+  if(wrap&&sel) wrap.style.display=(sel.value==='FIXO')?'block':'none';
+  atualizarPreviaCapitalOperacional();
+}
+// Prévia honesta: mostra o valor que vai virar base E o tamanho que a aposta
+// de 1% passaria a ter, pra decisão não ser às cegas.
+function atualizarPreviaCapitalOperacional(){
+  const cx=document.getElementById('cfg-capital-previa'); if(!cx) return;
+  const sel=document.getElementById('cfg-capital-modo'); if(!sel) return;
+  const banco=parseFloat(document.getElementById('cfg-banco-capital').value)||0;
+  const plataforma=parseFloat(document.getElementById('cfg-banca-capital').value)||0;
+  const fixo=parseFloat(document.getElementById('cfg-capital-fixo').value)||0;
+  const total=banco+plataforma;
+  let base, aviso='';
+  if(sel.value==='PLATAFORMA'){ base=plataforma; }
+  else if(sel.value==='FIXO'){
+    base=fixo>0?fixo:total;
+    if(fixo<=0) aviso=' <span style="color:var(--bar-amber);">Sem valor digitado, o app usa o total.</span>';
+    else if(fixo>total) aviso=' <span style="color:var(--bar-amber);">Atenção: é maior que o seu capital real.</span>';
+  }
+  else { base=total; }
+  cx.innerHTML='As apostas, a meta e o stop passam a ser calculados sobre <b>'+fmt(base)+'</b>.'
+    +' Uma base de 1% valeria <b>'+fmt(base*0.01)+'</b> por aposta.'+aviso;
+}
+
+function calcularSomaCapitalGeralUI(){ const b=parseFloat(document.getElementById('cfg-banco-capital').value)||0; const c=parseFloat(document.getElementById('cfg-banca-capital').value)||0; document.getElementById('cfg-banca-total-disabled').value=(b+c).toFixed(2); atualizarPreviaCapitalOperacional(); }
 
 function gerarEstruturaLotesIniciais(){
   // Nova arquitetura: a operação começa VAZIA — os lotes são criados na aba Operação (➕ Adicionar lote).
@@ -2270,6 +2363,15 @@ function alterarDataInicioCicloUI(){ ms().dataInicioCiclo=document.getElementByI
 function salvarConfiguracoes(){
   // Compartilhado
   state.bancoCapital=parseFloat(document.getElementById('cfg-banco-capital').value)||0.00;
+  // v45.29 — capital operacional. Fica antes do recálculo das apostas lá embaixo,
+  // que já reajusta os lotes sem risco acumulado para a nova base.
+  const selCap=document.getElementById('cfg-capital-modo');
+  if(selCap){
+    const v=String(selCap.value||'TOTAL').toUpperCase();
+    ms().capitalModo=(v==='PLATAFORMA'||v==='FIXO')?v:'TOTAL';
+  }
+  const inpFixo=document.getElementById('cfg-capital-fixo');
+  if(inpFixo) ms().capitalFixo=Math.max(0,parseFloat(inpFixo.value)||0);
   const urlDigitada=document.getElementById('cfg-sheets-url').value.trim();
   const urlMudou=urlDigitada && urlDigitada!==state.sheetsUrl;
   state.sheetsUrl=urlDigitada;
@@ -2619,7 +2721,7 @@ function verificarMetaLote(seq){
   if(!seq) return false;
   const metaPct=metaPctDoLote(seq);
   if(metaPct<=0) return false; // meta desativada
-  const baseCapital=state.bancaInicioEtapa+(parseFloat(state.bancoCapital)||0);
+  const baseCapital=capitalOperacionalBase();
   const alvo=baseCapital*(metaPct/100);
   const lucro=seq.lucroEtapa||0;
   if(lucro>=alvo){
@@ -2656,8 +2758,7 @@ function processarPerdaSeq(seq,odd){
   seq.lucroEtapa=(seq.lucroEtapa||0)-val; // lucro do LOTE individual
   seq.perdasAcumuladas+=val;
   seq.streakLoss=(seq.streakLoss||0)+1;
-  const capitalGlobal=state.bancaAtual+(parseFloat(state.bancoCapital)||0);
-  const limiteLote=capitalGlobal*((ms().stopLotePercent||5)/100);
+  const limiteLote=capitalOperacionalAtual()*((ms().stopLotePercent||5)/100);
   const proximaAposta=sniperArredondarAposta(seq.apostaAtual*fatorIncremento(seq,'LOSS'));
   const estourouGales=seq.streakLoss>=(ms().maxGales||4);
   const estourouLote=seq.perdasAcumuladas>=limiteLote||proximaAposta>=limiteLote;
@@ -4047,7 +4148,7 @@ function renderLinhas(){
       <td class="t-meta-cell">${(function(){
         const mp=metaPctDoLote(seq);
         if(mp<=0) return '<span style="color:var(--muted);font-size:10px;">—</span>';
-        const alvo=(state.bancaInicioEtapa+(parseFloat(state.bancoCapital)||0))*(mp/100);
+        const alvo=capitalOperacionalBase()*(mp/100);
         const luc=seq.lucroEtapa||0;
         const pctReal=alvo>0?(luc/alvo)*100:0;              // % real (pode ser negativo)
         const prog=Math.max(0,Math.min(100,pctReal));       // largura da barra (0–100)
@@ -4129,6 +4230,12 @@ function renderLinhas(){
 function preencherCamposConfig(){ if(typeof aplicarVisibilidadeAbas==="function") aplicarVisibilidadeAbas(); if(typeof renderEditorMercados==="function") renderEditorMercados(); if(typeof atualizarBotaoSenhaUI==="function") atualizarBotaoSenhaUI();
   document.getElementById('cfg-banco-capital').value=(state.bancoCapital||0).toFixed(2);
   document.getElementById('cfg-banca-capital').value=state.bancaAtual.toFixed(2);
+  // v45.29 — capital operacional
+  const selCapCfg=document.getElementById('cfg-capital-modo');
+  if(selCapCfg) selCapCfg.value=capitalModoValido();
+  const inpFixoCfg=document.getElementById('cfg-capital-fixo');
+  if(inpFixoCfg) inpFixoCfg.value=(parseFloat(ms().capitalFixo)||0).toFixed(2);
+  if(typeof alterarCapitalModoUI==='function') alterarCapitalModoUI();
   document.getElementById('cfg-meta').value=ms().metaPercent;
   document.getElementById('cfg-stoploss').value=ms().stopLossPercent;
   document.getElementById('cfg-max-gales').value=ms().maxGales||4;
@@ -4438,10 +4545,21 @@ function renderProjecaoEtapas(){
   const box=document.getElementById('projecao-etapas-body'); if(!box) return;
   const metaPct=parseFloat(ms().metaPercent)||0;
   const capitalInicialCiclo=pontoDePartidaDoCiclo(); // v45.27: antes era o início da etapa atual
-  const baseAtual=state.bancaInicioEtapa+(parseFloat(state.bancoCapital)||0);
+  const baseAtual=capitalOperacionalBase();          // v45.29: a projeção segue o capital operacional
+  // v45.29: as etapas CONCLUÍDAS são dinheiro real e continuam ancoradas na origem real do
+  // ciclo. A etapa atual e as futuras são alvos calculados sobre o capital operacional, que
+  // pode ser menor. Ancorar as duas coisas na mesma origem daria percentuais sem sentido —
+  // por isso cada metade tem a sua âncora, e o modo aparece escrito acima da tabela.
+  const modoCap=capitalModoValido();
+  const origemProjecao=(modoCap==='TOTAL')?capitalInicialCiclo:baseAtual;
   const nFuturas=Math.max(1,Math.min(20,parseInt(document.getElementById('input-proj-etapas').value)||5));
 
   let html='';
+  if(modoCap!=='TOTAL'){
+    html+=`<div style="font-size:9.5px;color:var(--muted);background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:5px 7px;margin-bottom:6px;line-height:1.4;">
+      ⚙️ Projeção sobre o capital operacional <b>${fmt(baseAtual)}</b> (${rotuloCapitalModo()}). As etapas já concluídas abaixo mostram o dinheiro real.
+    </div>`;
+  }
   // Cabeçalho da tabela
   html+=`<div style="display:grid;grid-template-columns:50px 1fr 1fr 1fr;gap:4px;font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase;padding:0 4px 4px;border-bottom:1px solid var(--border2);margin-bottom:4px;">
     <span>Etapa</span><span style="text-align:right;">Base</span><span style="text-align:right;">Meta</span><span style="text-align:right;">Cresc. acum.</span>
@@ -4467,7 +4585,7 @@ function renderProjecaoEtapas(){
 
   // Etapa atual (em andamento)
   const metaAtual=baseAtual*(1+metaPct/100);
-  const crescAtual=capitalInicialCiclo>0?((metaAtual/capitalInicialCiclo)-1)*100:0;
+  const crescAtual=origemProjecao>0?((metaAtual/origemProjecao)-1)*100:0;
   html+=`<div style="display:grid;grid-template-columns:50px 1fr 1fr 1fr;gap:4px;font-size:11px;padding:4px;background:var(--accent-dim);border:1px solid var(--accent-border);border-radius:4px;margin-bottom:2px;">
     <span style="font-weight:800;color:var(--accent);">#${ms().etapaAtual} ▶</span>
     <span style="text-align:right;font-family:var(--mono);">${fmt(baseAtual)}</span>
@@ -4479,7 +4597,7 @@ function renderProjecaoEtapas(){
   let baseProj=metaAtual;
   for(let i=1;i<=nFuturas;i++){
     const metaProj=baseProj*(1+metaPct/100);
-    const crescProj=capitalInicialCiclo>0?((metaProj/capitalInicialCiclo)-1)*100:0;
+    const crescProj=origemProjecao>0?((metaProj/origemProjecao)-1)*100:0;
     html+=`<div style="display:grid;grid-template-columns:50px 1fr 1fr 1fr;gap:4px;font-size:11px;padding:4px;color:var(--muted);margin-bottom:2px;">
       <span>#${ms().etapaAtual+i}</span>
       <span style="text-align:right;font-family:var(--mono);">${fmt(baseProj)}</span>
@@ -4716,10 +4834,13 @@ function renderizarGrafico(){
 
 function atualizarPainelUI(forcarGrafico=false){
   const banco=parseFloat(state.bancoCapital)||0;
-  const capitalGlobal=state.bancaAtual+banco;
-  const baseEtapa=state.bancaInicioEtapa+banco;
+  const capitalGlobal=state.bancaAtual+banco;   // dinheiro real — só para o KPI de capital global
+  // v45.29: a operação (meta, stop, avanço da etapa) roda sobre o capital operacional.
+  // No modo TOTAL estes dois valores são idênticos ao capitalGlobal/base de antes.
+  const baseEtapa=capitalOperacionalBase();
+  const capitalOp=capitalOperacionalAtual();
   const metaVal=baseEtapa*(1+ms().metaPercent/100);
-  const stopVal=baseEtapa*(1-ms().stopLossPercent/100); // global: plataforma + banco
+  const stopVal=baseEtapa*(1-ms().stopLossPercent/100);
   const lucroEtapa=state.bancaAtual-state.bancaInicioEtapa;
   const lucroNecessario=metaVal-baseEtapa;
   if(!state.resultadosReaisGrafico||state.resultadosReaisGrafico.length===0) state.resultadosReaisGrafico=[(parseFloat(state.bancaInicial)||0)+(parseFloat(state.bancoCapital)||0)]; // v45.27: total (plataforma+banco), como todos os outros pontos
@@ -4740,24 +4861,24 @@ function atualizarPainelUI(forcarGrafico=false){
   el('kpi-banca',fmt(state.bancaAtual));
   el('kpi-banco-sub','Banco: '+fmt(banco));
   el('kpi-meta',fmt(metaVal));
-  el('kpi-meta-sub','+'+ms().metaPercent+'% sobre capital global');
+  el('kpi-meta-sub','+'+ms().metaPercent+'% sobre '+fmt(baseEtapa)+' ('+rotuloCapitalModo()+')');
   el('kpi-stoploss',fmt(stopVal));
-  el('kpi-stop-sub','-'+ms().stopLossPercent+'% do capital global');
+  el('kpi-stop-sub','-'+ms().stopLossPercent+'% sobre '+fmt(baseEtapa)+' ('+rotuloCapitalModo()+')');
   el('hdr-etapa','#'+ms().etapaAtual);
   el('lbl-etapa-num','#'+ms().etapaAtual);
   el('lbl-lucro-etapa',fmt(lucroEtapa));
   el('lbl-lotes-win',ms().sequencias.filter(s=>s.status==='FINISHED').length);
   el('lbl-lotes-loss',ms().sequencias.filter(s=>s.status!=='FINISHED').length);
   el('lbl-valor-inicial-op',fmt(baseEtapa));
-  el('lbl-valor-atual-op',fmt(state.bancaAtual+(parseFloat(state.bancoCapital)||0)));
+  el('lbl-valor-atual-op',fmt(capitalOp));
   el('lbl-meta-op',fmt(metaVal));
-  const faltaOp=Math.max(0,metaVal-(state.bancaAtual+banco));
+  const faltaOp=Math.max(0,metaVal-capitalOp);
   const faltaEl=document.getElementById('lbl-falta-op');
   if(faltaEl){ faltaEl.innerText=fmt(faltaOp); faltaEl.style.color=faltaOp<=0?'var(--win)':'var(--accent)'; }
   // Espelho na aba Lotes — referência é a ETAPA (mesma base da aba Painel)
   el('lbl-etapa-num-lt','#'+ms().etapaAtual);
   el('lbl-valor-inicial-lt',fmt(baseEtapa));
-  el('lbl-valor-atual-lt',fmt(state.bancaAtual+(parseFloat(state.bancoCapital)||0)));
+  el('lbl-valor-atual-lt',fmt(capitalOp));
   el('lbl-meta-lt',fmt(metaVal));
   const faltaElLt=document.getElementById('lbl-falta-lt');
   if(faltaElLt){ faltaElLt.innerText=fmt(faltaOp); faltaElLt.style.color=faltaOp<=0?'var(--win)':'var(--accent)'; }
@@ -4782,10 +4903,10 @@ function atualizarPainelUI(forcarGrafico=false){
   const chip=document.getElementById('hdr-etapa'); if(chip) chip.parentElement.title='OPERAÇÃO';
 
   // Card do Painel: PROGRESSO DA ETAPA (base da etapa, meta da etapa, lucro acumulado na etapa)
-  const baseEtapaCard=state.bancaInicioEtapa+(parseFloat(state.bancoCapital)||0);
+  const baseEtapaCard=capitalOperacionalBase();           // v45.29
   const metaEtapaPctCard=parseFloat(ms().metaPercent)||0;
   const alvoEtapaCard=baseEtapaCard*(metaEtapaPctCard/100);
-  const lucroEtapaCard=saldoTotalAtual()-baseEtapaCard;
+  const lucroEtapaCard=capitalOp-baseEtapaCard;           // = lucro real da etapa, em qualquer modo
   el('progresso-inicial',fmt(baseEtapaCard));
   el('progresso-meta-fixa-dinamica',metaEtapaPctCard>0?fmt(baseEtapaCard+alvoEtapaCard):'—');
   el('progresso-lucro-necessario',metaEtapaPctCard>0?fmt(alvoEtapaCard):'—');
@@ -4799,7 +4920,7 @@ function atualizarPainelUI(forcarGrafico=false){
   // O modal de meta da ETAPA usa o progresso da etapa (não o do dia mostrado no card).
   const pctEtapaModal=lucroNecessario>0?(lucroEtapa/lucroNecessario)*100:0;
   if(pctEtapaModal>=100&&!sinalizadoMeta){ sinalizadoMeta=true; document.getElementById('modal-meta').style.display='flex'; }
-  if(capitalGlobal<=stopVal&&!sinalizadoStop){ sinalizadoStop=true; ms().stopTravado=true; document.getElementById('modal-stop').style.display='flex'; }
+  if(capitalOp<=stopVal&&!sinalizadoStop){ sinalizadoStop=true; ms().stopTravado=true; document.getElementById('modal-stop').style.display='flex'; }
 
   const banner=document.getElementById('banner-stop');
   if(banner) banner.style.display=ms().stopTravado?'block':'none';
