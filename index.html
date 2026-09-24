@@ -213,6 +213,12 @@ header { background:var(--surface); border-bottom:1px solid var(--border); paddi
 /* Larg. p/ 15 caixas de 16px + gaps ≈ 270px */
 .u10-scroll { display:flex; gap:2px; align-items:center; overflow-x:auto; max-width:270px; scroll-behavior:smooth; padding:2px; scrollbar-width:none; }
 .u10-scroll::-webkit-scrollbar { display:none; }
+/* v45.32 — nome do bloco editável direto no cabeçalho. Parece título; vira caixa ao tocar. */
+.bloco-nome-input { font-family:var(--sans); font-size:13px; font-weight:800; color:var(--text); background:transparent; border:1px dashed transparent; border-radius:5px; padding:3px 6px; margin-left:-6px; min-width:6ch; max-width:60vw; outline:none; cursor:text; transition:border-color .15s, background .15s; }
+.bloco-nome-input:hover { border-color:var(--border); }
+.bloco-nome-input:focus { border-style:solid; border-color:var(--accent); background:var(--surface); }
+/* iPhone dá zoom automático em campos com fonte menor que 16px ao tocar — em telas de toque usa 16px */
+@media (pointer:coarse){ .bloco-nome-input { font-size:16px; } }
 .u10-arrow { flex:none; width:18px; height:20px; border:1.5px solid var(--border); background:var(--surface2); color:var(--text); border-radius:4px; cursor:pointer; font-size:10px; line-height:1; padding:0; font-weight:800; }
 .u10-arrow:hover { background:var(--accent-dim); border-color:var(--accent); }
 .u10 { width:16px; height:16px; border-radius:3px; display:inline-flex; align-items:center; justify-content:center; font-size:11px; font-weight:900; line-height:1; box-sizing:border-box; flex:none; }
@@ -693,7 +699,7 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">CONTROLE <span>FINANCEIRO</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v45.31</span></div>
+      <div class="app-logo">CONTROLE <span>FINANCEIRO</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v45.32</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
@@ -3175,6 +3181,48 @@ function alternarRecolherBloco(id){
   salvarDadosEAtualizarTudo();
 }
 
+/* ── v45.32: nome do bloco editável direto no cabeçalho ────────────────────
+   Toque no nome, digite, e Enter (ou tocar fora) confirma. Esc desfaz.
+
+   Dois cuidados que motivam o desenho:
+   1) Nada é salvo a cada tecla. Salvar redesenha a tabela, e redesenhar no meio da
+      digitação apagaria o texto e o cursor — foi exatamente o defeito da v45.12 nas
+      caixas de categoria. Aqui só se grava ao sair do campo.
+   2) Ao confirmar, a tabela NÃO é redesenhada: o campo já mostra o nome novo. Isso
+      importa porque o "sair do campo" normalmente acontece quando você toca em OUTRO
+      botão (ex.: Pos de um lote). Se a tabela fosse redesenhada nesse instante, o botão
+      tocado sumiria antes de receber o toque, e a marcação se perderia sem aviso. */
+function escaparAtributo(s){
+  return String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function larguraNomeBloco(nome){ return Math.max(6, Math.min(40, String(nome||'').length+1)); }
+function teclaNomeBloco(e,el){
+  if(e.key==='Enter'){ e.preventDefault(); el.blur(); }
+  else if(e.key==='Escape'){
+    e.preventDefault();
+    el.value=el.dataset.original||'';
+    el.size=larguraNomeBloco(el.value);
+    el.dataset.cancelado='1';
+    el.blur();
+  }
+}
+function confirmarNomeBloco(id,el){
+  if(el.dataset.cancelado==='1'){ delete el.dataset.cancelado; return; }
+  const b=getBlocos().find(x=>x.id===id); if(!b) return;
+  const nome=el.value.trim();
+  if(!nome){ // vazio não vale: volta ao nome anterior, sem alerta interrompendo
+    el.value=b.nome; el.size=larguraNomeBloco(b.nome); return;
+  }
+  if(nome===b.nome){ el.value=nome; return; } // nada mudou: não grava à toa
+  b.nome=nome;
+  el.value=nome;
+  el.dataset.original=nome;
+  el.size=larguraNomeBloco(nome);
+  // Grava sem redesenhar (ver cuidado 2 acima)
+  state.ultimoTimestampSinc=Date.now();
+  agendarSalvarNuvem();
+}
+
 function renomearBloco(id){
   const b=getBlocos().find(x=>x.id===id); if(!b) return;
   const novo=prompt('Nome do bloco:', b.nome);
@@ -4190,10 +4238,9 @@ function renderLinhas(){
       <td colspan="${NCOLS}" style="padding:0;">
         <div style="display:flex;align-items:center;gap:8px;background:var(--surface2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:7px 10px;">
           <button onclick="alternarRecolherBloco('${bloco.id}')" title="${recolhido?'Expandir':'Recolher'} este bloco" style="background:var(--surface);border:1px solid var(--border);color:var(--text);width:24px;height:24px;border-radius:5px;cursor:pointer;font-size:11px;font-weight:800;padding:0;flex:none;">${recolhido?'▶':'▼'}</button>
-          <span style="font-size:12px;font-weight:800;color:var(--text);">${bloco.nome}</span>
+          <input type="text" class="bloco-nome-input" value="${escaparAtributo(bloco.nome)}" data-original="${escaparAtributo(bloco.nome)}" maxlength="60" size="${larguraNomeBloco(bloco.nome)}" enterkeyhint="done" autocomplete="off" spellcheck="false" title="Toque para renomear" aria-label="Nome do bloco" oninput="this.size=larguraNomeBloco(this.value)" onkeydown="teclaNomeBloco(event,this)" onblur="confirmarNomeBloco('${bloco.id}',this)">
           <span style="font-size:10px;color:var(--muted);font-family:var(--mono);">(${doBloco.length} lote${doBloco.length===1?'':'s'})</span>
           <span style="flex:1;"></span>
-          <button onclick="renomearBloco('${bloco.id}')" title="Renomear bloco" style="background:var(--surface);border:1px solid var(--border);color:var(--muted);padding:3px 7px;border-radius:4px;cursor:pointer;font-size:10px;font-weight:700;">✏️</button>
           <button onclick="excluirBloco('${bloco.id}')" title="Excluir bloco (os lotes vão para outro)" style="background:var(--surface);border:1px solid var(--border);color:var(--muted);padding:3px 7px;border-radius:4px;cursor:pointer;font-size:10px;font-weight:700;">🗑️</button>
         </div>
       </td>
