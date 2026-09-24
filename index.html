@@ -693,7 +693,7 @@ tbody tr:last-child td { border-bottom:none; }
         <path d="M9 35 L15.5 15 L22.5 30 L29.5 15 L36 10.5" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M30.5 9.5 L37.5 9 L36.8 16" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="app-logo">CONTROLE <span>FINANCEIRO</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v45.30</span></div>
+      <div class="app-logo">CONTROLE <span>FINANCEIRO</span> <span style="font-size:9px;color:var(--muted);font-weight:600;">v45.31</span></div>
     </div>
     <div class="etapa-chip">Etapa <b id="hdr-etapa">#1</b></div>
     <div class="hdr-btns">
@@ -2978,6 +2978,23 @@ function renderUltimos10(arr){
   </div>`;
 }
 
+// v45.31 — a faixa dos Últimos 30 nascia encostada na ESQUERDA (posição zero da rolagem),
+// escondendo justamente os jogos mais recentes, que ficam à direita. E como a tabela é
+// redesenhada a cada marcação, voltava para o começo toda vez que um resultado era lançado.
+// Aqui, depois de cada desenho, cada faixa rolável é encostada na DIREITA: o jogo mais novo
+// sempre à vista, e os antigos ficam "escondidos" à esquerda, acessíveis pela seta ◀.
+function encostarUltimosNaDireita(raiz){
+  const faixas=(raiz||document).querySelectorAll('.u10-scroll.rolavel');
+  faixas.forEach(el=>{
+    // Sem animação: com o scroll-behavior:smooth do CSS, a faixa "deslizaria" da esquerda
+    // para a direita a cada marcação. O suave continua valendo para as setas ◀ ▶.
+    const antes=el.style.scrollBehavior;
+    el.style.scrollBehavior='auto';
+    el.scrollLeft=el.scrollWidth;
+    el.style.scrollBehavior=antes;
+  });
+}
+
 function rolarUltimos(btn,dir){
   const box=btn.parentElement.querySelector('.u10-scroll');
   if(box) box.scrollBy({left:dir*120, behavior:'smooth'});
@@ -4280,6 +4297,10 @@ function renderLinhas(){
     });
   });
   tbody.innerHTML=html;
+  encostarUltimosNaDireita(tbody);
+  // Segunda passada no próximo quadro: se a fonte ou a largura das colunas ainda estiverem
+  // se ajustando, a primeira medida pode sair curta.
+  if(typeof requestAnimationFrame==='function') requestAnimationFrame(()=>encostarUltimosNaDireita(tbody));
 }
 
 
